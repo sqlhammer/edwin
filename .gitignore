@@ -1,2 +1,5 @@
 # Private context
 docs/*
+
+# MCP configuration with API keys
+.mcp.json
