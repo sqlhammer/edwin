@@ -3,3 +3,6 @@ docs/*
 
 # Claude
 .claude/*
+
+# MCP configuration with API keys
+.mcp.json
