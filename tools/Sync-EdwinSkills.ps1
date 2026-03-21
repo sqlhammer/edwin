@@ -17,7 +17,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$RepoRoot   = $PSScriptRoot
+$RepoRoot   = Split-Path $PSScriptRoot -Parent
 $SkillsSource = Join-Path $RepoRoot "SKILLS"
 
 $Destinations = @(

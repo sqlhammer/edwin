@@ -23,7 +23,7 @@ rtk --version 2>/dev/null || echo "rtk not found"
 Stage the SKILLS directory and the sync script:
 
 ```bash
-git add SKILLS/ Sync-EdwinSkills.ps1
+git add SKILLS/ tools/Sync-EdwinSkills.ps1
 ```
 
 Show the user what is staged (`git status`) so they can confirm before committing.
@@ -51,7 +51,7 @@ git push
 Run the PowerShell sync script from the repo root:
 
 ```bash
-powershell -ExecutionPolicy Bypass -NoProfile -File "Sync-EdwinSkills.ps1"
+powershell -ExecutionPolicy Bypass -NoProfile -File "tools/Sync-EdwinSkills.ps1"
 ```
 
 If PowerShell is not available on this device, inform the user and instruct them to run `Sync-EdwinSkills.ps1` manually once PowerShell is available.
@@ -66,5 +66,5 @@ Report:
 ## Notes
 
 - **RTK fallback:** Always prefer `rtk git` when available; fall back to `git` silently if not.
-- **Scope:** Only stage `SKILLS/` and `Sync-EdwinSkills.ps1`. Do not stage unrelated files without explicit user instruction.
+- **Scope:** Only stage `SKILLS/` and `tools/Sync-EdwinSkills.ps1`. Do not stage unrelated files without explicit user instruction.
 - **Commit message:** Never invent a commit message. Always use what the user provides or explicitly ask.
