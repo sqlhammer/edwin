@@ -26,6 +26,7 @@ EDWIN's capabilities are organized as purpose-built skills. Each skill is a focu
 | `briefing` | Distill any input into a crisp executive briefing |
 | `executive-coach` | Directive coaching for Product-Eng leaders — presence, promotions, comp, roles |
 | `x-ghostwriter` | Interview-driven X post generation — AI leadership positioning for job search |
+| `blog-writer` | Research-backed blog drafting and revision — vault-aware, style-guided, leadership-positioned |
 
 ## Global Rules
 
