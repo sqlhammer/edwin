@@ -148,10 +148,12 @@ C:\repos\notes\Notes\
   Blog\
     Drafts\
       YYYY-MM\
-        {post-slug}.md
+        {post-slug}\
+          {post-slug}.md
 ```
 
-- `post-slug` = kebab-case title (e.g., `engineering-teams-in-an-ai-world.md`)
+- Each post gets its own folder named `{post-slug}` — images for the post live alongside the draft in this folder.
+- `post-slug` = kebab-case title (e.g., `engineering-teams-in-an-ai-world`)
 - `YYYY-MM` = current year and month
 
 **Frontmatter template:**
@@ -220,7 +222,7 @@ Apply the approved changes. All governing constraints from New Post mode apply:
 - Embed image recommendations where they add value
 - Strengthen systems thinking and outcome framing wherever Derik's answers allow
 
-Write the revised file at the same path with a version suffix: `{post-slug}-v2.md`. Increment if v2 already exists. **Never overwrite the original.**
+Write the revised file in the same folder as the original with a version suffix: `{post-slug}-v2.md`. Increment if v2 already exists. **Never overwrite the original.**
 
 After writing, confirm the new file path and provide a bulleted list of the key changes made.
 
