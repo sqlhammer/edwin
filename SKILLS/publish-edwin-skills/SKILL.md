@@ -20,10 +20,10 @@ rtk --version 2>/dev/null || echo "rtk not found"
 
 ### Step 2 — Stage skill files
 
-Stage the SKILLS directory and the sync script:
+Stage the SKILLS directory, the sync script, and the npx package files:
 
 ```bash
-git add SKILLS/ tools/Sync-EdwinSkills.ps1
+git add SKILLS/ tools/Sync-EdwinSkills.ps1 package.json bin/
 ```
 
 Show the user what is staged (`git status`) so they can confirm before committing.
@@ -66,5 +66,5 @@ Report:
 ## Notes
 
 - **RTK fallback:** Always prefer `rtk git` when available; fall back to `git` silently if not.
-- **Scope:** Only stage `SKILLS/` and `tools/Sync-EdwinSkills.ps1`. Do not stage unrelated files without explicit user instruction.
+- **Scope:** Only stage `SKILLS/`, `tools/Sync-EdwinSkills.ps1`, `package.json`, and `bin/`. Do not stage unrelated files without explicit user instruction.
 - **Commit message:** Never invent a commit message. Always use what the user provides or explicitly ask.
