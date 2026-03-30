@@ -46,7 +46,8 @@ Organize by thematic evolution, not lists. Introduce ideas as problems of fricti
 - Default: standalone posts, not threads, unless the insight requires depth
 - No hashtags unless they are a natural part of the sentence
 - No emojis
-- No em-dash abuse — one per post maximum
+- No em-dashes
+- No "it's not this; it's that" sentence structures
 - First line is the hook. It must work as a standalone statement.
 
 ---
