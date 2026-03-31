@@ -36,14 +36,16 @@ Detect mode from the invocation:
 
 ### PHASE 1: ORIENT
 
-Confirm the following. If any are missing, ask — do not assume defaults.
+Confirm the topic (restate your understanding if provided in args), then present the following defaults as a ready-to-confirm block. Derik can reply "confirmed" to accept all, or name only the fields he wants to change.
 
-1. **Topic** — What is the post about? (Confirm your understanding if provided in args.)
-2. **Target audience** — Who is this for? (e.g., engineering managers, CTOs, senior developers, general tech audience)
-3. **Target platform** — Where will this be published? (e.g., personal blog, LinkedIn, Medium, Substack)
-4. **Approximate length** — Short-form (~500 words), standard (~1,000 words), or long-form (~2,000+ words)?
+```
+Topic:    [restate topic]
+Audience: Engineering Managers and CTOs  ← change?
+Platform: Personal blog                  ← change?
+Length:   Standard (~1,000 words)        ← change? (Short ~500 / Long ~2,000+)
+```
 
-Output a one-paragraph brief confirming your understanding. **Wait for confirmation before Phase 2.**
+**Wait for confirmation before Phase 2.**
 
 ---
 
