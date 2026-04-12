@@ -67,6 +67,12 @@ For the most promising options (top 3-4), apply rigorous evaluation:
 **Fallback:** [Alternative if blocked]
 ```
 
+---
+
+### Technical Guidance
+
+- ALWAYS use the AskUserQuestion tool, when possible, to ask the user questions.
+
 ## Examples
 
 /strategist

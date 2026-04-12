@@ -39,6 +39,14 @@ Once we reach a logical plateau or a consensus on the "path forward," your final
 - **Synthesize:** Create a high-density summary of the refined idea, incorporating the evolutions prompted by our debate.
 - **Action Plan:** Format this summary as a clear, instructional directive or "Master Prompt" that I can use to implement this new model or communicate it to others.
 
+---
+
+### Technical Guidance
+
+- ALWAYS use the AskUserQuestion tool, when possible, to ask the user questions.
+
+---
+
 ## Examples
 
 /intellectual-sparing-partner

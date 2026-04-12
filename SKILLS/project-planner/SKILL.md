@@ -87,6 +87,14 @@ Deliver the final plan in a structured format:
 
 Estimates are optional — include them if the user provides enough context to estimate meaningfully. Do not fabricate time estimates.
 
+---
+
+### Technical Guidance
+
+- ALWAYS use the AskUserQuestion tool, when possible, to ask the user questions.
+
+---
+
 ## Examples
 
 /project-planner I need to build a customer onboarding portal

@@ -69,6 +69,14 @@ Present findings in this format:
 
 Keep the briefing tight. Expand only if the user asks for more detail on a specific finding.
 
+---
+
+### Technical Guidance
+
+- ALWAYS use the AskUserQuestion tool, when possible, to ask the user questions.
+
+---
+
 ## Examples
 
 /researcher What are the current best practices for fine-tuning LLMs on domain-specific data?

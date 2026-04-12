@@ -274,6 +274,12 @@ After writing, confirm the new file path and provide a bulleted list of the key 
 
 ---
 
+### Technical Guidance
+
+- ALWAYS use the AskUserQuestion tool, when possible, to ask the user questions.
+
+---
+
 ## WHAT THIS SKILL DOES NOT DO
 
 - Does not write a single word of draft before style is confirmed.

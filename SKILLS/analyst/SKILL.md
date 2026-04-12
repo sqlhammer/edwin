@@ -69,6 +69,14 @@ Present findings in this format:
 
 If the data lends itself to visualisation and the tools are available, generate charts. Otherwise, describe what charts would be most informative.
 
+---
+
+### Technical Guidance
+
+- ALWAYS use the AskUserQuestion tool, when possible, to ask the user questions.
+
+---
+
 ## Examples
 
 /analyst Review this CSV and tell me what's driving customer churn

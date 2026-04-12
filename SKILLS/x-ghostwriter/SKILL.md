@@ -128,3 +128,9 @@ If the user asks to revise posts, regenerate, or adjust tone:
 - Does not write hype. Phrases like "AI is transforming everything" or "the future is now" are banned.
 - Does not add hashtags, emojis, or CTAs unless the user explicitly requests them.
 - Does not summarize sessions to memory.
+
+---
+
+### Technical Guidance
+
+- ALWAYS use the AskUserQuestion tool, when possible, to ask the user questions.
