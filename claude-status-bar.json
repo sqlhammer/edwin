@@ -1,0 +1,16 @@
+{
+    "statusBar": [
+        {
+            "text": "\"█\".repeat(Math.floor((context_window.used_percentage || 0) / 5)) + \"░\".repeat(20 - Math.floor((context_window.used_percentage || 0) / 5)) + \" \" + (context_window.used_percentage || 0).toFixed(0) + \"%\"",
+            "description": "Visual context window usage bar"
+        },
+        {
+            "text": "context_window.total_input_tokens.toLocaleString() + \"↑ \" + context_window.total_output_tokens.toLocaleString() + \"↓ (\" + ((context_window.total_input_tokens + context_window.total_output_tokens) / context_window.context_window_size * 100).toFixed(1) + \"%)\"",
+            "description": "Input/output tokens with percentage"
+        },                                                                                                                                                                                                    
+        {
+            "text": "model.display_name",
+            "description": "Current model"
+        }
+    ]
+}

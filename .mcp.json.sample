@@ -6,6 +6,15 @@
       "headers": {
         "Authorization": "Bearer 2d...9a8"
       }
+    },
+    "atlassian": {
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "env": {
+        "ATLASSIAN_BASE_URL": "https://ololabs.atlassian.net",
+        "ATLASSIAN_EMAIL": "de...@olo.com",
+        "ATLASSIAN_API_TOKEN": ""
+      }
     }
   }
 }
