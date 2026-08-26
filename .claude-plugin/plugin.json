@@ -1,0 +1,16 @@
+{
+  "name": "edwin",
+  "description": "EDWIN — Electronic Digital Workforce Intelligence Network. A portable personal AI assistant framework for Claude.",
+  "author": {
+    "name": "EDWIN Core Team"
+  },
+  "version": "0.2.0-dev",
+  "license": "MIT",
+  "keywords": [
+    "personal-assistant",
+    "productivity",
+    "skills",
+    "workflow",
+    "automation"
+  ]
+}

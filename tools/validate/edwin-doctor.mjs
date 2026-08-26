@@ -21,6 +21,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createHash } from 'crypto';
 import { extractFrontmatter, parseYAML } from './lib/mini-yaml.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -189,6 +190,14 @@ const checks = [
   // Add checks here:
   // - brags.md parses (WU-18)
   // - categories.json parses with all referenced categories existing (WU-18)
+
+  // Plugin build drift (WU-08)
+  {
+    id: 'plugin-skills-drift',
+    title: 'Plugin skills directory drift',
+    group: 'plugin',
+    run: checkPluginSkillsDrift,
+  },
 ];
 
 // ============================================================================
@@ -897,6 +906,100 @@ function checkMemoryFilesParse(ctx) {
           `Comment metadata should be in format: <!-- date | context | source -->`);
       }
     }
+  }
+}
+
+// ============================================================================
+// PLUGIN BUILD DRIFT CHECKS
+// ============================================================================
+
+function hashDirectory(dirPath) {
+  const hash = createHash('sha256');
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name);
+    hash.update(entry.name);
+
+    if (entry.isDirectory()) {
+      hash.update(hashDirectory(fullPath));
+    } else {
+      const content = fs.readFileSync(fullPath);
+      hash.update(createHash('sha256').update(content).digest('hex'));
+    }
+  }
+
+  return hash.digest('hex');
+}
+
+function checkPluginSkillsDrift(ctx) {
+  const repoSkillsDir = path.join(REPO_ROOT, 'skills');
+  const coreSkillsDir = path.join(REPO_ROOT, 'core/skills');
+
+  // If skills/ doesn't exist, that's a WARNING (fresh clone may not have built yet)
+  if (!fileExists(repoSkillsDir)) {
+    addFinding('plugin-skills-drift', 'warning', 'plugin', repoSkillsDir, null,
+      `Plugin skills directory does not exist — run 'npm run build-plugin' to generate it`);
+    return;
+  }
+
+  // Get all skills from both directories
+  const coreSkills = fileExists(coreSkillsDir)
+    ? fs.readdirSync(coreSkillsDir, { withFileTypes: true })
+        .filter(e => e.isDirectory())
+        .map(e => e.name)
+    : [];
+
+  const repoSkills = fs.readdirSync(repoSkillsDir, { withFileTypes: true })
+    .filter(e => e.isDirectory())
+    .map(e => e.name);
+
+  const drifted = [];
+  const missing = [];
+  const extra = [];
+
+  // Check each core skill
+  for (const skillName of coreSkills) {
+    const corePath = path.join(coreSkillsDir, skillName);
+    const repoPath = path.join(repoSkillsDir, skillName);
+
+    if (!fileExists(repoPath)) {
+      missing.push(skillName);
+    } else {
+      // Compare by hash
+      const coreHash = hashDirectory(corePath);
+      const repoHash = hashDirectory(repoPath);
+
+      if (coreHash !== repoHash) {
+        drifted.push(skillName);
+      }
+    }
+  }
+
+  // Check for extra skills in repo that aren't in core
+  for (const skillName of repoSkills) {
+    if (!coreSkills.includes(skillName)) {
+      extra.push(skillName);
+    }
+  }
+
+  // Report findings
+  if (drifted.length > 0 || missing.length > 0 || extra.length > 0) {
+    const problems = [];
+    if (drifted.length > 0) {
+      problems.push(`drifted: ${drifted.join(', ')}`);
+    }
+    if (missing.length > 0) {
+      problems.push(`missing: ${missing.join(', ')}`);
+    }
+    if (extra.length > 0) {
+      problems.push(`extra: ${extra.join(', ')}`);
+    }
+
+    addFinding('plugin-skills-drift', 'error', 'plugin', repoSkillsDir, null,
+      `Plugin skills directory out of sync with core/skills/ (${problems.join('; ')}) — run 'npm run build-plugin'`);
   }
 }
 
