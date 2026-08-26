@@ -17,7 +17,8 @@
     "sync": "node tools/sync/engine.mjs",
     "bundle": "node tools/bundle/build-bundle.mjs",
     "build-plugin": "node tools/bundle/build-plugin.mjs",
-    "memory": "node tools/memory/memory.mjs"
+    "memory": "node tools/memory/memory.mjs",
+    "brags": "node tools/memory/brags.mjs"
   },
   "engines": {
     "node": ">=18"

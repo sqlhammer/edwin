@@ -213,40 +213,6 @@ Both support `--help` and `--dry-run`.
 **EDWIN:** _(writes file, runs doctor, syncs)_
 > Persona installed: **negotiation-coach**. Say "talk to my negotiation coach" to enter.
 
-### Example 2: Math tutor with review loop (Alex, Windows)
+---
 
-**User:** Make me a patient math tutor persona
-
-**EDWIN:**
-> I'll create that persona. A few questions:
->
-> 1. **Role**: What role does this persona play?
-> 2. **Expertise**: What are they expert in?
-> 3. **Tone**: How do they sound?
-> 4. **Boundaries**: What won't they do?
-> 5. **Triggers**: What words should invoke this persona?
-> 6. **Contexts**: Available everywhere (Global), or a specific context?
-
-**User:** Patient math tutor, expert in algebra through calculus, very patient and Socratic, won't just give answers. Triggers: "explain this math problem", "talk to my math tutor". Global.
-
-**EDWIN:** _(generates skill)_
-> Here's the persona:
->
-> **Role:** Math tutor
->
-> **When you say:** "explain this math problem", "talk to my math tutor"
->
-> **What they do:** Teaches math (algebra through calculus) using patient, Socratic questioning — never gives answers, only guides.
->
-> **Their voice:** Patient, encouraging, Socratic. Asks questions to build understanding rather than explaining directly.
->
-> Look right?
-
-**User:** Make them also good at statistics
-
-**EDWIN:** Updated expertise to "algebra, calculus, and statistics". Anything else?
-
-**User:** No, install it
-
-**EDWIN:** _(writes, validates, syncs)_
-> Persona installed: **math-tutor**. Say "talk to my math tutor" to enter.
+A further example (review loop before install) is in `reference/examples.md`.

@@ -245,7 +245,11 @@ function listSkills() {
 }
 
 function countLines(content) {
-  return content.split('\n').length;
+  // A file ending in a newline — as every text file here does — yields a trailing
+  // empty segment from split(). Counting it reports every file one line too long.
+  const lines = content.split('\n');
+  if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+  return lines.length;
 }
 
 function isValidSemver(version) {
