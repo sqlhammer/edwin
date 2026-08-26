@@ -45,6 +45,27 @@ new skills from conversation, and tooling for installation, validation, scheduli
 - `tools/validate/Edwin-Doctor.ps1` — PowerShell wrapper that uses Node when present and falls back to a
   frontmatter-only check when it is not, announcing the reduced coverage. (WU-05)
 - `npm run doctor`. (WU-05)
+- Context system: `Global`, `Work`, and `Home` defined in `core/contexts/contexts.json`, with skill
+  membership living in each skill's frontmatter as the single source of truth. All skills stay available in
+  every context — the active context biases suggestions and ambiguity resolution, it never restricts
+  access. (WU-03)
+- `edwin-context` skill — switch, create, rename, and remove contexts, assign skills to them, and list
+  skills grouped by context, entirely through conversation. Refuses to remove or rename `Global`, and
+  reports how many skills a removal affects before doing it. (WU-03)
+- `core/persona/hooks/context-bias.md` — the always-on bias behaviour, including surfacing a strong
+  out-of-context match once rather than hiding it. (WU-03)
+- `tools/sync/context.mjs` — context and skill-assignment operations with surgical frontmatter editing that
+  rewrites only the `contexts:` line, so a context rename propagates across every skill without disturbing
+  anything else. (WU-03)
+- `edwin-workflow-analyzer` skill — learns a recurring task either by watching the current conversation or
+  by a guided interview, then writes a structured breakdown to `user/workflows/`. The interview batches its
+  questions, skips anything already observed, speaks the user's vocabulary rather than the framework's, and
+  plays the workflow back for confirmation. Re-running it on an existing breakdown updates it with a
+  plain-language diff. (WU-09)
+- `core/persona/hooks/workflow-observation.md` — offers once, at a natural pause, when the same multi-step
+  task has been done twice; tombstones a decline and honours the opt-out silently. (WU-09)
+- `core/templates/workflow-breakdown.md` and its worked example — the breakdown format and the documented
+  handoff contract the skill creator consumes. (WU-09)
 
 ### Changed
 - v0.1's flat `SKILLS/` folder moved to `core/skills/`; the npx installer and PowerShell sync script were
