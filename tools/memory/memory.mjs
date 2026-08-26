@@ -19,6 +19,8 @@
  *   --section <name>    Filter by section for list command
  *   --dry-run           Show what would be done without writing
  *   --json              Output JSON result
+ *   --root <path>       Operate on a tree other than this repo (expects <path>/user/memory/).
+ *                       Use this to test the tool without touching real personal data.
  *   --help              Show this help
  *
  * Exit codes:
@@ -38,10 +40,18 @@ if (nodeMajor < 18) {
   process.exit(2);
 }
 
-// Resolve repo root
+// Resolve repo root. --root is scanned before the main arg loop because every path
+// below is derived from it; it lets the tool be exercised against a scratch tree
+// instead of the user's real personal data.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const REPO_ROOT = join(__dirname, '..', '..');
+const rootFlagIndex = process.argv.indexOf('--root');
+const rootOverride = rootFlagIndex !== -1 ? process.argv[rootFlagIndex + 1] : null;
+if (rootFlagIndex !== -1 && (!rootOverride || rootOverride.startsWith('--'))) {
+  console.error('Error: --root requires a path');
+  process.exit(2);
+}
+const REPO_ROOT = rootOverride || join(__dirname, '..', '..');
 const USER_DIR = join(REPO_ROOT, 'user');
 const MEMORY_DIR = join(USER_DIR, 'memory');
 const MEMORY_PATH = join(MEMORY_DIR, 'memory.md');
@@ -82,6 +92,10 @@ for (let i = 0; i < args.length; i++) {
       break;
     case '--json':
       opts.json = true;
+      break;
+    case '--root':
+      // Already handled above, skip the value
+      i++;
       break;
     default:
       if (!opts.command && !arg.startsWith('--')) {

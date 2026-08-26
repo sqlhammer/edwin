@@ -23,10 +23,18 @@ if (nodeVersion[0] < 18) {
   process.exit(2);
 }
 
-// Path setup
+// Resolve repo root. --root is scanned before path resolution because every path
+// below is derived from it; it lets the tool be exercised against a scratch tree
+// instead of the real repository.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const REPO_ROOT = resolve(__dirname, '..', '..');
+const rootFlagIndex = process.argv.indexOf('--root');
+const rootOverride = rootFlagIndex !== -1 ? process.argv[rootFlagIndex + 1] : null;
+if (rootFlagIndex !== -1 && (!rootOverride || rootOverride.startsWith('--'))) {
+  console.error('Error: --root requires a path');
+  process.exit(2);
+}
+const REPO_ROOT = rootOverride || resolve(__dirname, '..', '..');
 const CORE_DIR = join(REPO_ROOT, 'core');
 const USER_DIR = join(REPO_ROOT, 'user');
 const CONTEXTS_JSON = join(CORE_DIR, 'contexts', 'contexts.json');
@@ -777,6 +785,8 @@ OPTIONS:
   --help          Show this help
   --dry-run       Show what would be done without doing it
   --json          Output results as JSON
+  --root <path>   Operate on a tree other than this repo (expects <path>/core/ and <path>/user/).
+                  Use this to test the tool without touching real repository data.
 
 EXIT CODES:
   0   Success
@@ -805,7 +815,18 @@ function main() {
   DRY_RUN = args.includes('--dry-run');
   JSON_OUTPUT = args.includes('--json');
 
-  const cleanArgs = args.filter(a => !a.startsWith('--'));
+  // Filter out flags and their values (like --root <path>)
+  const cleanArgs = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i].startsWith('--')) {
+      // Skip flag and its value if it's a value-taking flag
+      if (args[i] === '--root' || args[i] === '--context') {
+        i++; // Skip the next argument (the value)
+      }
+    } else {
+      cleanArgs.push(args[i]);
+    }
+  }
   const command = cleanArgs[0];
 
   try {

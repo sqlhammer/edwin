@@ -30,6 +30,9 @@
  *   --dry-run                      Show what would be generated without writing
  *   --json                         Output JSON result only
  *   --quiet                        Minimal output
+ *   --limits <path>                Use an alternative portal-limits.json. Lets the
+ *                                  over-limit path be tested without editing the
+ *                                  checked-in limits file.
  *   --help                         Show this help
  *
  * Exit codes:
@@ -75,7 +78,16 @@ const BRAGS_PATH = join(USER_DIR, 'brags', 'brags.md');
 const DIST_DIR = join(REPO_ROOT, 'dist');
 const BUNDLES_DIR = join(DIST_DIR, 'bundles');
 const MANIFEST_PATH = join(DIST_DIR, 'bundle-manifest.json');
-const PORTAL_LIMITS_PATH = join(__dirname, 'portal-limits.json');
+// --limits is scanned before the main arg loop because the limits path is needed
+// during setup. It exists so the truncation and over-limit paths can be exercised
+// against a scratch limits file rather than by editing the checked-in one.
+const limitsFlagIndex = process.argv.indexOf('--limits');
+const limitsOverride = limitsFlagIndex !== -1 ? process.argv[limitsFlagIndex + 1] : null;
+if (limitsFlagIndex !== -1 && (!limitsOverride || limitsOverride.startsWith('--'))) {
+  console.error('Error: --limits requires a path');
+  process.exit(2);
+}
+const PORTAL_LIMITS_PATH = limitsOverride || join(__dirname, 'portal-limits.json');
 
 // Parse args
 const args = process.argv.slice(2);
@@ -124,6 +136,10 @@ for (let i = 0; i < args.length; i++) {
       break;
     case '--quiet':
       opts.quiet = true;
+      break;
+    case '--limits':
+      // Already consumed during setup above.
+      i++;
       break;
     default:
       console.error(`Unknown option: ${arg}`);
