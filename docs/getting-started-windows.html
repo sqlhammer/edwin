@@ -191,7 +191,7 @@
             <p>The installer will:</p>
             <ol>
                 <li>Check if you have Node.js and Git installed</li>
-                <li>If you're missing either one, it will open your web browser to the download page and wait for you to install them</li>
+                <li>If you're missing either one, it will ask "Install Node.js now?" — press <strong>Y</strong> and it installs it for you. Nothing to download or find in a browser.</li>
                 <li>Ask where you want to install EDWIN (default: a folder called "edwin" in your user directory)</li>
                 <li>Download EDWIN and set everything up</li>
                 <li>Install EDWIN's skills and persona into Claude</li>
@@ -199,8 +199,14 @@
             <p>The installer will tell you exactly what it's doing as it goes. If something goes wrong, it will tell you how to fix it.</p>
         </div>
 
+        <div class="meta-box">
+            <h3>About those permission prompts</h3>
+            <p>If Node.js or Git needs installing, Windows will show a "Do you want to allow this app to make changes to your device?" box. Click <strong>Yes</strong>. That's Windows asking, not EDWIN — installing software for every user on the machine requires it.</p>
+            <p>The installer uses <strong>winget</strong>, the software installer built into Windows 10 and 11, so the download comes from Microsoft's catalogue. On an older or locked-down Windows that doesn't have winget, it downloads Node.js and Git directly from their official sites instead, and checks the Node.js download against the official checksum before installing it.</p>
+        </div>
+
         <div class="warning">
-            <p><strong>If Node.js or Git installation opens:</strong> Follow the installation wizard for each tool, use all the default settings, and when it's done, go back to the Command Prompt window and press any key to continue.</p>
+            <p><strong>If it says a tool installed but still can't find it:</strong> close the Command Prompt window and double-click the installer again. Windows only gives a program the list of installed tools when it starts, so a fresh window is sometimes needed. The installer tells you when this is the problem.</p>
         </div>
 
         <h2>Step 3: Restart Claude</h2>
@@ -293,7 +299,7 @@
 
         <ul>
             <li><strong>Skills don't appear after installation:</strong> Restart Claude (quit and reopen)</li>
-            <li><strong>Node.js or Git missing:</strong> The installer will detect this and guide you to download them. Make sure you restart the Command Prompt after installing Node.js or Git.</li>
+            <li><strong>Node.js or Git missing:</strong> The installer detects this and installs them for you — just press Y when it asks. If it then says it still can't find the tool, close the Command Prompt window and run the installer again.</li>
             <li><strong>"set up EDWIN" does nothing:</strong> EDWIN might already be configured. Try saying "list skills" to see if it's working</li>
             <li><strong>Permission errors during installation:</strong> Right-click the installer and choose "Run as administrator"</li>
         </ul>

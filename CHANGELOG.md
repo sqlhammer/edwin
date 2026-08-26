@@ -143,7 +143,7 @@ new skills from conversation, and tooling for installation, validation, scheduli
   web portals, scheduled tasks, updating, and troubleshooting — with `docs/index.html` as a hub organised by
   "I want to…". Inline CSS and no external requests, so every page works offline. Each opens with "What
   you'll need" and "How long this takes". (WU-15)
-- `tools/test/run-e2e.mjs` — 38-check end-to-end harness covering doctor, the sync engine, context
+- `tools/test/run-e2e.mjs` — end-to-end harness (38 checks at WU-16, 43 after WU-17) covering doctor, the sync engine, context
   operations, memory, brags, the scheduler, bundle export, both installers, and the no-personal-data
   contract. Every check runs against a temp `HOME` or a `--root` scratch tree and the suite hashes the real
   `user/` directory before and after to prove it was untouched. `npm test`. (WU-16)
@@ -172,6 +172,36 @@ new skills from conversation, and tooling for installation, validation, scheduli
   string parsing, with no `Date` involved. (WU-16)
 
 ### Changed
+- Both double-click installers now **install** missing prerequisites instead of opening a download page.
+  Node.js and Git are installed by the installer itself: from Homebrew on macOS or winget on Windows when
+  either is present, and otherwise from the vendors' own official packages — Node's signed `.pkg`/`.msi`
+  with its SHA-256 verified against the published `SHASUMS256.txt`, Git from Apple's Command Line Tools on
+  macOS and the official Git for Windows installer run silently on Windows. A download that fails its
+  checksum is refused, not installed. Nothing is fetched through a web browser. (WU-17)
+- Installer prerequisite handling is consent-based and fails closed. Both installers gained `--yes` (assume
+  yes), `--skip-deps` (never install; report and stop), and `--help`. With no console to prompt at, the
+  answer is **no** — an unattended run cannot accidentally consent to installing software. On Windows this
+  required `choice` rather than `set /p`, which cannot tell a bare Return from end-of-input and so would
+  have read "nobody is there" as "yes". (WU-17)
+- The macOS installer looks for Homebrew by absolute path (`/opt/homebrew`, `/usr/local`) and loads its
+  environment before deciding anything is missing. A double-clicked `.command` inherits a minimal
+  environment, so a perfectly good Homebrew install is frequently not on `PATH` — most often on Apple
+  silicon. It also verifies Git by *running* it, because `/usr/bin/git` exists on every Mac as a stub that
+  fails until the Command Line Tools are installed. (WU-17)
+- Installers report a tool that installed but isn't visible to the current shell as exactly that, and say to
+  reopen the window — instead of continuing into a broken clone. (WU-17)
+- `bin/edwin-install.mjs` (the npx path) prints the command that installs the missing tool on the machine it
+  is running on — `brew`, `winget`, or whichever of apt/dnf/pacman/zypper/apk is present — rather than a URL.
+  It keeps refusing to proceed; the npx path assumes a terminal and does not install anything itself. (WU-17)
+- `docs/getting-started-mac.html`, `docs/getting-started-windows.html`, `docs/troubleshooting.html`, and the
+  README prerequisites line rewritten to describe the scripted installs, the sudo/UAC prompts they cause,
+  and the real failure modes: declined consent, `--skip-deps`, a `PATH` that needs a new window, and a
+  checksum mismatch. (WU-17)
+- **Verification status:** the macOS paths were exercised on a real machine, including a live download with
+  checksum verification and a deliberately corrupted package to prove the mismatch is caught. The Windows
+  `.cmd` paths were written against live URL probes and reviewed, but **never executed** — no Windows
+  machine was available. `docs/testing/manual-test-script.md` §7 covers them and marks them UNVERIFIED.
+  (WU-17)
 - All 13 v0.1 skills rewritten to the v0.2 format: frontmatter (`name`, `description`, `contexts`,
   `version`, `requires`, `author`) plus the required body sections, including a `## Degradation` ladder that
   none of them previously had. Their methodologies are preserved; the structure around them is new. (WU-04)

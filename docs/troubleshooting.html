@@ -203,41 +203,50 @@
         <h2>Installation Issues</h2>
 
         <div class="problem">
-            <h3>Symptom: "Node.js is not installed" or "Node.js version 18 or higher is required"</h3>
-            <p><strong>What happened:</strong> The installer needs Node.js version 18 or higher, and it's either not installed or too old.</p>
+            <h3>Symptom: "Node.js is not installed and installation was declined" (or the same for Git)</h3>
+            <p><strong>What happened:</strong> The installer offered to install the missing tool and did not get a yes. Either you answered no, or nothing was there to answer — this is what you see when the installer runs unattended, from a script, or with its input redirected.</p>
 
-            <p><strong>Fix:</strong></p>
+            <p><strong>Fix — let it install:</strong> Run the installer again and answer <strong>Y</strong> when it asks. To skip the question entirely:</p>
             <ol>
-                <li>Go to <a href="https://nodejs.org">nodejs.org</a></li>
-                <li>Download the LTS (Long Term Support) version</li>
-                <li>Run the installer and follow the prompts</li>
-                <li>Close and reopen your terminal or command prompt</li>
-                <li>Run the EDWIN installer again</li>
+                <li><strong>macOS:</strong> open Terminal and run <code>bash ~/Downloads/EDWIN-Install.command --yes</code></li>
+                <li><strong>Windows:</strong> open Command Prompt and run <code>%USERPROFILE%\Downloads\EDWIN-Install.cmd --yes</code></li>
             </ol>
+
+            <p><strong>Fix — install it yourself instead:</strong> One command, no browser needed:</p>
+            <ol>
+                <li><strong>macOS with Homebrew:</strong> <code>brew install node git</code></li>
+                <li><strong>macOS without Homebrew:</strong> <code>xcode-select --install</code> for Git; for Node.js let the EDWIN installer do it, since it verifies the download's checksum for you</li>
+                <li><strong>Windows:</strong> <code>winget install --exact --id OpenJS.NodeJS.LTS --source winget</code> and <code>winget install --exact --id Git.Git --source winget</code></li>
+            </ol>
+            <p>Then close and reopen your terminal or Command Prompt and run the EDWIN installer again.</p>
         </div>
 
         <div class="problem">
-            <h3>Symptom: "git is not installed"</h3>
-            <p><strong>What happened:</strong> EDWIN needs Git to download from the repository, and it's not installed.</p>
+            <h3>Symptom: "Node.js still isn't usable after the install attempt" (or the same for Git)</h3>
+            <p><strong>What happened:</strong> The tool was installed, but this window doesn't know about it yet. A terminal is given the list of installed programs when it starts and doesn't notice later additions. Common on Windows.</p>
 
-            <p><strong>Fix:</strong></p>
-            <p><strong>macOS:</strong></p>
-            <ol>
-                <li>Open Terminal</li>
-                <li>Type <code>git --version</code> and press Enter</li>
-                <li>If prompted, click Install when macOS offers to install Command Line Developer Tools</li>
-                <li>Wait for the installation to complete</li>
-                <li>Run the EDWIN installer again</li>
-            </ol>
+            <p><strong>Fix:</strong> Close the window and run the installer again. A fresh window sees the new tool. If it happens a second time, the install genuinely failed — check the log the installer names on screen (<code>install.log</code> in your EDWIN folder) for what the tool's own installer reported.</p>
+        </div>
 
-            <p><strong>Windows:</strong></p>
-            <ol>
-                <li>Go to <a href="https://git-scm.com/downloads">git-scm.com/downloads</a></li>
-                <li>Download the Windows installer</li>
-                <li>Run the installer (the defaults are fine)</li>
-                <li>Close and reopen Command Prompt</li>
-                <li>Run the EDWIN installer again</li>
-            </ol>
+        <div class="problem">
+            <h3>Symptom (macOS): the installer asks for your password</h3>
+            <p><strong>What happened:</strong> Installing Node.js or Git for every user on the machine requires administrator rights, so macOS asks. Nothing has gone wrong.</p>
+
+            <p><strong>What to know:</strong> The password goes to macOS, not to EDWIN — the installer never sees it and never stores it. If you would rather not be asked, install the tools yourself first with <code>brew install node git</code>, then run the EDWIN installer; it will find them and skip straight past.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom (Windows): "Do you want to allow this app to make changes to your device?"</h3>
+            <p><strong>What happened:</strong> Same thing — installing Node.js or Git needs administrator rights, so Windows asks. Click <strong>Yes</strong>.</p>
+
+            <p><strong>If you click No,</strong> the installer reports that the tool is still unavailable and stops. Nothing is left half-installed.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom (Windows): "winget is unavailable"</h3>
+            <p><strong>What happened:</strong> The installer prefers <strong>winget</strong>, the software installer built into Windows 10 and 11. Some older or locked-down Windows installations don't have it.</p>
+
+            <p><strong>What happens next:</strong> Nothing you need to do — the installer falls back to downloading Node.js and Git straight from their official sites and installing them silently. It's a message, not an error. If that fallback also fails, the log will say why.</p>
         </div>
 
         <div class="problem">

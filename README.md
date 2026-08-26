@@ -68,7 +68,7 @@ Pick the path that fits your comfort level. All four install the same framework.
 
 Both installers prompt for the repository URL if downloaded standalone. After installation, open Claude and say "set up EDWIN" to complete configuration.
 
-**Prerequisites:** Git and Node.js 18+. The installer opens download pages if they're missing.
+**Prerequisites:** Git and Node.js 18+. If either is missing the installer offers to install it and does so itself — nothing to download through a browser. It prefers your existing package manager (Homebrew on macOS, winget on Windows) and otherwise fetches the official signed package and verifies its checksum before installing. Pass `--yes` to skip the confirmation, or `--skip-deps` to have it refuse rather than install.
 
 See [docs/getting-started-mac.html](docs/getting-started-mac.html) or [docs/getting-started-windows.html](docs/getting-started-windows.html) for step-by-step guides.
 

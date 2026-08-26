@@ -31,6 +31,7 @@ import {
   statSync,
   rmSync,
   copyFileSync,
+  chmodSync,
 } from 'fs';
 import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -905,6 +906,128 @@ if (!jsonOutput) console.log('\nRunning installer tests...\n');
       } catch (err) {
         fail('macOS installer test', err.message);
       }
+
+      // --- Prerequisite installation (WU-17) -------------------------------
+      //
+      // The installer installs Node.js and Git itself. None of the checks below may
+      // actually install anything, so they exercise only the paths that refuse: --help,
+      // argument validation, --skip-deps, and the "no console to ask at" decline.
+      //
+      // Two things have to be faked to reach those paths on a machine that already has
+      // both tools:
+      //
+      //   1. A stub `node` / `git` earlier on PATH that exits non-zero. The installer
+      //      decides a tool is usable by *running* it, not by finding it, so a stub that
+      //      fails is indistinguishable from a broken or absent install — which is the
+      //      normal state of git on a fresh Mac.
+      //   2. The Homebrew probe paths. load_brew_env() finds brew by absolute path and
+      //      then puts its bin directory at the front of PATH — which would shadow the
+      //      stub with the real tool. Neutralising the two paths is what makes the stub
+      //      stick; without it this test silently passes for the wrong reason.
+      const runInstaller = (args, extraEnv = {}, script = tempInstaller) =>
+        spawnSync('bash', [script, ...args], {
+          env: { ...process.env, HOME: installerTestHome, TERM: 'dumb', ...extraEnv },
+          stdio: ['ignore', 'pipe', 'pipe'],
+          encoding: 'utf-8',
+          timeout: 20000,
+        });
+
+      // --help must describe the scripted install, not a download page.
+      {
+        const r = runInstaller(['--help']);
+        const out = r.stdout + r.stderr;
+        if (r.status === 0 && /--skip-deps/.test(out) && /--yes/.test(out) && /installed for you/i.test(out)) {
+          pass('macOS installer: --help documents scripted prerequisite install');
+        } else {
+          fail('macOS installer --help', `exit ${r.status}, output: ${out.substring(0, 200)}`);
+        }
+      }
+
+      // An unrecognised option is a usage error (exit 2), not a silent default.
+      {
+        const r = runInstaller(['--not-a-real-option']);
+        const out = r.stdout + r.stderr;
+        if (r.status === 2 && /unknown option/i.test(out)) {
+          pass('macOS installer: unknown option exits 2');
+        } else {
+          fail('macOS installer arg validation', `exit ${r.status}, output: ${out.substring(0, 200)}`);
+        }
+      }
+
+      // Build the stub tools and the brew-blind installer copy.
+      const stubBin = join(TEMP_ROOT, 'stub-bin');
+      mkdirSync(stubBin, { recursive: true });
+      const writeStub = name => {
+        const p = join(stubBin, name);
+        writeFileSync(p, '#!/bin/sh\nexit 1\n');
+        chmodSync(p, 0o755);
+        return p;
+      };
+      const stubNode = writeStub('node');
+      const stubGit = writeStub('git');
+
+      const brewBlind = join(TEMP_ROOT, 'test-installer-nobrew.command');
+      writeFileSync(
+        brewBlind,
+        readFileSync(macInstaller, 'utf-8')
+          .replaceAll('/opt/homebrew/bin/brew', '/nonexistent/hb/bin/brew')
+          .replaceAll('/usr/local/bin/brew', '/nonexistent/ul/bin/brew')
+      );
+
+      const stubPath = `${stubBin}:${process.env.PATH}`;
+
+      // Positive control. Same brew-blind installer, same PATH, but with the stubs
+      // renamed away: it must get *past* the prerequisite checks. Without this, the two
+      // checks below would pass just as happily if the installer were failing for some
+      // unrelated reason — which is the whole failure mode this suite exists to catch.
+      {
+        const emptyBin = join(TEMP_ROOT, 'stub-bin-empty');
+        mkdirSync(emptyBin, { recursive: true });
+        const r = runInstaller([], { PATH: `${emptyBin}:${process.env.PATH}` }, brewBlind);
+        const out = r.stdout + r.stderr;
+        if (/Node\.js found/.test(out) && /git found/.test(out) && /--repo-url/.test(out)) {
+          pass('macOS installer: real node and git satisfy the prerequisite checks');
+        } else {
+          fail(
+            'macOS installer prerequisite control',
+            `expected both tools accepted then the repo-url failure; got: ${out.substring(0, 300)}`
+          );
+        }
+      }
+
+      // --skip-deps must refuse rather than install, and say how to change that.
+      {
+        const r = runInstaller(['--skip-deps'], { PATH: stubPath }, brewBlind);
+        const out = r.stdout + r.stderr;
+        if (r.status !== 0 && /Git is not installed \(run without --skip-deps/.test(out)) {
+          pass('macOS installer: --skip-deps refuses instead of installing');
+        } else {
+          fail('macOS installer --skip-deps', `exit ${r.status}, output: ${out.substring(0, 300)}`);
+        }
+      }
+
+      // No console and no --yes must decline. An unattended run must never consent to
+      // installing software on its own; stdin is already closed for every run here.
+      {
+        const r = runInstaller([], { PATH: stubPath }, brewBlind);
+        const out = r.stdout + r.stderr;
+        const declined = /installation was declined/.test(out);
+        // Nothing may have been fetched: the decline happens before any download.
+        const noDownload = !/Downloading/i.test(out);
+        if (r.status !== 0 && declined && noDownload) {
+          pass('macOS installer: no console and no --yes declines the install');
+        } else {
+          fail(
+            'macOS installer unattended consent',
+            `exit ${r.status}, declined=${declined}, noDownload=${noDownload}: ${out.substring(0, 300)}`
+          );
+        }
+      }
+
+      // The stubs exist only for the checks above; leave nothing executable behind that a
+      // later test could pick up off PATH by accident.
+      rmSync(stubNode, { force: true });
+      rmSync(stubGit, { force: true });
     } else {
       skip('macOS installer', 'EDWIN-Install.command not found');
     }

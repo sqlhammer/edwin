@@ -200,12 +200,22 @@
             <p>The installer will open in Terminal (the app on your Mac where you type commands). It will:</p>
             <ol>
                 <li>Check if you have Node.js and Git installed</li>
-                <li>If you're missing either one, it will open your web browser to the download page</li>
+                <li>If you're missing either one, it will ask "Install Node.js now?" — press Return and it installs it for you. Nothing to download or find in a browser.</li>
                 <li>Ask where you want to install EDWIN (default: <code>~/edwin</code> which means a folder called "edwin" in your home directory)</li>
                 <li>Download EDWIN and set everything up</li>
                 <li>Install EDWIN's skills and persona into Claude</li>
             </ol>
             <p>The installer will tell you exactly what it's doing as it goes. If something goes wrong, it will tell you how to fix it.</p>
+        </div>
+
+        <div class="meta-box">
+            <h3>About that password prompt</h3>
+            <p>If Node.js or Git needs installing, macOS will ask for your Mac password. That's normal — installing software for every user on the machine requires it. The password goes to macOS, not to EDWIN.</p>
+            <p>Two things worth knowing:</p>
+            <ul>
+                <li>If you already have <strong>Homebrew</strong> (a tool many developers use to install software), the installer uses it.</li>
+                <li>If you don't, it downloads Node.js directly from <code>nodejs.org</code> and checks the download against the official checksum before installing it. Git comes from Apple's Command Line Tools, which macOS installs itself.</li>
+            </ul>
         </div>
 
         <h2>Step 3: Restart Claude</h2>
@@ -299,7 +309,7 @@
         <ul>
             <li><strong>Skills don't appear after installation:</strong> Restart Claude (quit and reopen)</li>
             <li><strong>Installer won't run:</strong> Make sure you right-clicked and chose Open, not just double-clicked</li>
-            <li><strong>Node.js or Git missing:</strong> The installer will detect this and guide you to download them</li>
+            <li><strong>Node.js or Git missing:</strong> The installer detects this and installs them for you — just answer Y when it asks</li>
             <li><strong>"set up EDWIN" does nothing:</strong> EDWIN might already be configured. Try saying "list skills" to see if it's working</li>
         </ul>
 

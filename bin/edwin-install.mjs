@@ -23,12 +23,54 @@ import { homedir } from 'os';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+// Which command installs a given tool on this machine. Returns a copy-pasteable command
+// rather than a download page: this is the npx path, whose users have a terminal open,
+// and the double-click installers already do the install themselves.
+function installHint(tool) {
+  const has = cmd => {
+    try {
+      execSync(process.platform === 'win32' ? `where ${cmd}` : `command -v ${cmd}`, { stdio: 'ignore' });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const pkg = { git: 'git', node: 'node' }[tool];
+
+  if (process.platform === 'darwin') {
+    if (has('brew')) return `brew install ${pkg}`;
+    // Apple's Command Line Tools provide git; Node has no equivalent system package.
+    return tool === 'git'
+      ? 'xcode-select --install'
+      : 'Install Homebrew (https://brew.sh) then: brew install node';
+  }
+
+  if (process.platform === 'win32') {
+    const id = tool === 'git' ? 'Git.Git' : 'OpenJS.NodeJS.LTS';
+    return `winget install --exact --id ${id} --source winget`;
+  }
+
+  for (const [manager, command] of [
+    ['apt-get', `sudo apt-get install -y ${pkg}`],
+    ['dnf', `sudo dnf install -y ${pkg}`],
+    ['pacman', `sudo pacman -S --noconfirm ${pkg}`],
+    ['zypper', `sudo zypper install -y ${pkg}`],
+    ['apk', `sudo apk add ${pkg}`],
+  ]) {
+    if (has(manager)) return command;
+  }
+
+  return `Install ${pkg} with your distribution's package manager`;
+}
+
 // Node version check
 const nodeMajor = parseInt(process.version.slice(1).split('.')[0], 10);
 if (nodeMajor < 18) {
   console.error(`\nERROR: Node.js version 18 or higher is required.`);
   console.error(`You have ${process.version}.`);
-  console.error(`\nPlease upgrade Node.js: https://nodejs.org/\n`);
+  console.error(`\nUpgrade it with:\n  ${installHint('node')}\n`);
+  console.error(`Or use the double-click installer in tools/installers/, which installs it for you.\n`);
   process.exit(1);
 }
 
@@ -44,7 +86,8 @@ function hasGit() {
 
 if (!hasGit()) {
   console.error(`\nERROR: git is not installed.`);
-  console.error(`\nPlease install git: https://git-scm.com/downloads\n`);
+  console.error(`\nInstall it with:\n  ${installHint('git')}\n`);
+  console.error(`Or use the double-click installer in tools/installers/, which installs it for you.\n`);
   process.exit(1);
 }
 

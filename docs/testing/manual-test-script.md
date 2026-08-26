@@ -345,39 +345,123 @@ The bundle's own correctness — build success, character limits, and skill bodi
 
 ---
 
-## Test Group 7: Edge Cases & Error Handling
+## Test Group 7: Prerequisite Installation
 
-### 7.1 Install without Node.js
+The installers install Node.js and Git themselves rather than opening a download page. The macOS
+paths in 7.1 and 7.2 were exercised on the development machine, including a real download with
+checksum verification and a deliberately corrupted package to prove mismatch detection — re-run them
+on a clean machine to confirm the sudo and Command Line Tools flows. **The Windows paths in 7.3–7.5
+have never been executed.** They were written against live URL probes and cross-checked by reading,
+but no Windows machine was available. Treat them as unverified until a tester signs them off.
+
+### 7.1 macOS — Node.js missing, consent given
 
 **Instruction:**
-1. On a fresh machine without Node.js, attempt to run the installer
-2. Observe the error message
+1. On a Mac without Node.js (or with `node` removed from `PATH` and no Homebrew on `PATH`), run
+   `bash tools/installers/EDWIN-Install.command`
+2. Answer `Y` (or press Return) at "Install Node.js now?"
+3. Enter your password when macOS asks
 
 **Expected:**
-- Installer detects missing Node.js
-- Provides clear error message with link to download Node.js
-- Does not proceed with broken install
+- The installer names the version it is about to install and where it came from
+- With Homebrew present it uses `brew install node`; without it, it downloads the official `.pkg`,
+  reports the checksum comparison, and only then installs
+- After installing it re-checks the version and reports success
+- Node.js is genuinely usable afterwards (`node --version` in a new terminal)
 
 **Result:** [ ] Pass [ ] Fail
 
 ---
 
-### 7.2 Install without git
+### 7.2 macOS — Git missing, consent given
 
 **Instruction:**
-1. On a machine without git, attempt to run the installer
-2. Observe the error message
+1. On a Mac with no working Git — `/usr/bin/git` exists on every Mac as a stub that fails until
+   Apple's Command Line Tools are installed, so "no working Git" is the normal state of a fresh Mac
+2. Run the installer and answer `Y` at "Install Git now?"
 
 **Expected:**
-- Installer detects missing git
-- Provides clear error message with installation instructions
-- Does not proceed
+- With Homebrew present it uses `brew install git`
+- Without it, macOS installs the Command Line Tools; the installer either drives
+  `softwareupdate` directly or falls back to the `xcode-select --install` dialog and waits
+- After installing, `git --version` actually succeeds — mere presence of the binary is not enough
+- If the install fails, the installer says so and stops rather than continuing to a broken clone
 
 **Result:** [ ] Pass [ ] Fail
 
 ---
 
-### 7.3 Context that doesn't exist
+### 7.3 Windows — prerequisites missing, winget available (UNVERIFIED)
+
+**Instruction:**
+1. On a Windows 10/11 machine without Node.js and without Git, double-click `EDWIN-Install.cmd`
+2. Press `Y` at each "Install ... now?" prompt
+3. Click **Yes** at each UAC prompt
+
+**Expected:**
+- The installer reports it is using winget
+- Node.js and Git install without opening a browser
+- If a tool installs but the current window still can't find it, the installer says so explicitly and
+  tells you to close the window and run it again — it does not continue with a broken install
+- After reopening Command Prompt, `node --version` and `git --version` both work
+
+**Result:** [ ] Pass [ ] Fail
+
+---
+
+### 7.4 Windows — prerequisites missing, winget unavailable (UNVERIFIED)
+
+**Instruction:**
+1. On a Windows machine without winget (or with the App Execution Alias for winget disabled, which
+   leaves a stub that fails when run), repeat 7.3
+
+**Expected:**
+- The installer reports winget is unavailable and continues rather than stopping
+- Node.js is downloaded as the official `.msi` and its SHA-256 is compared against
+  `SHASUMS256.txt` before installing
+- Git is downloaded as the official Git for Windows `.exe` and installed silently
+- **Corrupt-download check:** if you can intercept the download, truncate the `.msi` and re-run —
+  the installer must refuse to install it and say the checksum did not match
+
+**Result:** [ ] Pass [ ] Fail
+
+---
+
+### 7.5 Declining, and `--skip-deps` (UNVERIFIED on Windows)
+
+**Instruction:**
+1. Run the installer with a prerequisite missing and answer `N`
+2. Run it again as `EDWIN-Install.cmd --skip-deps` (or `bash EDWIN-Install.command --skip-deps`)
+
+**Expected:**
+- Declining stops the installer with a message naming the missing tool and how to install it yourself
+- `--skip-deps` stops the same way and says to re-run without `--skip-deps` to have it installed
+- Neither path leaves a half-configured EDWIN behind
+
+**Result:** [ ] Pass [ ] Fail
+
+---
+
+### 7.6 Unattended run (UNVERIFIED on Windows)
+
+**Instruction:**
+1. Run the installer with `--yes` and a prerequisite missing
+2. Separately, run it with its input redirected from nothing and **no** `--yes`:
+   - macOS: `bash EDWIN-Install.command < /dev/null`
+   - Windows: `EDWIN-Install.cmd < NUL`
+
+**Expected:**
+- `--yes` installs without asking, and echoes the answer it assumed
+- With no console and no `--yes`, the installer **declines** and exits — it must not silently consent
+  to installing software on a machine nobody is watching
+
+**Result:** [ ] Pass [ ] Fail
+
+---
+
+## Test Group 8: Edge Cases & Error Handling
+
+### 8.1 Context that doesn't exist
 
 **Instruction:**
 1. In Claude, type: "switch to FakeContext"
@@ -393,7 +477,10 @@ The bundle's own correctness — build success, character limits, and skill bodi
 
 ## Summary
 
-**Total tests:** 19 (4.1 is setup for 4.2 and carries no Pass/Fail cell)
+**Total tests:** 24 (4.1 is setup for 4.2 and carries no Pass/Fail cell)
+
+Cells 7.3, 7.4, 7.5 and 7.6 cover code that has never been run on Windows. If a tester signs off the
+whole script without them, the sign-off does not cover Windows prerequisite installation.
 
 **Passed:** _____
 

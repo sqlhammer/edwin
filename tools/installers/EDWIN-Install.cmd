@@ -15,13 +15,66 @@ set "INSTALL_DIR=%DEFAULT_INSTALL_DIR%"
 set "LOG_FILE=%INSTALL_DIR%\install.log"
 set "MIN_NODE_VERSION=18"
 
-REM Repository URL can be passed as argument
 set "REPO_URL="
+set "ASSUME_YES=0"
+set "INSTALL_DEPS=1"
+
+:parse_args
+if "%~1"=="" goto :args_done
 if /i "%~1"=="--repo-url" (
-    if not "%~2"=="" (
-        set "REPO_URL=%~2"
+    if "%~2"=="" (
+        echo Error: --repo-url requires a URL >&2
+        exit /b 2
     )
+    set "REPO_URL=%~2"
+    shift
+    shift
+    goto :parse_args
 )
+if /i "%~1"=="--yes" (
+    set "ASSUME_YES=1"
+    shift
+    goto :parse_args
+)
+if /i "%~1"=="-y" (
+    set "ASSUME_YES=1"
+    shift
+    goto :parse_args
+)
+if /i "%~1"=="--skip-deps" (
+    set "INSTALL_DEPS=0"
+    shift
+    goto :parse_args
+)
+if /i "%~1"=="--help" goto :show_usage
+if /i "%~1"=="-h" goto :show_usage
+echo Error: unknown option: %~1 >&2
+echo. >&2
+call :usage_text >&2
+exit /b 2
+
+:show_usage
+call :usage_text
+exit /b 0
+
+:usage_text
+echo EDWIN-Install.cmd -- install EDWIN on Windows
+echo.
+echo Usage:
+echo   EDWIN-Install.cmd [options]
+echo.
+echo Options:
+echo   --repo-url ^<url^>   Repository to install from ^(otherwise read from package.json or prompted^)
+echo   --yes              Answer yes to every confirmation; required for unattended runs
+echo   --skip-deps        Report missing Git or Node.js instead of installing them
+echo   --help             Show this help
+echo.
+echo Missing prerequisites are installed for you. Git and Node.js come from winget when it
+echo is available; otherwise they are downloaded from their official sources and installed
+echo silently. Nothing is downloaded through a web browser.
+goto :eof
+
+:args_done
 
 REM ============================================================================
 REM Helper Functions
@@ -29,12 +82,7 @@ REM ============================================================================
 
 REM Note: log file directory is created by :log and :log_error when needed
 
-REM Open URL in default browser
 goto :skip_functions
-
-:open_url
-start "" "%~1"
-goto :eof
 
 :log
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%" 2>nul
@@ -60,6 +108,171 @@ exit /b 1
 :command_exists
 where %1 >nul 2>&1
 goto :eof
+
+REM Ask a yes/no question. Input: %CONFIRM_PROMPT%. Returns 0 for yes, 1 for no.
+REM choice.exe reads the console directly, so a redirected or absent stdin gives
+REM errorlevel 255 rather than silently looking like a bare Return. That distinction
+REM matters: without it an unattended run would consent to everything by accident.
+:confirm
+if "%ASSUME_YES%"=="1" (
+    echo %CONFIRM_PROMPT% [Y/n] y  ^(--yes^)
+    exit /b 0
+)
+choice /c yn /n /d y /t 60 /m "%CONFIRM_PROMPT% [Y/n] "
+if errorlevel 255 (
+    call :log No console available to ask: "%CONFIRM_PROMPT%"
+    exit /b 1
+)
+if errorlevel 2 exit /b 1
+if errorlevel 1 exit /b 0
+exit /b 1
+
+REM winget is present on Windows 10 1809+ and Windows 11. It can also exist as a broken
+REM App Execution Alias, so being on PATH is not enough -- it has to actually answer.
+:winget_available
+where winget >nul 2>&1
+if errorlevel 1 exit /b 1
+winget --version >nul 2>&1
+if errorlevel 1 exit /b 1
+exit /b 0
+
+REM A freshly installed tool is not on this session's PATH: cmd captured PATH at
+REM startup and neither winget nor an MSI can change that retroactively. Rather than
+REM re-reading the registry -- whose Path holds unexpanded %%SystemRoot%%-style entries
+REM that break when copied verbatim -- append the known install locations.
+:refresh_tool_path
+set "PATH=%PATH%;%ProgramFiles%\nodejs;%LOCALAPPDATA%\Programs\nodejs"
+set "PATH=%PATH%;%ProgramFiles%\Git\cmd;%LOCALAPPDATA%\Programs\Git\cmd"
+goto :eof
+
+REM Newest Node release carrying an LTS codename. Output: %NODE_LTS% (empty on failure).
+REM index.tab is whitespace-separated with lts in column 10 ("-" when not an LTS line),
+REM so no JSON parser is needed -- which matters when the reason we are here is that
+REM there is no node to parse JSON with.
+:latest_node_lts
+set "NODE_LTS="
+for /f "usebackq skip=1 tokens=1,10" %%a in (`curl -fsSL --max-time 60 https://nodejs.org/dist/index.tab 2^>nul`) do (
+    if not "%%b"=="-" (
+        set "NODE_LTS=%%a"
+        goto :eof
+    )
+)
+goto :eof
+
+REM Install Node from its official MSI. Output: errorlevel 0 on success.
+:install_node_msi
+call :latest_node_lts
+if "%NODE_LTS%"=="" (
+    call :log_error Could not determine the current Node.js LTS version from nodejs.org
+    exit /b 1
+)
+
+set "NODE_ARCH=x64"
+if /i "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "NODE_ARCH=arm64"
+
+set "NODE_MSI=node-%NODE_LTS%-%NODE_ARCH%.msi"
+set "NODE_BASE=https://nodejs.org/dist/%NODE_LTS%"
+set "NODE_TMP=%TEMP%\edwin-node-%RANDOM%"
+mkdir "%NODE_TMP%" 2>nul
+
+call :log Downloading %NODE_MSI%...
+curl -fL --max-time 900 -o "%NODE_TMP%\%NODE_MSI%" "%NODE_BASE%/%NODE_MSI%"
+if errorlevel 1 (
+    call :log_error Failed to download %NODE_BASE%/%NODE_MSI%
+    rmdir /s /q "%NODE_TMP%" 2>nul
+    exit /b 1
+)
+
+REM This installer is about to run elevated, so check it against Node's published
+REM checksum first. A truncated or substituted download must not be installed.
+curl -fsSL --max-time 120 -o "%NODE_TMP%\SHASUMS256.txt" "%NODE_BASE%/SHASUMS256.txt"
+if errorlevel 1 (
+    call :log_error Failed to download checksums from %NODE_BASE%/SHASUMS256.txt
+    rmdir /s /q "%NODE_TMP%" 2>nul
+    exit /b 1
+)
+
+set "NODE_EXPECTED="
+for /f "usebackq tokens=1,2" %%h in ("%NODE_TMP%\SHASUMS256.txt") do (
+    if /i "%%i"=="%NODE_MSI%" set "NODE_EXPECTED=%%h"
+)
+
+set "NODE_ACTUAL="
+for /f "skip=1 delims=" %%h in ('certutil -hashfile "%NODE_TMP%\%NODE_MSI%" SHA256') do (
+    if not defined NODE_ACTUAL set "NODE_ACTUAL=%%h"
+)
+REM certutil prints the digest with spaces on some Windows builds.
+set "NODE_ACTUAL=%NODE_ACTUAL: =%"
+
+if "%NODE_EXPECTED%"=="" (
+    call :log_error No published checksum for %NODE_MSI% -- refusing to install it
+    rmdir /s /q "%NODE_TMP%" 2>nul
+    exit /b 1
+)
+
+if /i not "%NODE_EXPECTED%"=="%NODE_ACTUAL%" (
+    call :log_error Checksum mismatch for %NODE_MSI% -- refusing to install it
+    rmdir /s /q "%NODE_TMP%" 2>nul
+    exit /b 1
+)
+
+call :log Checksum verified. Installing %NODE_MSI%...
+msiexec /i "%NODE_TMP%\%NODE_MSI%" /qn /norestart
+if errorlevel 1 (
+    call :log_error msiexec failed for %NODE_MSI%
+    rmdir /s /q "%NODE_TMP%" 2>nul
+    exit /b 1
+)
+
+rmdir /s /q "%NODE_TMP%" 2>nul
+exit /b 0
+
+REM Install Git for Windows from its official release. Output: errorlevel 0 on success.
+REM The version is taken from where /releases/latest redirects to, so this needs no JSON
+REM parser. Git for Windows names its tag v<ver>.windows.<n> and its asset Git-<ver>.<n>,
+REM so the asset version is the tag with ".windows." collapsed to ".".
+:install_git_exe
+set "GIT_TAG_URL="
+for /f "usebackq delims=" %%u in (`curl -sIL -o NUL -w "%%{url_effective}" --max-time 60 https://github.com/git-for-windows/git/releases/latest 2^>nul`) do set "GIT_TAG_URL=%%u"
+
+if "%GIT_TAG_URL%"=="" (
+    call :log_error Could not reach github.com to find the current Git for Windows release
+    exit /b 1
+)
+
+set "GIT_TAG=%GIT_TAG_URL:*/releases/tag/=%"
+if "%GIT_TAG%"=="%GIT_TAG_URL%" (
+    call :log_error Unexpected redirect target for the latest Git release: %GIT_TAG_URL%
+    exit /b 1
+)
+
+set "GIT_VER=%GIT_TAG:~1%"
+set "GIT_VER=%GIT_VER:.windows.=.%"
+
+set "GIT_ASSET=Git-%GIT_VER%-64-bit.exe"
+if /i "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "GIT_ASSET=Git-%GIT_VER%-arm64.exe"
+
+set "GIT_TMP=%TEMP%\edwin-git-%RANDOM%"
+mkdir "%GIT_TMP%" 2>nul
+
+call :log Downloading %GIT_ASSET%...
+curl -fL --max-time 900 -o "%GIT_TMP%\%GIT_ASSET%" "https://github.com/git-for-windows/git/releases/download/%GIT_TAG%/%GIT_ASSET%"
+if errorlevel 1 (
+    call :log_error Failed to download %GIT_ASSET%
+    rmdir /s /q "%GIT_TMP%" 2>nul
+    exit /b 1
+)
+
+call :log Installing %GIT_ASSET%...
+"%GIT_TMP%\%GIT_ASSET%" /VERYSILENT /NORESTART /NOCANCEL /SP- /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS
+if errorlevel 1 (
+    call :log_error Git installer failed
+    rmdir /s /q "%GIT_TMP%" 2>nul
+    exit /b 1
+)
+
+rmdir /s /q "%GIT_TMP%" 2>nul
+exit /b 0
 
 :validate_repo_url
 REM Input: %VALIDATE_INPUT%
@@ -160,7 +373,10 @@ REM ============================================================================
 
 call :log Checking prerequisites...
 
-REM Check for git
+REM ----------------------------------------------------------------------------
+REM Git
+REM ----------------------------------------------------------------------------
+
 call :command_exists git
 if errorlevel 1 (
     echo.
@@ -168,49 +384,117 @@ if errorlevel 1 (
     echo   Git is not installed
     echo ========================================================================
     echo.
-    echo EDWIN needs Git to download and update its files.
+    echo EDWIN needs Git to download and update its files. I can install it.
     echo.
-    echo I'll open the Git download page in your browser.
-    echo After installing Git, run this installer again.
-    echo.
-    call :open_url "https://git-scm.com/downloads"
-    call :exit_with_error Git is not installed
+
+    if "%INSTALL_DEPS%"=="0" call :exit_with_error Git is not installed ^(run without --skip-deps to install it^)
+
+    set "CONFIRM_PROMPT=Install Git now?"
+    call :confirm
+    if errorlevel 1 (
+        echo.
+        echo Nothing installed. Install Git yourself and run this installer again,
+        echo or re-run with --yes to install it without being asked.
+        echo.
+        call :exit_with_error Git is not installed and installation was declined
+    )
+
+    call :winget_available
+    if errorlevel 1 (
+        call :log winget is unavailable; installing Git from its official release...
+        call :install_git_exe
+    ) else (
+        call :log Installing Git with winget...
+        winget install --exact --id Git.Git --source winget --silent --accept-package-agreements --accept-source-agreements
+        if errorlevel 1 (
+            call :log winget machine-scope install failed; retrying in user scope...
+            winget install --exact --id Git.Git --source winget --scope user --silent --accept-package-agreements --accept-source-agreements
+        )
+    )
+
+    call :refresh_tool_path
+
+    call :command_exists git
+    if errorlevel 1 (
+        echo.
+        echo Git still isn't available after the install attempt.
+        echo If it did install, close this window and run the installer again --
+        echo a new window picks up the updated PATH.
+        echo.
+        call :exit_with_error Git installation did not produce a working git
+    )
+
+    call :log Git installed
 )
 
-REM Check for Node.js
+REM ----------------------------------------------------------------------------
+REM Node.js
+REM ----------------------------------------------------------------------------
+
+set "NODE_MAJOR=0"
 call :command_exists node
-if errorlevel 1 (
-    echo.
-    echo ========================================================================
-    echo   Node.js is not installed
-    echo ========================================================================
-    echo.
-    echo EDWIN needs Node.js to run its installation scripts.
-    echo.
-    echo I'll open the Node.js download page in your browser.
-    echo Download and install the LTS version, then run this installer again.
-    echo.
-    call :open_url "https://nodejs.org/"
-    call :exit_with_error Node.js is not installed
+if not errorlevel 1 (
+    for /f "tokens=1 delims=." %%a in ('node -v') do set "NODE_MAJOR=%%a"
+    set "NODE_MAJOR=!NODE_MAJOR:~1!"
 )
 
-REM Check Node.js version
-for /f "tokens=1 delims=." %%a in ('node -v') do set NODE_MAJOR=%%a
-set NODE_MAJOR=%NODE_MAJOR:~1%
+if !NODE_MAJOR! lss %MIN_NODE_VERSION% (
+    echo.
+    echo ========================================================================
+    if "!NODE_MAJOR!"=="0" (
+        echo   Node.js is not installed
+    ) else (
+        echo   Node.js is too old
+    )
+    echo ========================================================================
+    echo.
+    echo EDWIN needs Node.js %MIN_NODE_VERSION% or higher. I can install it.
+    echo.
 
-if %NODE_MAJOR% lss %MIN_NODE_VERSION% (
-    echo.
-    echo ========================================================================
-    echo   Node.js version is too old
-    echo ========================================================================
-    echo.
-    for /f %%v in ('node -v') do echo You have Node.js %%v, but EDWIN needs version %MIN_NODE_VERSION% or higher.
-    echo.
-    echo I'll open the Node.js download page in your browser.
-    echo Download and install the latest LTS version, then run this installer again.
-    echo.
-    call :open_url "https://nodejs.org/"
-    call :exit_with_error Node.js version is too old
+    if "%INSTALL_DEPS%"=="0" call :exit_with_error Node.js %MIN_NODE_VERSION% or higher is required ^(run without --skip-deps to install it^)
+
+    set "CONFIRM_PROMPT=Install Node.js now?"
+    call :confirm
+    if errorlevel 1 (
+        echo.
+        echo Nothing installed. Install Node.js %MIN_NODE_VERSION% or higher yourself and run
+        echo this installer again, or re-run with --yes to install it without being asked.
+        echo.
+        call :exit_with_error Node.js is missing or too old and installation was declined
+    )
+
+    call :winget_available
+    if errorlevel 1 (
+        call :log winget is unavailable; installing Node.js from its official MSI...
+        call :install_node_msi
+    ) else (
+        call :log Installing Node.js with winget...
+        winget install --exact --id OpenJS.NodeJS.LTS --source winget --silent --accept-package-agreements --accept-source-agreements
+        if errorlevel 1 (
+            call :log winget install failed; falling back to the official MSI...
+            call :install_node_msi
+        )
+    )
+
+    call :refresh_tool_path
+
+    set "NODE_MAJOR=0"
+    call :command_exists node
+    if not errorlevel 1 (
+        for /f "tokens=1 delims=." %%a in ('node -v') do set "NODE_MAJOR=%%a"
+        set "NODE_MAJOR=!NODE_MAJOR:~1!"
+    )
+
+    if !NODE_MAJOR! lss %MIN_NODE_VERSION% (
+        echo.
+        echo Node.js still isn't usable after the install attempt.
+        echo If it did install, close this window and run the installer again --
+        echo a new window picks up the updated PATH.
+        echo.
+        call :exit_with_error Node.js installation did not produce a usable node
+    )
+
+    call :log Node.js installed
 )
 
 REM Check for Claude Code or Claude Desktop

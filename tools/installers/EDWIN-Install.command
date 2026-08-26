@@ -21,10 +21,61 @@ LOG_FILE="$INSTALL_DIR/install.log"
 # Repository to clone (read from package.json, or prompted)
 REPO_URL=""
 
-# Allow passing repository URL as argument
-if [ "${1:-}" = "--repo-url" ] && [ -n "${2:-}" ]; then
-    REPO_URL="$2"
-fi
+# Answer every confirmation with yes (for unattended runs)
+ASSUME_YES=0
+
+# Install missing prerequisites rather than only reporting them
+INSTALL_DEPS=1
+
+show_usage() {
+    cat <<'USAGE'
+EDWIN-Install.command — install EDWIN on macOS
+
+Usage:
+  EDWIN-Install.command [options]
+
+Options:
+  --repo-url <url>   Repository to install from (otherwise read from package.json or prompted)
+  --yes              Answer yes to every confirmation; required for unattended runs
+  --skip-deps        Report missing Git or Node.js instead of installing them
+  --help             Show this help
+
+Missing prerequisites are installed for you. Git and Node.js come from Homebrew when it is
+present; otherwise Node.js is installed from Node's official signed .pkg (checksum verified)
+and Git from Apple's Command Line Tools. Nothing is downloaded through a web browser.
+USAGE
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --repo-url)
+            if [ -z "${2:-}" ]; then
+                echo "Error: --repo-url requires a URL" >&2
+                exit 2
+            fi
+            REPO_URL="$2"
+            shift 2
+            ;;
+        --yes|-y)
+            ASSUME_YES=1
+            shift
+            ;;
+        --skip-deps)
+            INSTALL_DEPS=0
+            shift
+            ;;
+        --help|-h)
+            show_usage
+            exit 0
+            ;;
+        *)
+            echo "Error: unknown option: $1" >&2
+            echo "" >&2
+            show_usage >&2
+            exit 2
+            ;;
+    esac
+done
 
 # Minimum Node.js version
 MIN_NODE_VERSION=18
@@ -49,9 +100,35 @@ log_error() {
 # Helper Functions
 # ============================================================================
 
-# Open URL in default browser
-open_url() {
-    open "$1" 2>/dev/null || true
+# True when there is a terminal to prompt at. Without one, no question can be answered,
+# so every confirmation must fail loudly rather than block forever.
+have_tty() {
+    [ -t 0 ]
+}
+
+# Ask a yes/no question. Defaults to yes on a bare Return.
+confirm() {
+    local prompt="$1"
+
+    if [ "$ASSUME_YES" -eq 1 ]; then
+        echo "$prompt [Y/n] y  (--yes)"
+        return 0
+    fi
+
+    if ! have_tty; then
+        return 1
+    fi
+
+    local reply=""
+    # read fails at EOF, and set -e would abort the whole installer on it.
+    if ! read -r -p "$prompt [Y/n] " reply; then
+        return 1
+    fi
+
+    case "$reply" in
+        ''|[Yy]|[Yy][Ee][Ss]) return 0 ;;
+        *) return 1 ;;
+    esac
 }
 
 # Pause and wait for user to press a key
@@ -167,57 +244,325 @@ prompt_for_repo_url() {
 # Prerequisite Checks
 # ============================================================================
 
+# ---------------------------------------------------------------------------
+# Homebrew
+# ---------------------------------------------------------------------------
+
+# Put Homebrew on PATH if it is installed. A double-clicked .command inherits a
+# minimal environment, so an installed brew is frequently not on PATH yet —
+# especially on Apple silicon, where it lives in /opt/homebrew rather than /usr/local.
+load_brew_env() {
+    if command_exists brew; then
+        return 0
+    fi
+
+    local candidate
+    for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+        if [ -x "$candidate" ]; then
+            eval "$("$candidate" shellenv)"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+install_homebrew() {
+    log "Installing Homebrew..."
+    echo ""
+    echo "Homebrew is the package manager most Mac developer tools install through."
+    echo "Its installer asks for your password once, to create /opt/homebrew."
+    echo ""
+
+    # NONINTERACTIVE stops the official script waiting on a Return it will never get
+    # here. It cannot suppress the sudo password prompt, which only you can answer.
+    if ! NONINTERACTIVE=1 /bin/bash -c \
+        "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+        log_error "Homebrew installation failed"
+        return 1
+    fi
+
+    load_brew_env
+}
+
+# ---------------------------------------------------------------------------
+# Git
+# ---------------------------------------------------------------------------
+
+# /usr/bin/git exists on every Mac as a stub that fails until Apple's Command Line
+# Tools are installed. So `command -v git` succeeding does not mean git works — the
+# only reliable test is running it.
+git_usable() {
+    command_exists git || return 1
+    git --version >/dev/null 2>&1
+}
+
+# Install Apple's Command Line Tools, which provide git. Tried without a GUI first:
+# the sentinel file below makes the tools appear as an ordinary softwareupdate item,
+# which can be installed from the command line. If that fails we fall back to asking
+# macOS to show its own install dialog — still no browser, still no manual download.
+install_command_line_tools() {
+    local sentinel="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+
+    log "Installing Apple's Command Line Tools (provides git)..."
+
+    if have_tty || sudo -n true 2>/dev/null; then
+        touch "$sentinel" 2>/dev/null || true
+
+        local label
+        label=$(softwareupdate -l 2>/dev/null \
+            | grep -E '^ *\* *(Label: )?Command Line Tools' \
+            | sed -E 's/^ *\* *(Label: )?//' \
+            | tail -1) || true
+
+        if [ -n "$label" ]; then
+            log "Found update label: $label"
+            sudo softwareupdate -i "$label" --verbose || log_error "softwareupdate failed for: $label"
+        else
+            log "No Command Line Tools update label offered"
+        fi
+
+        rm -f "$sentinel" 2>/dev/null || true
+
+        if git_usable; then
+            return 0
+        fi
+    fi
+
+    # Fallback: macOS shows its own dialog. One click, no download to find.
+    log "Falling back to the macOS Command Line Tools dialog"
+    xcode-select --install >/dev/null 2>&1 || true
+
+    echo ""
+    echo "macOS is showing an 'Install' dialog for the Command Line Tools."
+    echo "Click Install and accept the licence. I'll wait for it to finish."
+    echo ""
+
+    local waited=0
+    local timeout=1800
+    while ! git_usable; do
+        sleep 5
+        waited=$((waited + 5))
+        if [ "$((waited % 60))" -eq 0 ]; then
+            echo "  still waiting... (${waited}s)"
+        fi
+        if [ "$waited" -ge "$timeout" ]; then
+            log_error "Command Line Tools did not finish installing within $((timeout / 60)) minutes"
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+ensure_git() {
+    if git_usable; then
+        log "git found: $(git --version)"
+        return 0
+    fi
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  Git is not installed"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "EDWIN needs Git to download and update its files. I can install it."
+    echo ""
+
+    if [ "$INSTALL_DEPS" -eq 0 ]; then
+        exit_with_error "Git is not installed (run without --skip-deps to install it)"
+    fi
+
+    if ! confirm "Install Git now?"; then
+        echo ""
+        echo "Nothing installed. Install Git yourself and run this installer again,"
+        echo "or re-run with --yes to install it without being asked."
+        echo ""
+        exit_with_error "Git is not installed and installation was declined"
+    fi
+
+    if load_brew_env; then
+        log "Installing git with Homebrew..."
+        brew install git || log_error "brew install git failed"
+    else
+        install_command_line_tools || true
+    fi
+
+    if ! git_usable; then
+        echo ""
+        echo "Git still isn't working after the install attempt."
+        echo "Check the log for what the installer reported: $LOG_FILE"
+        echo ""
+        exit_with_error "Git installation did not produce a working git"
+    fi
+
+    log "git installed: $(git --version)"
+}
+
+# ---------------------------------------------------------------------------
+# Node.js
+# ---------------------------------------------------------------------------
+
+node_major() {
+    node -v 2>/dev/null | sed 's/v\([0-9]*\).*/\1/'
+}
+
+node_usable() {
+    command_exists node || return 1
+    local major
+    major=$(node_major)
+    [ -n "$major" ] || return 1
+    [ "$major" -ge "$MIN_NODE_VERSION" ]
+}
+
+# Newest Node release carrying an LTS codename, from Node's own release index.
+# index.tab is tab-separated with lts in column 10 ("-" for non-LTS releases), so this
+# needs no JSON parser — which matters when the reason we are here is that there is no
+# node to parse JSON with.
+latest_node_lts() {
+    curl -fsSL --max-time 60 https://nodejs.org/dist/index.tab 2>/dev/null \
+        | awk -F'\t' 'NR > 1 && $10 != "-" && $10 != "" { print $1; exit }'
+}
+
+# Install Node from its official signed .pkg. The macOS package is universal, so there
+# is no architecture in its name.
+install_node_pkg() {
+    local version="$1"
+    local base="https://nodejs.org/dist/${version}"
+    local pkg="node-${version}.pkg"
+    local tmp
+
+    tmp=$(mktemp -d) || return 1
+
+    log "Downloading $pkg..."
+    if ! curl -fL --max-time 900 --progress-bar -o "$tmp/$pkg" "$base/$pkg"; then
+        log_error "Failed to download $base/$pkg"
+        rm -rf "$tmp"
+        return 1
+    fi
+
+    # This package is about to run as root, so verify it against Node's published
+    # checksum first. A truncated or substituted download must not be installed.
+    if ! curl -fsSL --max-time 120 -o "$tmp/SHASUMS256.txt" "$base/SHASUMS256.txt"; then
+        log_error "Failed to download checksums from $base/SHASUMS256.txt"
+        rm -rf "$tmp"
+        return 1
+    fi
+
+    local expected actual
+    expected=$(awk -v want="$pkg" '$2 == want { print $1 }' "$tmp/SHASUMS256.txt")
+    actual=$(shasum -a 256 "$tmp/$pkg" | awk '{ print $1 }')
+
+    if [ -z "$expected" ]; then
+        log_error "No published checksum for $pkg — refusing to install it"
+        rm -rf "$tmp"
+        return 1
+    fi
+
+    if [ "$expected" != "$actual" ]; then
+        log_error "Checksum mismatch for $pkg (expected $expected, got $actual) — refusing to install it"
+        rm -rf "$tmp"
+        return 1
+    fi
+
+    log "Checksum verified. Installing $pkg (this needs your password)..."
+    if ! sudo installer -pkg "$tmp/$pkg" -target /; then
+        log_error "installer failed for $pkg"
+        rm -rf "$tmp"
+        return 1
+    fi
+
+    rm -rf "$tmp"
+
+    # The .pkg installs into /usr/local/bin, which a double-clicked .command may not
+    # have inherited.
+    case ":$PATH:" in
+        *:/usr/local/bin:*) ;;
+        *) export PATH="/usr/local/bin:$PATH" ;;
+    esac
+
+    return 0
+}
+
+ensure_node() {
+    if node_usable; then
+        log "Node.js found: $(node -v)"
+        return 0
+    fi
+
+    local current=""
+    if command_exists node; then
+        current=$(node -v)
+    fi
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    if [ -n "$current" ]; then
+        echo "  Node.js $current is too old"
+    else
+        echo "  Node.js is not installed"
+    fi
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    if [ -n "$current" ]; then
+        echo "EDWIN needs Node.js $MIN_NODE_VERSION or higher. I can upgrade it."
+    else
+        echo "EDWIN needs Node.js to run its scripts. I can install it."
+    fi
+    echo ""
+
+    if [ "$INSTALL_DEPS" -eq 0 ]; then
+        exit_with_error "Node.js $MIN_NODE_VERSION or higher is required (run without --skip-deps to install it)"
+    fi
+
+    if ! confirm "Install Node.js now?"; then
+        echo ""
+        echo "Nothing installed. Install Node.js $MIN_NODE_VERSION or higher yourself and run this"
+        echo "installer again, or re-run with --yes to install it without being asked."
+        echo ""
+        exit_with_error "Node.js is missing or too old and installation was declined"
+    fi
+
+    if load_brew_env; then
+        log "Installing Node.js with Homebrew..."
+        brew install node || log_error "brew install node failed"
+    fi
+
+    if ! node_usable; then
+        local version
+        version=$(latest_node_lts)
+        if [ -z "$version" ]; then
+            log_error "Could not determine the current Node.js LTS version from nodejs.org"
+            echo ""
+            echo "I couldn't reach nodejs.org to find out which version to install."
+            echo "Check your network connection and run this installer again."
+            echo ""
+            exit_with_error "Could not determine the Node.js LTS version"
+        fi
+        log "Installing Node.js $version from the official package..."
+        install_node_pkg "$version" || true
+    fi
+
+    if ! node_usable; then
+        echo ""
+        echo "Node.js still isn't usable after the install attempt."
+        echo "Check the log for what the installer reported: $LOG_FILE"
+        echo ""
+        exit_with_error "Node.js installation did not produce a usable node"
+    fi
+
+    log "Node.js installed: $(node -v)"
+}
+
 check_prerequisites() {
     log "Checking prerequisites..."
 
-    # Check for git
-    if ! command_exists git; then
-        echo ""
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "  Git is not installed"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo ""
-        echo "EDWIN needs Git to download and update its files."
-        echo ""
-        echo "I'll open the Git download page in your browser."
-        echo "After installing Git, run this installer again."
-        echo ""
-        open_url "https://git-scm.com/downloads"
-        exit_with_error "Git is not installed"
-    fi
+    # Homebrew first if it is present: when it is, it is the least surprising way to
+    # install both of the tools below.
+    load_brew_env || true
 
-    # Check for Node.js
-    if ! command_exists node; then
-        echo ""
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "  Node.js is not installed"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo ""
-        echo "EDWIN needs Node.js to run its installation scripts."
-        echo ""
-        echo "I'll open the Node.js download page in your browser."
-        echo "Download and install the LTS version, then run this installer again."
-        echo ""
-        open_url "https://nodejs.org/"
-        exit_with_error "Node.js is not installed"
-    fi
-
-    # Check Node.js version
-    local node_version=$(node -v | sed 's/v\([0-9]*\).*/\1/')
-    if [ "$node_version" -lt "$MIN_NODE_VERSION" ]; then
-        echo ""
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "  Node.js version is too old"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo ""
-        echo "You have Node.js $(node -v), but EDWIN needs version $MIN_NODE_VERSION or higher."
-        echo ""
-        echo "I'll open the Node.js download page in your browser."
-        echo "Download and install the latest LTS version, then run this installer again."
-        echo ""
-        open_url "https://nodejs.org/"
-        exit_with_error "Node.js version $(node -v) is too old (need $MIN_NODE_VERSION or higher)"
-    fi
+    ensure_git
+    ensure_node
 
     # Check for Claude Code or Claude Desktop
     local claude_dir="$HOME/.claude"

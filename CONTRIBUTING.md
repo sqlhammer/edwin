@@ -109,7 +109,7 @@ npm run bundle       # Generate web-portal bundles
 npm run build-plugin # Rebuild skills/ from core/skills/ for plugin packaging
 npm run memory       # Memory helper (record, recall, forget, digest)
 npm run brags        # Wins helper (log, list, generate a brag document)
-npm test             # End-to-end suite (38 checks, temp directories only)
+npm test             # End-to-end suite (43 checks, temp directories only)
 ```
 
 ## Definition of Done
@@ -127,7 +127,7 @@ Discovered gaps outside scope are written up in the completion report, not fixed
 
 ## Testing
 
-- **End-to-end suite:** `npm test` must exit 0. It runs 38 checks against temp directories and a temp
+- **End-to-end suite:** `npm test` must exit 0. It runs 43 checks against temp directories and a temp
   `HOME`, and fails if the real `user/` directory changed during the run. A new tool belongs in it.
 - **Testability is part of the tool.** Anything that writes under `user/` takes `--root <path>`; anything
   that reads tracked config takes an override for it (`--limits` on the bundler). A tool that can only be
@@ -135,6 +135,12 @@ Discovered gaps outside scope are written up in the completion report, not fixed
 - **Assert the failure, not the success.** A check named "rejects X" must prove the rejection came from the
   logic under test and not from argument validation upstream of it. Defeat your own guard once and confirm
   the check goes red.
+- **No test may install software or invoke `sudo`.** The installers install Node.js and Git; the suite tests
+  only the paths that *refuse* — `--help`, argument validation, `--skip-deps`, and the no-console decline.
+  Simulate a missing tool with a stub on `PATH` that exits non-zero, and pair it with a control run that has
+  no stub, so a check cannot pass because the installer broke for some other reason. Note that mutating an
+  installer to prove a consent check goes red would make the suite install software for real — verify by
+  removing the stub instead.
 - **Doctor validation:** `npm run doctor` must pass.
 - **Idempotency:** Run `npm run sync` or `npm run build-plugin` twice — second run should report no changes.
 - **Cross-platform:** Scripts must run on macOS and Windows. Use `path.join`, never string concatenation for paths. Use `os.homedir()`, never `$HOME` or `%USERPROFILE%`.
