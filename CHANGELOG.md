@@ -68,6 +68,25 @@ new skills from conversation, and tooling for installation, validation, scheduli
   handoff contract the skill creator consumes. (WU-09)
 - `core/skills/blog-writer/reference/writing-styles.md` — the Standard and Narrative style guides, split out
   of the skill body so the skill itself stays about the workflow. (WU-04)
+- `tools/sync/engine.mjs` — the sync engine. Composes `CLAUDE.md` from the persona, hooks, and a
+  context-grouped skill index, installs skills into `~/.claude/skills/`, and tracks what it installed in
+  `~/.edwin/installed.json` so a later run can prune skills that no longer exist. Idempotent by content
+  hash: a second run reports everything unchanged. (WU-06)
+- Managed markers are honoured unconditionally — anything outside `<!-- EDWIN:BEGIN -->` /
+  `<!-- EDWIN:END -->` is never modified, by any flag, and a `CLAUDE.md` with no markers gets the EDWIN
+  block appended rather than replaced. The `EDWIN:MEMORY` and `EDWIN:CONTEXT` sections survive re-sync so
+  the memory system can own them independently. (WU-06)
+- `tools/sync/targets.mjs` — the only place harness paths are computed, so supporting a new harness or a
+  corrected path is a one-file change. (WU-06)
+- `bin/edwin-install.mjs` — the `npx` entry point. Checks Node and git, works either from a clone or from a
+  cached one it manages itself, and reads the repository to install from out of `package.json` so a fork
+  needs no code edits. (WU-06)
+- `tools/sync/Sync-Edwin.ps1` — PowerShell path for machines without Node, explicit about the features it
+  cannot offer. (WU-06)
+- `npm run sync`. (WU-06)
+- `user/config.json` gains `website` and a `paths` object (`notes`, `blogDrafts`, `careerBackground`) for
+  the optional locations `blog-writer` and `executive-coach` ask about. Onboarding does not ask for them;
+  a skill asks the first time it needs one and offers to save the answer. (WU-04)
 
 ### Changed
 - All 13 v0.1 skills rewritten to the v0.2 format: frontmatter (`name`, `description`, `contexts`,

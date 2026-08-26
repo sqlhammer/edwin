@@ -41,10 +41,10 @@ Every coaching interaction follows this structure:
 
 #### 1. Intake
 
-**If user/config.json exists and contains a `careerBackgroundPath` field:**
+**If user/config.json exists and contains a `paths.careerBackground` field:**
 - Read the file at that path (resume, CV, or background document) to load the user's professional context
 
-**If `careerBackgroundPath` is empty or the file doesn't exist:**
+**If `paths.careerBackground` is empty or the file doesn't exist:**
 - Ask the user:
 
 > I can coach more effectively if I understand your background. Do you have a resume, CV, or professional background doc I can read? If so, provide the file path. If not, give me a 2-3 sentence summary: current role, years of experience, and what you're aiming for.
@@ -188,7 +188,7 @@ No scripts required. This skill is pure instruction.
 
 **User:** Coach me. I've been a Senior Engineering Manager for 18 months. My skip-level says I'm not ready for Director yet but won't say why. How do I get promoted?
 
-**EDWIN:** _(reads user/config.json, finds careerBackgroundPath, reads resume)_
+**EDWIN:** _(reads user/config.json, finds paths.careerBackground, reads resume)_
 > **Pattern:** Vague "not ready" feedback without a concrete gap — classic gatekeeping or mismatch between what you think Director means and what your org values.
 >
 > **Diagnosis:**

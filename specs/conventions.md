@@ -307,7 +307,9 @@ onboarding (WU-02) and maintained by the owning skills. All are hand-editable by
     "workflowObservation": true
   },
   "publish": { "remote": "", "branch": "main" },
-  "positioning": ""
+  "positioning": "",
+  "website": "",
+  "paths": { "notes": "", "blogDrafts": "", "careerBackground": "" }
 }
 ```
 
@@ -315,6 +317,17 @@ onboarding (WU-02) and maintained by the owning skills. All are hand-editable by
 `claude-code` | `claude-desktop` | `cowork` | `web`. `publish.remote` is the user's *own* repo for
 `edwin-publish`; empty means unconfigured and the skill must ask. `positioning` is the free-text goal
 used by voice skills such as `x-ghostwriter`; empty means ask at runtime.
+
+`paths` holds optional locations on the user's machine: `notes` (a notes or vault directory),
+`blogDrafts` (where drafts are written), `careerBackground` (a CV or similar). `website` is the user's
+own site. **Empty is the normal state.** Onboarding does not ask for any of them — a skill asks the
+first time it actually needs one, then offers to save the answer. No skill may *require* one of these
+to be set; every consumer degrades to working from what the user pastes into the conversation.
+
+**Adding a key.** A skill may not read a config key that is not in this schema. Reading an undeclared
+key is a silent no-op: onboarding never writes it, so the branch that consumes it is dead code and the
+skill only ever takes its fallback path. If a skill needs new configuration, add it here first, add it
+to `tools/sync/init-user.mjs`, and give it a documented default.
 
 ### `user/state.json`
 

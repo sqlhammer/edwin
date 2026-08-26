@@ -63,10 +63,10 @@ Wait for confirmation before Phase 2.
 Run both in parallel:
 
 **Vault search (if applicable):**
-- Read `user/config.json` for `notesPath` (Obsidian vault or notes directory)
+- Read `user/config.json` for `paths.notes` (Obsidian vault or notes directory)
 - If present, search that directory for notes related to the topic using file tools
 - Report: files found, how each relates to the topic, key claims or facts with file path citations
-- If no `notesPath` or no relevant files, state that clearly
+- If no `paths.notes` or no relevant files, state that clearly
 
 **Web research:**
 If the topic involves facts, data, trends, technical claims, or industry context, use web search to find current, credible sources. For each fact:
@@ -143,12 +143,12 @@ After the full draft, attempt to generate recommended images using available too
 
 ### 6. File output
 
-**If `user/config.json` contains `blogDraftsPath`:**
+**If `user/config.json` contains `paths.blogDrafts`:**
 Write the draft to that location. Create directories if they do not exist.
 
 **Folder structure:**
 ```
-[blogDraftsPath]/
+[paths.blogDrafts]/
   YYYY-MM/
     {post-slug}/
       {post-slug}.md
@@ -174,7 +174,7 @@ sources:
 ---
 ```
 
-**If no `blogDraftsPath` configured:**
+**If no `paths.blogDrafts` configured:**
 Print the draft with frontmatter and offer to save it to `user/config.json` for future sessions.
 
 After writing or printing, confirm the full file path (if written) and provide a one-sentence summary of what was written.

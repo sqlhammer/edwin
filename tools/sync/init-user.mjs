@@ -171,6 +171,10 @@ const config = {
   },
   publish: { remote: '', branch: 'main' },
   positioning: '',
+  website: '',
+  // Optional locations a skill asks for the first time it needs one, then offers to
+  // save. Empty is the normal state — no skill may require these to be set.
+  paths: { notes: '', blogDrafts: '', careerBackground: '' },
 };
 
 const state = {
