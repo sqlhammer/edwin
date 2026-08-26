@@ -4,7 +4,7 @@
   "description": "EDWIN — Electronic Digital Workforce Intelligence Network. A portable personal AI assistant framework for Claude.",
   "type": "module",
   "bin": {
-    "edwin": "bin/install.js"
+    "edwin": "bin/edwin-install.mjs"
   },
   "files": [
     "bin/",
