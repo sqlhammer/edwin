@@ -2,7 +2,7 @@
 name: blog-writer
 description: Research-backed blog post drafting and revision. Use when the user says "write a blog post", "draft a post about", "revise this blog", or wants to create or edit long-form content with research, style guidance, leadership positioning, and image recommendations.
 contexts: all
-version: 1.0.0
+version: 1.0.1
 requires: [web-search]
 author: edwin-core
 ---
@@ -86,21 +86,7 @@ Output a **Research Summary:**
 
 Ask the user 2-4 targeted questions to surface outcome-oriented and systems-thinking content. Select only the questions most relevant to the topic — do not present the full bank. Present as a numbered list and wait for answers.
 
-**Outcomes bank:**
-- What specific result did this produce? (metrics, before/after comparisons, time saved, velocity gained)
-- How did you measure success? What did the baseline look like before the change?
-- What did failure look like before this approach worked?
-
-**Systems thinking bank:**
-- How does this fit into the larger system? What depends on it, and what does it depend on?
-- What constraint were you solving for? What happens to the system if you remove this piece?
-- Where does friction live in this system, and what does your approach do to that friction?
-- What feedback loop does this create — intended or otherwise?
-
-**Credibility bank:**
-- Have you personally implemented this, or are you synthesizing from observation?
-- What's the honest caveat a practitioner needs to know before trying this?
-- What would you do differently now?
+Question banks (Outcomes, Systems thinking, Credibility) are in `reference/leadership-questions.md`.
 
 Wait for answers before Phase 4.
 
@@ -144,38 +130,10 @@ After the full draft, attempt to generate recommended images using available too
 ### 6. File output
 
 **If `user/config.json` contains `paths.blogDrafts`:**
-Write the draft to that location. Create directories if they do not exist.
-
-**Folder structure:**
-```
-[paths.blogDrafts]/
-  YYYY-MM/
-    {post-slug}/
-      {post-slug}.md
-```
-
-- Each post gets its own folder named `{post-slug}` — images for the post live alongside the draft in this folder
-- `post-slug` = kebab-case title (e.g., `engineering-teams-in-an-ai-world`)
-- `YYYY-MM` = current year and month
-
-**Frontmatter template:**
-```yaml
----
-title: [Post Title]
-date: [YYYY-MM-DD]
-status: draft
-style: [standard / narrative]
-audience: [target audience]
-platform: [target platform]
-tags: [relevant tags derived from topic and notes]
-sources:
-  - [source 1 — format: "Title — URL or file path"]
-  - [source 2]
----
-```
+Write the draft to that location using the folder structure and frontmatter template in `reference/file-structure.md`. Create directories if they do not exist.
 
 **If no `paths.blogDrafts` configured:**
-Print the draft with frontmatter and offer to save it to `user/config.json` for future sessions.
+Print the draft with frontmatter and offer to save the path to `user/config.json` for future sessions.
 
 After writing or printing, confirm the full file path (if written) and provide a one-sentence summary of what was written.
 
@@ -249,7 +207,7 @@ None. This skill uses file tools and web search directly.
 
 ## Examples
 
-### Example 1: New post (Alex, all tools available)
+### New post (Alex, all tools available)
 
 **User:** Write a blog post about adopting AI code review in engineering teams.
 
@@ -267,8 +225,8 @@ None. This skill uses file tools and web search directly.
 >   - GitHub Copilot adoption study (Microsoft, 2023) — credible
 >   - Anthropic Claude code review case studies — credible
 > **Verified Facts to Use:**
->   - 55% of developers report faster code review with AI assistance (Confidence: High — Microsoft study + industry surveys)
->   - AI catches style/syntax issues 2-3x faster than manual review (Confidence: Medium — limited sample sizes)
+>   - 55% of developers report faster code review with AI assistance (Confidence: High)
+>   - AI catches style/syntax issues 2-3x faster than manual review (Confidence: Medium)
 > **Gaps Requiring User Input:** No data on human-AI disagreement rates or false positive handling.
 >
 > **Leadership questions:**
@@ -278,28 +236,4 @@ None. This skill uses file tools and web search directly.
 
 _(User answers. EDWIN recommends Standard Style, waits for confirmation, then drafts the post and writes it to the configured directory.)_
 
-### Example 2: Revision (Sam, file provided)
-
-**User:** Revise this blog post. _(provides file path)_
-
-**EDWIN:** _(reads the file)_
-> **File:** `/path/to/post.md`
-> **Current Style:** Standard
-> **Approximate Word Count:** 800
-> **Strengths:** Clear structure, good systems thinking angle
-> **Issues Identified:**
->   - Two uncited statistics (lines 34, 56)
->   - Weak outcome framing — says "teams move faster" but no baseline or metric
->   - No image recommendations
->
-> **Revision plan:** Verify or remove uncited stats, add outcome metrics (ask user for data), recommend 1-2 images. Preserve Standard Style. Approve?
-
-**User:** Approved. For metrics: review time dropped from 4 hours to 1.5 hours on average.
-
-**EDWIN:** _(revises, writes to `post-v2.md`)_
-> Revised: `/path/to/post-v2.md`
->
-> **Changes:**
-> - Removed unverified stat on line 34, added qualifier on line 56
-> - Added outcome: "review time dropped from 4 hours to 1.5 hours on average"
-> - Recommended 2 images: one process diagram, one before/after comparison chart
+Additional examples (revision mode) are in `reference/examples.md`.

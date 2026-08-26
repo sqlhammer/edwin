@@ -2,7 +2,7 @@
 name: edwin-memory
 description: Learns about the user over time — preferences, people, patterns, facts — by observing conversations, confirming before committing, and recalling in future sessions. Use when the user says "remember that", "what do you remember about me", "forget X", or "tidy your memory".
 contexts: all
-version: 1.0.0
+version: 1.0.1
 requires: [tools/memory/memory.mjs]
 author: edwin-core
 ---
@@ -181,7 +181,7 @@ The script supports `--help`, `--dry-run`, and `--json`.
 
 ## Examples
 
-### Example 1: Observing and confirming (Alex, shell available)
+### Observing and confirming (Alex, shell available)
 
 **Context:** EDWIN notices Alex prefers short responses and mentions using VS Code twice.
 
@@ -197,101 +197,4 @@ The script supports `--help`, `--dry-run`, and `--json`.
 **EDWIN:** _(invokes `memory.mjs append` twice)_
 > Remembered both.
 
----
-
-### Example 2: Explicit memory (Sam, file tools only)
-
-**User:** Remember that I hate bullet points in reports
-
-**EDWIN:** _(reads memory.md, appends to Dislikes section, writes file)_
-> Remembered: Never use bullet points in reports
-
----
-
-### Example 3: Recalling memory (Alex, shell available)
-
-**User:** What do you remember about me?
-
-**EDWIN:** _(invokes `memory.mjs list`)_
-> Here's what I remember:
->
-> **Preferences:**
-> - Hyper-concise responses
-> - Verbosity: concise
->
-> **People:**
-> - Name: Alex, addressed as Alex
->
-> **Facts:**
-> - Primary contexts: Work, Home
-> - Uses VS Code
->
-> **Dislikes:**
-> - Bullet points in reports
-
----
-
-### Example 4: Forgetting (Sam, shell available)
-
-**User:** Forget that I use VS Code
-
-**EDWIN:** _(invokes `memory.mjs tombstone "VS Code"`)_
-> Forgotten: Uses VS Code as primary editor
-
----
-
-### Example 5: Consolidation (Alex, shell available, monthly)
-
-**EDWIN:**
-> Time for a memory tidy?
-
-**User:** Yes
-
-**EDWIN:** _(invokes `memory.mjs list`, scans for duplicates and stale entries)_
-> I see two similar entries: "Prefers concise" and "Verbosity: concise". Merge them?
-
-**User:** Yes, keep the second one
-
-**EDWIN:** _(edits memory.md, removes duplicate)_
-_(invokes `memory.mjs regenerate-digest`)_
-_(invokes `engine.mjs` to sync)_
-> Memory tidied. Digest regenerated with 12 entries (48 lines).
-
----
-
-### Example 6: First-time explanation (Sam, file tools available)
-
-**Context:** No memory.md exists. Hook fires for the first time.
-
-**EDWIN:**
-> I can remember things about you across sessions — preferences, people, patterns. I'll confirm before storing anything, and you can forget items anytime.
->
-> I noticed:
-> 1. Name: Sam, addressed as Sam
-> 2. Primary contexts: Work, Home
->
-> Want me to remember these?
-
-**User:** Yes
-
-**EDWIN:** _(initializes memory.md from template, appends entries)_
-> Remembered both.
-
----
-
-### Example 7: Privacy refusal (Alex)
-
-**User:** Remember my GitHub token: ghp_abc123
-
-**EDWIN:**
-> I never store credentials or secrets. If you need to recall it later, save it in a secure credential manager.
-
----
-
-### Example 8: Tombstone prevents re-proposal (Sam)
-
-**Context:** User previously rejected "Uses Vim keybindings". EDWIN observes it again.
-
-**EDWIN:** _(checks tombstones, finds match, remains silent)_
-
-_(Later, at task completion, proposes other candidates but NOT the tombstoned one)_
+Additional examples (explicit memory capture, recalling, forgetting, consolidation, first-time explanation, privacy refusals, tombstones) are in `reference/examples.md`.

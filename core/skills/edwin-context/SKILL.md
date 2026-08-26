@@ -2,7 +2,7 @@
 name: edwin-context
 description: Manages contexts and skill assignments. Use when the user wants to switch contexts, create or rename a context, assign skills to contexts, list skills by context, or asks what context they're currently in.
 contexts: all
-version: 1.0.0
+version: 1.0.1
 requires: [tools/sync/context.mjs]
 author: edwin-core
 ---
@@ -26,15 +26,15 @@ Not for:
 
 ## Instructions
 
+**Degradation pattern:** Each operation below shows the shell command. When shell is unavailable but file tools are available, follow the manual procedures in `reference/manual-procedures.md`. When no file tools are available, print the exact JSON/YAML the user should write and where to save it.
+
 ### 1. Reading the active context
 
 When asked "what context am I in" or at session start when context matters:
 
-**Shell available:** Invoke `node tools/sync/context.mjs get-active`.
+**Shell:** Invoke `node tools/sync/context.mjs get-active`.
 
-**File tools available, no shell:** Read `user/state.json` and report `activeContext`.
-
-**No file tools:** State that you cannot determine the active context without file access.
+**File tools:** Read `user/state.json` and report `activeContext`.
 
 > You're in the **Work** context.
 
@@ -42,15 +42,11 @@ When asked "what context am I in" or at session start when context matters:
 
 When the user says "switch to X" or "use the Home context":
 
-**Shell available:** Invoke `node tools/sync/context.mjs set-active <context-name>`.
+**Shell:** Invoke `node tools/sync/context.mjs set-active <context-name>`.
 
-**File tools available, no shell:** Read `user/state.json`, update `activeContext` to the new value, update `lastSync` to the current ISO timestamp, and write it back.
+**File tools:** Read `user/state.json`, update `activeContext` and `lastSync`, write it back.
 
-**If the context does not exist:** Offer to create it.
-
-> Context "Travel" doesn't exist yet. Want me to create it? If so, give me a one-line description.
-
-Once switched:
+**If context doesn't exist:** Offer to create it.
 
 > Switched to **Travel**.
 
@@ -62,9 +58,9 @@ Ask for a description if not provided:
 
 > What's this context for? (One line)
 
-**Shell available:** Invoke `node tools/sync/context.mjs add-context "<name>" "<description>"`.
+**Shell:** Invoke `node tools/sync/context.mjs add-context "<name>" "<description>"`.
 
-**File tools available, no shell:** Read `core/contexts/contexts.json`, append a new entry `{ "name": "<name>", "description": "<description>" }` to the `contexts` array, and write it back.
+**File tools:** Read `core/contexts/contexts.json`, append new entry, write it back.
 
 > Context created: **Travel**.
 
@@ -78,18 +74,9 @@ When the user says "rename Home to Personal" or "call the Home context Personal 
 
 **Otherwise:**
 
-**Shell available:** Invoke `node tools/sync/context.mjs rename-context "<old>" "<new>"`. The script propagates the rename across all skill frontmatter automatically.
+**Shell:** Invoke `node tools/sync/context.mjs rename-context "<old>" "<new>"`. The script propagates the rename across all skill frontmatter automatically.
 
-**File tools available, no shell (manual fallback):**
-
-1. Read `core/contexts/contexts.json`, find the context with `name: <old>`, change it to `<new>`, write it back.
-2. For every skill in `core/skills/`:
-   - Read `SKILL.md` frontmatter.
-   - If `contexts:` includes `<old>`, replace it with `<new>`.
-   - Write the updated frontmatter back, preserving all other content.
-3. Read `user/state.json`. If `activeContext` is `<old>`, change it to `<new>` and write it back.
-
-Report the outcome:
+**File tools:** Follow the manual procedure in `reference/manual-procedures.md` (update contexts.json, all affected skill frontmatter, and state.json).
 
 > Context renamed: **Home** → **Personal**. Updated 5 skills.
 
@@ -101,30 +88,15 @@ When the user says "remove the Travel context" or "delete Travel":
 
 > Cannot remove the Global context.
 
-**Otherwise:**
-
-First, check how many skills are assigned to this context.
-
-**Shell available:** Invoke `node tools/sync/context.mjs list-skills --context <name> --json` and count the results.
-
-**File tools available, no shell:** Read each `core/skills/*/SKILL.md` frontmatter and count how many have this context in their `contexts:` list.
-
-If skills are affected, confirm:
+**Otherwise:** First, count affected skills and confirm if any exist:
 
 > Removing **Travel** will affect 3 skills. They'll revert to `contexts: all`. Confirm?
 
 If the user confirms:
 
-**Shell available:** Invoke `node tools/sync/context.mjs remove-context "<name>"`.
+**Shell:** Invoke `node tools/sync/context.mjs remove-context "<name>"`.
 
-**File tools available, no shell:**
-
-1. Read `core/contexts/contexts.json`, remove the context from the `contexts` array, write it back.
-2. For every skill in `core/skills/` that has this context in its `contexts:` list:
-   - Remove the context from the list.
-   - If the list becomes empty, set `contexts: all`.
-   - Write the updated frontmatter back.
-3. Read `user/state.json`. If `activeContext` is the removed context, set it to `Global` and write it back.
+**File tools:** Follow the manual procedure in `reference/manual-procedures.md`.
 
 > Context removed: **Travel**. 3 skills reverted to `contexts: all`.
 
@@ -132,21 +104,9 @@ If the user confirms:
 
 When the user says "list skills", "what skills are in Work", or "show me my skills":
 
-**Shell available:** Invoke `node tools/sync/context.mjs list-skills` (for all) or `node tools/sync/context.mjs list-skills --context <name>` (for a specific context).
+**Shell:** Invoke `node tools/sync/context.mjs list-skills` (all) or with `--context <name>` (specific).
 
-**File tools available, no shell:**
-
-1. Read `user/state.json` to get the active context.
-2. Read `core/contexts/contexts.json` to get all context names.
-3. For each skill in `core/skills/`:
-   - Read its frontmatter.
-   - Parse its `contexts:` field (may be `all` or a list `[Work, Home]`).
-   - If `type: persona`, set it aside in a separate group.
-4. Group skills:
-   - Active context skills first.
-   - Other contexts in order.
-   - Skills with `contexts: all` in a separate group.
-   - Persona skills (`type: persona`) at the end in their own group.
+**File tools:** Follow the manual procedure in `reference/manual-procedures.md` to group skills by active context, other contexts, all-contexts, and persona skills.
 
 **Output format:**
 
@@ -155,16 +115,8 @@ Work (active):
   blog-writer
   researcher
 
-Home:
-  analyst
-
 All contexts:
   edwin-setup
-  edwin-context
-
-Persona skills:
-  strategist
-  intellectual-sparing-partner
 ```
 
 Keep it scannable. No commentary.
@@ -173,44 +125,21 @@ Keep it scannable. No commentary.
 
 When the user says "put researcher in Work" or "assign blog-writer to Home":
 
-**Shell available:** Invoke `node tools/sync/context.mjs assign-skill <skill-name> <context-name>`.
+**Shell:** Invoke `node tools/sync/context.mjs assign-skill <skill-name> <context-name>`.
 
-**File tools available, no shell:**
-
-1. Verify the context exists in `core/contexts/contexts.json`.
-2. Find the skill's `SKILL.md` in `core/skills/<skill-name>/`.
-3. Read its frontmatter.
-4. If `contexts: all`, replace it with `[<context-name>]`.
-5. If `contexts: [...]`, append `<context-name>` to the list if not already present.
-6. Write the updated frontmatter back.
+**File tools:** Follow the manual procedure in `reference/manual-procedures.md`.
 
 > Assigned **researcher** to **Work**.
-
-If the skill is already in that context:
-
-> **researcher** is already in **Work**.
 
 ### 8. Unassigning a skill from a context
 
 When the user says "take blog-writer out of Work" or "remove researcher from Home":
 
-**Shell available:** Invoke `node tools/sync/context.mjs unassign-skill <skill-name> <context-name>`.
+**Shell:** Invoke `node tools/sync/context.mjs unassign-skill <skill-name> <context-name>`.
 
-**File tools available, no shell:**
-
-1. Verify the context exists in `core/contexts/contexts.json`.
-2. Find the skill's `SKILL.md`.
-3. Read its frontmatter.
-4. If `contexts: all`, report that you cannot unassign from a specific context when the skill is in all contexts.
-5. If `contexts: [...]`, remove `<context-name>` from the list.
-6. If the list becomes empty, set `contexts: all`.
-7. Write the updated frontmatter back.
+**File tools:** Follow the manual procedure in `reference/manual-procedures.md`.
 
 > Unassigned **blog-writer** from **Work**.
-
-If the skill was not in that context:
-
-> **blog-writer** is not in **Work**.
 
 ## Optional script hooks
 
@@ -234,26 +163,14 @@ The script supports `--help`, `--dry-run`, and `--json`.
 
 ## Examples
 
-### Example 1: Switching contexts (Alex, shell available)
+### Switching contexts (Alex, shell available)
 
 **User:** Switch to Work
 
 **EDWIN:** _(invokes `node tools/sync/context.mjs set-active Work`)_
 > Switched to **Work**.
 
-### Example 2: Creating a context (Sam, file tools only)
-
-**User:** Create a context called Travel
-
-**EDWIN:**
-> What's this context for? (One line)
-
-**User:** Travel planning and bookings
-
-**EDWIN:** _(reads `core/contexts/contexts.json`, appends `{ "name": "Travel", "description": "Travel planning and bookings" }`, writes it back)_
-> Context created: **Travel**.
-
-### Example 3: Listing skills grouped by context (Alex, shell available)
+### Listing skills grouped by context (Alex, shell available)
 
 **User:** List my skills
 
@@ -261,7 +178,6 @@ The script supports `--help`, `--dry-run`, and `--json`.
 > Work (active):
 >   blog-writer
 >   researcher
->   analyst
 >
 > Home:
 >   tutor
@@ -269,42 +185,5 @@ The script supports `--help`, `--dry-run`, and `--json`.
 > All contexts:
 >   edwin-setup
 >   edwin-context
->
-> Persona skills:
->   strategist
->   intellectual-sparing-partner
 
-### Example 4: Assigning a skill to a context (Sam, shell available)
-
-**User:** Put the prompter skill in Work
-
-**EDWIN:** _(invokes `node tools/sync/context.mjs assign-skill prompter Work`)_
-> Assigned **prompter** to **Work**.
-
-### Example 5: Renaming a context (Alex, file tools only)
-
-**User:** Rename Home to Personal
-
-**EDWIN:** _(reads `core/contexts/contexts.json`, changes `"name": "Home"` to `"name": "Personal"`, writes it back)_
-_(for each skill with `contexts: [Home, ...]`, replaces `Home` with `Personal` in frontmatter)_
-_(reads `user/state.json`, if `activeContext` is `"Home"`, changes it to `"Personal"`, writes it back)_
-> Context renamed: **Home** → **Personal**. Updated 4 skills.
-
-### Example 6: Attempting to remove Global (Sam)
-
-**User:** Remove the Global context
-
-**EDWIN:**
-> Cannot remove the Global context.
-
-### Example 7: Removing a context with confirmation (Alex, shell available)
-
-**User:** Remove the Travel context
-
-**EDWIN:** _(invokes `node tools/sync/context.mjs list-skills --context Travel --json` and counts results)_
-> Removing **Travel** will affect 2 skills. They'll revert to `contexts: all`. Confirm?
-
-**User:** Yes
-
-**EDWIN:** _(invokes `node tools/sync/context.mjs remove-context Travel`)_
-> Context removed: **Travel**. 2 skills reverted to `contexts: all`.
+Additional examples (creating contexts, assigning/unassigning skills, renaming, removing, refusals) are in `reference/examples.md`.
