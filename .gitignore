@@ -1,8 +1,17 @@
-# Private context
-docs/*
+# Machine-local user data — never committed, never synced, never exported.
+user/*
+!user/README.md
 
-# Claude
+# Generated artifacts
+dist/
+node_modules/
+
+# Claude harness working files
 .claude/*
 
 # MCP configuration with API keys
 .mcp.json
+
+# OS noise
+.DS_Store
+Thumbs.db

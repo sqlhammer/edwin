@@ -1,10 +1,10 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Syncs all skills from the edwin SKILLS directory to both .claude/SKILLS destinations.
+    Syncs all skills from the edwin core/skills directory to both .claude/SKILLS destinations.
 
 .DESCRIPTION
-    Copies all files from each skill subdirectory under SKILLS/ to:
+    Copies all files from each skill subdirectory under core/skills/ to:
       1. The global Claude Code skills directory (~/.claude/SKILLS)
       2. The local repo .claude/SKILLS directory (<repo-root>/.claude/SKILLS)
 
@@ -17,8 +17,9 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$RepoRoot   = Split-Path $PSScriptRoot -Parent
-$SkillsSource = Join-Path $RepoRoot "SKILLS"
+# tools/sync/ -> tools/ -> repo root
+$RepoRoot     = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$SkillsSource = Join-Path (Join-Path $RepoRoot "core") "skills"
 
 $Destinations = @(
     @{ Label = "Global (~/.claude/SKILLS)";    Path = Join-Path (Join-Path $HOME ".claude") "SKILLS" },
@@ -26,7 +27,7 @@ $Destinations = @(
 )
 
 if (-not (Test-Path $SkillsSource)) {
-    Write-Error "SKILLS source directory not found: $SkillsSource"
+    Write-Error "Skills source directory not found: $SkillsSource"
     exit 1
 }
 

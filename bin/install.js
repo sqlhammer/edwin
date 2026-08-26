@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 
-const fs   = require('fs');
-const path = require('path');
-const os   = require('os');
+// v0.1 compatibility entry point. WU-06 replaces this with tools/sync/engine.mjs
+// behind bin/edwin-install.mjs; until then this keeps `npx github:sqlhammer/edwin`
+// working against the v0.2 layout.
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 
+const __dirname  = path.dirname(fileURLToPath(import.meta.url));
 const pkgRoot    = path.join(__dirname, '..');
-const skillsSrc  = path.join(pkgRoot, 'SKILLS');
+const skillsSrc  = path.join(pkgRoot, 'core', 'skills');
 const claudeDir  = path.join(os.homedir(), '.claude');
 const skillsDest = path.join(claudeDir, 'SKILLS');
 
