@@ -1,24 +1,43 @@
 ---
 name: project-planner
-description: WBS decomposition into deliverables, work packages, and tasks. Use when the user needs to break down a project, plan execution, or structure work.
+description: Work Breakdown Structure decomposition into deliverables, work packages, and tasks. Use when the user says "plan this project", "break down this work", "how do I structure", or provides an ambiguous goal that needs decomposition into sequenced, actionable tasks with milestones.
+contexts: [Work]
+version: 1.0.0
+requires: []
+author: edwin-core
 ---
 
-# Project Planner Instructions
+# Project Planner
 
-### ROLE: Project Planner
+## Purpose
 
-Act as a disciplined project planner. Your job is to take an ambiguous goal and decompose it into a clear, actionable structure — from high-level deliverables down to individual tasks. Favour clarity and completeness over optimism.
+Take an ambiguous goal and decompose it into a clear, actionable structure — from high-level deliverables down to individual tasks. Favor clarity and completeness over optimism.
 
----
+## When to use
 
-### PHASE 1: CHARTER
+- "Plan this project" / "Break down this work" / "How do I structure X"
+- User provides a goal but no execution plan
+- "What are the deliverables" / "What's the critical path"
 
-1. **Define the objective.** What does "done" look like? Get a clear success statement.
-2. **Identify constraints.** Timeline, budget, team size, dependencies, technology choices, regulatory requirements.
-3. **Stakeholders.** Who needs to be consulted, informed, or has approval authority?
-4. **Confirm scope.** Restate the project boundary — what's in and what's explicitly out.
+Not for:
+- Brainstorming options (use `strategist`)
+- Workflow documentation (use `edwin-workflow-analyzer`)
+- Task tracking (outside EDWIN's scope)
 
-**Output:**
+## Instructions
+
+### 1. Charter
+
+Define the objective:
+
+> What does "done" look like? What's the clear success statement?
+
+Identify constraints: timeline, budget, team size, dependencies, technology choices, regulatory requirements.
+
+Identify stakeholders: who needs to be consulted, informed, or has approval authority?
+
+Confirm scope by restating the project boundary — what's in and what's explicitly out:
+
 ```
 **Objective:** [Clear success statement]
 **Constraints:** [Key limitations]
@@ -26,9 +45,9 @@ Act as a disciplined project planner. Your job is to take an ambiguous goal and 
 **Scope — Out:** [What's excluded]
 ```
 
----
+Wait for confirmation.
 
-### PHASE 2: DECOMPOSE (WBS)
+### 2. Decompose (WBS)
 
 Break the project into a Work Breakdown Structure:
 
@@ -36,28 +55,26 @@ Break the project into a Work Breakdown Structure:
 2. **Work Packages** — Groupings of related work within each deliverable (Level 2)
 3. **Tasks** — Individual actions within each work package (Level 3)
 
-**Rules:**
-- Every task should be concrete and completable by one person/team.
-- Use verb-noun format for tasks: "Design database schema", "Write API integration tests".
-- If a task feels too large to estimate, decompose it further.
-- Flag tasks with external dependencies or high uncertainty.
+Rules:
+- Every task should be concrete and completable by one person/team
+- Use verb-noun format for tasks: "Design database schema", "Write API integration tests"
+- If a task feels too large to estimate, decompose it further
+- Flag tasks with external dependencies or high uncertainty
 
-**Output:** Indented hierarchical list or table.
+Output: Indented hierarchical list or table.
 
----
+### 3. Sequence
 
-### PHASE 3: SEQUENCE
+Identify dependencies. Mark as:
+- **FS** (Finish-to-Start) — A must finish before B starts
+- **FF** (Finish-to-Finish) — A and B must finish together
+- **Parallel** — No dependency, can run concurrently
 
-1. **Dependencies.** Identify which tasks block others. Mark as:
-   - **FS** (Finish-to-Start) — A must finish before B starts
-   - **FF** (Finish-to-Finish) — A and B must finish together
-   - **Parallel** — No dependency, can run concurrently
-2. **Critical path.** Identify the longest chain of dependent tasks — this determines minimum project duration.
-3. **Milestones.** Define 3-5 checkpoints where progress can be verified.
+Identify the **critical path** — the longest chain of dependent tasks — this determines minimum project duration.
 
----
+Define 3-5 milestones where progress can be verified.
 
-### PHASE 4: PACKAGE
+### 4. Package
 
 Deliver the final plan in a structured format:
 
@@ -87,15 +104,102 @@ Deliver the final plan in a structured format:
 
 Estimates are optional — include them if the user provides enough context to estimate meaningfully. Do not fabricate time estimates.
 
----
+## Degradation
 
-### Technical Guidance
+| Capability | Available | Unavailable |
+|------------|-----------|-------------|
+| File tools | Scan repository for technical context | Work from user-provided context only |
+| Web search | Research similar project structures or validate assumptions | Work from general knowledge |
 
-- ALWAYS use the AskUserQuestion tool, when possible, to ask the user questions.
-
----
+No scripts required. This skill is pure instruction.
 
 ## Examples
 
-/project-planner I need to build a customer onboarding portal
-/project-planner
+### Example 1: Customer onboarding portal (Alex)
+
+**User:** Plan a project to build a customer onboarding portal.
+
+**EDWIN:**
+> What does "done" look like? What's the clear success statement?
+
+**User:** New customers can sign up, verify email, complete a profile, and access their dashboard. No payment yet.
+
+**EDWIN:**
+> **Objective:** New customers can self-serve through signup, email verification, profile completion, and dashboard access.
+> **Constraints:** Timeline? Team size? Tech stack?
+
+**User:** 6 weeks. 2 engineers, 1 designer. Rails backend, React frontend.
+
+**EDWIN:**
+> **Objective:** Self-serve onboarding portal (signup → email verification → profile → dashboard access)
+> **Constraints:** 6 weeks, 2 engineers, 1 designer, Rails + React
+> **Scope — In:** Signup, email verification, profile form, dashboard landing page
+> **Scope — Out:** Payment integration, admin user management, analytics dashboard
+>
+> Confirm?
+
+**User:** Confirmed.
+
+**EDWIN:**
+> ## Project Plan: Customer Onboarding Portal
+>
+> ### Milestones
+> | # | Milestone | Target | Depends On |
+> |---|-----------|--------|------------|
+> | 1 | Signup + email flow functional | Week 2 | Backend + frontend work packages 1.1, 1.2 |
+> | 2 | Profile creation complete | Week 4 | Work packages 2.1, 2.2 |
+> | 3 | Dashboard access live | Week 5 | Work package 3.1 |
+> | 4 | QA + polish complete | Week 6 | All prior milestones |
+>
+> ### Work Breakdown
+> #### Deliverable 1: Signup & Email Verification
+> **Work Package 1.1: Backend**
+> - [ ] Task 1.1.1 — Design user schema (users table, auth fields) — 1 day — Backend Eng
+> - [ ] Task 1.1.2 — Build signup API endpoint — 2 days — Backend Eng
+> - [ ] Task 1.1.3 — Implement email verification token flow — 2 days — Backend Eng
+> - [ ] Task 1.1.4 — Write integration tests for signup/verification — 1 day — Backend Eng
+>
+> **Work Package 1.2: Frontend**
+> - [ ] Task 1.2.1 — Design signup form UI (Figma) — 2 days — Designer
+> - [ ] Task 1.2.2 — Build signup form component — 2 days — Frontend Eng
+> - [ ] Task 1.2.3 — Build email verification landing page — 1 day — Frontend Eng
+>
+> #### Deliverable 2: Profile Creation
+> **Work Package 2.1: Backend**
+> - [ ] Task 2.1.1 — Extend user schema for profile fields — 1 day — Backend Eng
+> - [ ] Task 2.1.2 — Build profile update API endpoint — 2 days — Backend Eng
+> - [ ] Task 2.1.3 — Write tests for profile updates — 1 day — Backend Eng
+>
+> **Work Package 2.2: Frontend**
+> - [ ] Task 2.2.1 — Design profile form UI — 2 days — Designer
+> - [ ] Task 2.2.2 — Build profile form component — 2 days — Frontend Eng
+> - [ ] Task 2.2.3 — Wire profile form to backend API — 1 day — Frontend Eng
+>
+> #### Deliverable 3: Dashboard Access
+> **Work Package 3.1: Frontend**
+> - [ ] Task 3.1.1 — Design dashboard landing page — 2 days — Designer
+> - [ ] Task 3.1.2 — Build dashboard component — 2 days — Frontend Eng
+> - [ ] Task 3.1.3 — Implement auth-gated routing — 1 day — Frontend Eng
+>
+> #### Deliverable 4: QA & Polish
+> **Work Package 4.1: Testing & Refinement**
+> - [ ] Task 4.1.1 — End-to-end manual QA pass — 2 days — All
+> - [ ] Task 4.1.2 — Fix critical bugs — 2 days — Engineers
+> - [ ] Task 4.1.3 — UI polish (spacing, error messages, loading states) — 1 day — Designer + Frontend Eng
+>
+> ### Dependencies & Critical Path
+> - **Critical path:** 1.1.1 → 1.1.2 → 1.2.2 → 2.1.2 → 2.2.3 → 3.1.2 → 4.1.2 (23 days)
+> - Designer work (1.2.1, 2.2.1, 3.1.1) can run in parallel with backend tasks
+> - QA (4.1.1) blocks final polish (4.1.3)
+>
+> ### Risks & Assumptions
+> - **Risk:** Email deliverability issues may surface late (no SMTP testing in scope). **Mitigation:** Test with SendGrid sandbox in week 1.
+> - **Assumption:** No complex profile validation rules beyond required fields.
+> - **Assumption:** Auth is handled by existing Rails session logic (no OAuth/SSO in scope).
+
+### Example 2: No context available (Sam)
+
+**User:** Plan a project to migrate our infrastructure to Kubernetes.
+
+**EDWIN:**
+> What does "done" look like? What's in scope — all services, or a subset? What's the timeline and team size? What are you migrating from?

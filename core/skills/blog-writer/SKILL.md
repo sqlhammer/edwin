@@ -1,42 +1,53 @@
 ---
 name: blog-writer
-description: Research-backed blog post writer and editor. Searches the Obsidian vault for related notes, selects between Narrative and Standard style guides (with confirmation), extracts leadership insights through targeted questions, recommends and optionally generates images, and writes drafts directly to the vault. Also revises existing posts.
+description: Research-backed blog post drafting and revision. Use when the user says "write a blog post", "draft a post about", "revise this blog", or wants to create or edit long-form content with research, style guidance, leadership positioning, and image recommendations.
+contexts: all
+version: 1.0.0
+requires: [web-search]
+author: edwin-core
 ---
 
 # Blog Writer
 
-You are Derik Hammer's personal blog editor — part researcher, part ghostwriter, part editorial director. Your output is publication-ready content that positions Derik as a senior technical leader who thinks in systems and leads for outcomes.
+## Purpose
 
-**Vault location:** `C:\repos\notes\Notes`
-**Blog drafts location:** `C:\repos\notes\Notes\Blog\Drafts\`
+Draft and revise research-backed blog posts with style guidance, leadership positioning, and image recommendations. Enforces correctness over creativity — every factual claim requires a source.
 
----
+## When to use
 
-## GOVERNING CONSTRAINTS
+- "Write a blog post about X" / "Draft a post on Y"
+- "Revise this blog post" / "Improve my draft"
+- User wants long-form content (500-2000+ words) with research backing
+
+Not for:
+- Social media posts (use `x-ghostwriter`)
+- Quick summaries (use `briefing`)
+- Technical documentation (different format)
+
+## Instructions
+
+### Governing constraints
 
 These override everything else, in order:
 
-1. **Correctness first.** Every factual claim requires a source: an Obsidian note path, a URL, or an explicit flag of "Based on general knowledge — unverified." No statistics or specific numbers without a named source. If a claim cannot be verified, do not include it — flag the gap and ask Derik to fill it.
-2. **No fabrication.** Do not invent experiences, outcomes, or quotes Derik has not confirmed.
+1. **Correctness first.** Every factual claim requires a source: a file path, a URL, or an explicit flag of "Based on general knowledge — unverified." No statistics or specific numbers without a named source. If a claim cannot be verified, do not include it — flag the gap and ask the user to fill it.
+2. **No fabrication.** Do not invent experiences, outcomes, or quotes the user has not confirmed.
 3. **No hype.** Phrases like "revolutionary," "game-changing," "the future of," or "transforming everything" are banned.
 4. **No confirmation, no draft.** Do not write prose until both style and leadership inputs are confirmed.
 
----
-
-## OPERATING MODES
+### Operating modes
 
 Detect mode from the invocation:
-
-- `/blog-writer [topic]` → **NEW POST mode**
-- `/blog-writer revise [file path or description]` → **REVISION mode**
+- User provides a topic → **NEW POST mode**
+- User says "revise" or provides an existing draft → **REVISION mode**
 
 ---
 
 ## NEW POST MODE
 
-### PHASE 1: ORIENT
+### 1. Orient
 
-Confirm the topic (restate your understanding if provided in args), then present the following defaults as a ready-to-confirm block. Derik can reply "confirmed" to accept all, or name only the fields he wants to change.
+Confirm the topic (restate your understanding if provided in args), then present the following defaults as a ready-to-confirm block. The user can reply "confirmed" to accept all, or name only the fields they want to change.
 
 ```
 Topic:    [restate topic]
@@ -45,39 +56,35 @@ Platform: Personal blog                  ← change?
 Length:   Standard (~1,000 words)        ← change? (Short ~500 / Long ~2,000+)
 ```
 
-**Wait for confirmation before Phase 2.**
+Wait for confirmation before Phase 2.
 
----
-
-### PHASE 2: RESEARCH
+### 2. Research
 
 Run both in parallel:
 
-**1. Vault search**
-Search `C:\repos\notes\Notes` for notes related to the topic. Use Glob and Grep to find relevant files. Read any that are relevant. Report:
-- Files found and how each relates to the topic
-- Key claims or facts from those notes (with file path citations)
-- If nothing relevant exists, state that clearly — do not pretend.
+**Vault search (if applicable):**
+- Read `user/config.json` for `notesPath` (Obsidian vault or notes directory)
+- If present, search that directory for notes related to the topic using file tools
+- Report: files found, how each relates to the topic, key claims or facts with file path citations
+- If no `notesPath` or no relevant files, state that clearly
 
-**2. Web research**
-If the topic involves facts, data, trends, technical claims, or industry context, use WebSearch to find current, credible sources. For each fact:
+**Web research:**
+If the topic involves facts, data, trends, technical claims, or industry context, use web search to find current, credible sources. For each fact:
 - Cite the source (URL)
 - Assign a confidence level: **High** (multiple credible sources agree) / **Medium** (limited sources or some ambiguity) / **Low** (single source, indirect, or significant uncertainty)
 
 Output a **Research Summary:**
 
 ```
-**Vault Notes Found:** [list with file paths, or "None"]
+**Notes Found:** [list with file paths, or "None" / "No notes directory configured"]
 **Web Sources:** [list with credibility notes]
 **Verified Facts to Use:** [list with confidence levels]
-**Gaps Requiring Derik's Input:** [facts you could not verify — do not include these in the draft without Derik's confirmation]
+**Gaps Requiring User Input:** [facts you could not verify — do not include these in the draft without user confirmation]
 ```
 
----
+### 3. Leadership extraction
 
-### PHASE 3: LEADERSHIP EXTRACTION
-
-Ask Derik 2–4 targeted questions to surface outcome-oriented and systems-thinking content. Select only the questions most relevant to the topic — do not present the full bank. Present as a numbered list and wait for answers.
+Ask the user 2-4 targeted questions to surface outcome-oriented and systems-thinking content. Select only the questions most relevant to the topic — do not present the full bank. Present as a numbered list and wait for answers.
 
 **Outcomes bank:**
 - What specific result did this produce? (metrics, before/after comparisons, time saved, velocity gained)
@@ -95,13 +102,11 @@ Ask Derik 2–4 targeted questions to surface outcome-oriented and systems-think
 - What's the honest caveat a practitioner needs to know before trying this?
 - What would you do differently now?
 
-**Wait for answers before Phase 4.**
+Wait for answers before Phase 4.
 
----
+### 4. Style selection
 
-### PHASE 4: STYLE SELECTION
-
-Analyze the topic, audience, and Derik's Phase 3 answers. Recommend one style:
+Read `reference/writing-styles.md` for detailed style guide definitions. Analyze the topic, audience, and user's Phase 3 answers. Recommend one style:
 
 **Standard Style** — Best for: technical deep-dives, engineering leadership, process/systems posts, how-to guides, thought leadership on tooling or methodology. Tone: authoritative mentor, systems language, Anchor Lead structure.
 
@@ -111,17 +116,15 @@ Output your recommendation:
 
 ```
 **Recommended Style:** [Standard / Narrative]
-**Reason:** [2–3 sentences explaining why this style fits the topic, audience, and content]
+**Reason:** [2-3 sentences explaining why this style fits the topic, audience, and content]
 **Alternative:** [One sentence on when the other style would be the stronger choice]
 ```
 
-**Wait for explicit confirmation before writing.** If Derik overrides your recommendation, apply the chosen style without comment.
+Wait for explicit confirmation before writing. If the user overrides your recommendation, apply the chosen style without comment.
 
----
+### 5. Draft
 
-### PHASE 5: DRAFT
-
-Write the post according to the confirmed style guide. Apply the full syntactic rules, lexicon, and structural flow defined in the **STYLE GUIDES** section below.
+Write the post according to the confirmed style guide (see `reference/writing-styles.md` for full syntactic rules, lexicon, and structural flow).
 
 **Image recommendations** — embed inline wherever an image would materially aid comprehension or engagement:
 
@@ -134,27 +137,24 @@ Style: [e.g., clean technical diagram, photorealistic, abstract/conceptual, anno
 [/IMAGE RECOMMENDATION]
 ```
 
-A standard 1,000-word post warrants 1–2 recommendations. Long-form may have 3. Do not cluster them.
+A standard 1,000-word post warrants 1-2 recommendations. Long-form may have 3. Do not cluster them.
 
 After the full draft, attempt to generate recommended images using available tools. If image generation is unavailable in this session, output a standalone **Image Generation Prompts** section with one detailed prompt per recommendation, ready to paste into an image generation tool.
 
----
+### 6. File output
 
-### PHASE 6: FILE OUTPUT
-
-Write the draft to the vault. Create directories if they do not exist.
+**If `user/config.json` contains `blogDraftsPath`:**
+Write the draft to that location. Create directories if they do not exist.
 
 **Folder structure:**
 ```
-C:\repos\notes\Notes\
-  Blog\
-    Drafts\
-      YYYY-MM\
-        {post-slug}\
-          {post-slug}.md
+[blogDraftsPath]/
+  YYYY-MM/
+    {post-slug}/
+      {post-slug}.md
 ```
 
-- Each post gets its own folder named `{post-slug}` — images for the post live alongside the draft in this folder.
+- Each post gets its own folder named `{post-slug}` — images for the post live alongside the draft in this folder
 - `post-slug` = kebab-case title (e.g., `engineering-teams-in-an-ai-world`)
 - `YYYY-MM` = current year and month
 
@@ -167,29 +167,32 @@ status: draft
 style: [standard / narrative]
 audience: [target audience]
 platform: [target platform]
-tags: [relevant tags derived from topic and vault notes]
+tags: [relevant tags derived from topic and notes]
 sources:
   - [source 1 — format: "Title — URL or file path"]
   - [source 2]
 ---
 ```
 
-After writing, confirm the full file path and provide a one-sentence summary of what was written.
+**If no `blogDraftsPath` configured:**
+Print the draft with frontmatter and offer to save it to `user/config.json` for future sessions.
+
+After writing or printing, confirm the full file path (if written) and provide a one-sentence summary of what was written.
 
 ---
 
 ## REVISION MODE
 
-Invoked as: `/blog-writer revise [file path or description of post]`
+Invoked when the user says "revise" or provides an existing draft.
 
-### PHASE 1: INTAKE
+### 1. Intake
 
-Read the existing post. If a file path was given, read it directly. If a description was given, search the vault for the matching file.
+Read the existing post. If a file path was given, read it directly. If a description was given, search the configured notes directory for the matching file. If the user provided the draft inline, work from that.
 
 Output a **Diagnostic Summary:**
 
 ```
-**File:** [path]
+**File:** [path, or "provided inline"]
 **Current Style:** [Standard / Narrative / Mixed / Unclear]
 **Approximate Word Count:** [estimate]
 **Strengths:** [what is working — be specific]
@@ -202,89 +205,101 @@ Output a **Diagnostic Summary:**
   - Image opportunities not taken
 ```
 
----
-
-### PHASE 2: REVISION BRIEF
+### 2. Revision brief
 
 Propose a revision plan specifying:
-
 - What will change and why
 - Whether the style will be preserved or adjusted (with reasoning)
 - Any leadership questions you need answered to strengthen the piece
 
-**Wait for approval before making changes.**
+Wait for approval before making changes.
 
----
-
-### PHASE 3: REVISE
+### 3. Revise
 
 Apply the approved changes. All governing constraints from New Post mode apply:
-
 - Correctness first — flag or remove any unverified claims before strengthening prose
 - Embed image recommendations where they add value
-- Strengthen systems thinking and outcome framing wherever Derik's answers allow
+- Strengthen systems thinking and outcome framing wherever the user's answers allow
 
+**If working with a file:**
 Write the revised file in the same folder as the original with a version suffix: `{post-slug}-v2.md`. Increment if v2 already exists. **Never overwrite the original.**
 
-After writing, confirm the new file path and provide a bulleted list of the key changes made.
+**If working inline:**
+Output the revised draft in full.
+
+After writing, confirm the new file path (if written) and provide a bulleted list of the key changes made.
 
 ---
 
-## STYLE GUIDES
+## Optional script hooks
 
-### Standard Style Guide
-
-*Source: `C:\repos\notes\Notes\Standard Writing Style Guide.md`*
-
-**Voice:** Authoritative mentor. Technically precise. Philosophically grounded. Calm, objective — the friction-reducer in the room.
-
-**Syntactic rules:**
-- **Anchor Lead:** Start paragraphs or sections with a short, declarative sentence that establishes a hard truth. One punch. No wind-up.
-- **Logical Layering:** Follow the anchor with complex clauses dissecting the *why* or the *how*. Use semicolons to connect related sub-points without breaking momentum. Never use em-dashes.
-- **Rhythmic Reset:** After a long explanatory sentence, use a punchy fragment or short sentence (under 7 words) to drive the point home.
-- **Literal Precision:** Active verbs and concrete nouns. No passive voice — the actor in every technical or managerial process must be named.
-
-**Lexicon:**
-- Systems language: friction, alignment, cadence, constraints, velocity, feedback loops, baseline, autonomy
-- Intellectual verbs: codify, dissect, internalize, facilitate, navigate, manifest
-- Directional nouns: clarity, intent, burden, objective, transparency
-
-**Structural flow:** Thematic evolution, not lists. Introduce ideas as problems of friction or ambiguity. Explore through system logic. Resolve through alignment. Use white space and subheaders to signal shifts. Eliminate "firstly," "secondly," "to summarize" — the logic guides the reader.
+None. This skill uses file tools and web search directly.
 
 ---
 
-### Narrative Style Guide
+## Degradation
 
-*Source: `C:\repos\notes\Notes\Narrative Writing Style Guide.md`*
-
-**Voice:** Visceral and atmospheric. Focuses on internal friction of a protagonist facing external constraints. Intimate perspective — lingers on physical sensations of movement or thought.
-
-**Syntactic rules:**
-- **Sensory Staccato:** Short, punchy sentences for physical actions or immediate sensory inputs (smell, touch, sound).
-- **Internal Monologue via Observation:** Show character growth through how the protagonist perceives surroundings — never explicit emotional labeling.
-- **Constraint-Driven Pacing:** Slow the prose when a character struggles. Use longer, more labored sentences to mirror the effort of the task.
-- **No Bifurcated Setup:** Never use "not only... but also." State facts of the scene directly.
-
-**Lexicon:**
-- Visceral nouns: grime, static, weight, pulse, friction, shadow, marrow
-- Action verbs: traced, strained, etched, coiled, snapped, tethered
-- Atmospheric adjectives: stale, sharp, heavy, hollow, jagged
-
-**Structural flow:** Path of Resistance. Scenes begin with a physical or mental barrier. Progression is marked by attempts to navigate through it. Transitions via sensory shifts — a change in light, a new sound, a physical realization — never "then he went to" or "next, this happened."
+| Capability | Available | Unavailable |
+|------------|-----------|-------------|
+| File tools | Read user's notes, write drafts to configured directory | Print draft for user to save manually; ask for inline note excerpts |
+| Web search | Research facts, trends, and current data | Work from user-provided sources and general knowledge; flag all findings as unverified |
+| Image generation | Generate recommended images inline | Provide detailed prompts for manual generation |
 
 ---
 
-### Technical Guidance
+## Examples
 
-- ALWAYS use the AskUserQuestion tool, when possible, to ask the user questions.
+### Example 1: New post (Alex, all tools available)
 
----
+**User:** Write a blog post about adopting AI code review in engineering teams.
 
-## WHAT THIS SKILL DOES NOT DO
+**EDWIN:**
+> Topic: Adopting AI code review in engineering teams
+> Audience: Engineering Managers and CTOs  ← change?
+> Platform: Personal blog                  ← change?
+> Length:   Standard (~1,000 words)        ← change?
 
-- Does not write a single word of draft before style is confirmed.
-- Does not include unverified facts, statistics, or claims — ever.
-- Does not invent experiences or outcomes Derik has not confirmed.
-- Does not overwrite existing files — always versions revisions.
-- Does not save session content to memory.
-- Does not pad responses with summaries of what it just did — confirm the file path and move on.
+**User:** Confirmed.
+
+**EDWIN:** _(searches configured notes directory and web)_
+> **Notes Found:** None (no notes directory configured)
+> **Web Sources:**
+>   - GitHub Copilot adoption study (Microsoft, 2023) — credible
+>   - Anthropic Claude code review case studies — credible
+> **Verified Facts to Use:**
+>   - 55% of developers report faster code review with AI assistance (Confidence: High — Microsoft study + industry surveys)
+>   - AI catches style/syntax issues 2-3x faster than manual review (Confidence: Medium — limited sample sizes)
+> **Gaps Requiring User Input:** No data on human-AI disagreement rates or false positive handling.
+>
+> **Leadership questions:**
+> 1. Have you introduced AI code review to a team? What resistance did you encounter?
+> 2. What metrics did you use to measure success — review time, bug catch rate, team satisfaction?
+> 3. What's the honest caveat a leader needs to know before rolling this out?
+
+_(User answers. EDWIN recommends Standard Style, waits for confirmation, then drafts the post and writes it to the configured directory.)_
+
+### Example 2: Revision (Sam, file provided)
+
+**User:** Revise this blog post. _(provides file path)_
+
+**EDWIN:** _(reads the file)_
+> **File:** `/path/to/post.md`
+> **Current Style:** Standard
+> **Approximate Word Count:** 800
+> **Strengths:** Clear structure, good systems thinking angle
+> **Issues Identified:**
+>   - Two uncited statistics (lines 34, 56)
+>   - Weak outcome framing — says "teams move faster" but no baseline or metric
+>   - No image recommendations
+>
+> **Revision plan:** Verify or remove uncited stats, add outcome metrics (ask user for data), recommend 1-2 images. Preserve Standard Style. Approve?
+
+**User:** Approved. For metrics: review time dropped from 4 hours to 1.5 hours on average.
+
+**EDWIN:** _(revises, writes to `post-v2.md`)_
+> Revised: `/path/to/post-v2.md`
+>
+> **Changes:**
+> - Removed unverified stat on line 34, added qualifier on line 56
+> - Added outcome: "review time dropped from 4 hours to 1.5 hours on average"
+> - Recommended 2 images: one process diagram, one before/after comparison chart

@@ -66,8 +66,26 @@ new skills from conversation, and tooling for installation, validation, scheduli
   task has been done twice; tombstones a decline and honours the opt-out silently. (WU-09)
 - `core/templates/workflow-breakdown.md` and its worked example — the breakdown format and the documented
   handoff contract the skill creator consumes. (WU-09)
+- `core/skills/blog-writer/reference/writing-styles.md` — the Standard and Narrative style guides, split out
+  of the skill body so the skill itself stays about the workflow. (WU-04)
 
 ### Changed
+- All 13 v0.1 skills rewritten to the v0.2 format: frontmatter (`name`, `description`, `contexts`,
+  `version`, `requires`, `author`) plus the required body sections, including a `## Degradation` ladder that
+  none of them previously had. Their methodologies are preserved; the structure around them is new. (WU-04)
+- Every skill `description` rewritten for trigger accuracy — it is the only text the harness sees when
+  deciding whether to route to a skill, and v0.1's single terse clauses were not enough to route on. (WU-04)
+- Skills assigned to contexts: `analyst`, `briefing`, `executive-coach`, `project-planner`, `strategist`,
+  and `x-ghostwriter` to `Work`; the rest available in every context. (WU-04)
+- `publish-edwin-skills` renamed to `edwin-publish` and generalised — it reads `publish.remote` and
+  `publish.branch` from `user/config.json`, asks when they are unset, and offers to save the answer. It no
+  longer assumes any particular repository owner. (WU-04)
+- `blog-writer`, `executive-coach`, and `x-ghostwriter` de-personalised. They previously named one
+  individual, read that person's files by absolute Windows path, and fetched their website. They now take
+  those inputs from `user/config.json` or ask for them, and degrade to working from what the user pastes
+  into the conversation. (WU-04)
+- `blog-image-producer` given v0.2 frontmatter and body sections. It had none in v0.1 — the sync engine
+  reported it as `[Migration needed]` in the skill index. Its image prompt is preserved verbatim. (WU-04)
 - v0.1's flat `SKILLS/` folder moved to `core/skills/`; the npx installer and PowerShell sync script were
   patched to the new paths so v0.1 installation keeps working until the WU-06 sync engine replaces them. (WU-01)
 - `.gitignore` now excludes `user/` (except its README) and `dist/`, and no longer excludes `docs/` —
