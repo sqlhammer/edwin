@@ -1,0 +1,36 @@
+{
+  "$schema": "Portal instruction character limits",
+  "_notice": "Limits marked 'verified: true' are sourced from official documentation. Limits with 'limit: null' are UNKNOWN — bundles are generated but not truncated or failed against made-up thresholds. When a portal rejects a bundle, update this file with the actual limit and regenerate.",
+  "portals": {
+    "claude": {
+      "name": "Claude Projects (claude.ai)",
+      "instructionLimit": null,
+      "limitType": "characters",
+      "verified": false,
+      "verifiedOn": "2026-08-26",
+      "source": "https://support.claude.com/en/articles/9517075-what-are-projects",
+      "notes": "No documented character limit found in official Claude Projects documentation. Checked support articles and platform docs — no numeric limit stated. Portal limit UNKNOWN — bundle generated but not truncated. Check it fits before relying on it.",
+      "supportsKnowledgeFiles": true
+    },
+    "gemini": {
+      "name": "Gemini Gems",
+      "instructionLimit": null,
+      "limitType": "characters",
+      "verified": false,
+      "verifiedOn": "2026-08-26",
+      "source": "https://support.google.com/gemini/answer/13594961",
+      "notes": "No documented character limit found for Gemini Gems custom instructions. Checked Google support docs and Vertex AI references — no numeric limit stated. Portal limit UNKNOWN — bundle generated but not truncated. Check it fits before relying on it.",
+      "supportsKnowledgeFiles": false
+    },
+    "copilot": {
+      "name": "Microsoft Copilot Declarative Agents",
+      "instructionLimit": 8000,
+      "limitType": "characters",
+      "verified": true,
+      "verifiedOn": "2026-08-26",
+      "source": "https://learn.microsoft.com/en-us/microsoft-365-copilot/extensibility/declarative-agent-manifest",
+      "notes": "VERIFIED: Microsoft 365 Copilot declarative agent manifest schema 1.6+ specifies that the 'instructions' field must be '8,000 characters or less'. This is a hard limit enforced by the platform.",
+      "supportsKnowledgeFiles": false
+    }
+  }
+}
