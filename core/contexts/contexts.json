@@ -9,5 +9,19 @@
     "export": "A context is the unit of export for web portals: tools/bundle/build-bundle.mjs takes --context <name> and flattens the persona plus that context's skills into a portal-shaped bundle. Global exports everything. Contexts are therefore also a size-management tool: a user with too much to fit inside claude.ai's instruction limit splits their work into narrower contexts and exports those.",
     "semantics": "All skills remain available in every context. The active context biases navigation, suggestions, and ambiguity resolution — it never restricts access. Global applies no bias."
   },
-  "contexts": []
+  "contexts": [
+    {
+      "name": "Global",
+      "builtin": true,
+      "description": "Everything at once — no bias toward any one area"
+    },
+    {
+      "name": "Work",
+      "description": "Professional projects, client work, and business tasks"
+    },
+    {
+      "name": "Home",
+      "description": "Personal projects, learning, and household matters"
+    }
+  ]
 }
