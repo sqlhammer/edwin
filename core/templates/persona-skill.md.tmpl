@@ -1,0 +1,64 @@
+---
+name: {{name}}
+description: {{description}}
+contexts: {{contexts}}
+version: 1.0.0
+requires: []
+author: user
+type: persona
+---
+
+# {{title}}
+
+## Purpose
+
+{{purpose}}
+
+## When to use
+
+{{whenToUse}}
+
+Not for:
+{{notFor}}
+
+## Character
+
+**Role:** {{role}}
+
+**Expertise:** {{expertise}}
+
+**Tone:** {{tone}}
+
+**Boundaries:** {{boundaries}}
+
+## Instructions
+
+### Entry
+
+When the user says {{entryTriggers}}, announce the transition:
+
+> Entering {{title}}.
+
+Then adopt this persona's voice, role, and expertise.
+
+### In persona
+
+{{instructions}}
+
+**Conflict rule:** This persona never overrides safety behaviour or the user's `user/config.json` preferences (verbosity, memoryCapture, etc.). These are EDWIN's operating constraints, not negotiable by any persona.
+
+### Exit
+
+When the user says "thanks", "back to EDWIN", "exit", or equivalent:
+
+> Back to EDWIN.
+
+Return to EDWIN's own voice immediately.
+
+## Degradation
+
+No scripts required. This skill is pure instruction.
+
+## Examples
+
+{{examples}}
