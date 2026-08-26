@@ -109,7 +109,7 @@ npm run bundle       # Generate web-portal bundles
 npm run build-plugin # Rebuild skills/ from core/skills/ for plugin packaging
 npm run memory       # Memory helper (record, recall, forget, digest)
 npm run brags        # Wins helper (log, list, generate a brag document)
-npm test             # End-to-end suite (43 checks, temp directories only)
+npm test             # End-to-end suite (47 checks, temp directories only)
 ```
 
 ## Definition of Done
@@ -127,7 +127,7 @@ Discovered gaps outside scope are written up in the completion report, not fixed
 
 ## Testing
 
-- **End-to-end suite:** `npm test` must exit 0. It runs 43 checks against temp directories and a temp
+- **End-to-end suite:** `npm test` must exit 0. It runs 47 checks against temp directories and a temp
   `HOME`, and fails if the real `user/` directory changed during the run. A new tool belongs in it.
 - **Testability is part of the tool.** Anything that writes under `user/` takes `--root <path>`; anything
   that reads tracked config takes an override for it (`--limits` on the bundler). A tool that can only be
@@ -141,6 +141,12 @@ Discovered gaps outside scope are written up in the completion report, not fixed
   no stub, so a check cannot pass because the installer broke for some other reason. Note that mutating an
   installer to prove a consent check goes red would make the suite install software for real — verify by
   removing the stub instead.
+- **Cover the success path, not only the refusals.** Every installer check once tested a path that *refuses* —
+  `--help`, argument validation, `--skip-deps`, the no-console decline — and all of them passed against an
+  installer that could not complete a single install, because nothing ever ran `git clone`. If a tool's whole
+  point is to do something, one check must make it do that thing end to end. Use a local `file://` fixture
+  built from the tracked working tree rather than the network, and build it from the working tree rather than
+  `git clone --bare`, which ships `HEAD` and would test the last commit instead of your change.
 - **Doctor validation:** `npm run doctor` must pass.
 - **Idempotency:** Run `npm run sync` or `npm run build-plugin` twice — second run should report no changes.
 - **Cross-platform:** Scripts must run on macOS and Windows. Use `path.join`, never string concatenation for paths. Use `os.homedir()`, never `$HOME` or `%USERPROFILE%`.

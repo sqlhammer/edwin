@@ -336,6 +336,40 @@ if (!jsonOutput) console.log('\nRunning sync engine tests...\n');
   }
 }
 
+// TEST 5b: a missing ~/.claude fails closed, and --create-target opts out of that
+//
+// Both branches are checked because the flag exists for one caller only: the double-click
+// installers, which run on machines where Claude may never have been started. The default has
+// to keep refusing, or a mistyped --home would silently populate a directory nobody asked for.
+{
+  const noClaudeHome = join(TEMP_ROOT, 'home-without-claude');
+  mkdirSync(noClaudeHome, { recursive: true });
+
+  const refused = run(`node tools/sync/engine.mjs --home ${noClaudeHome} --target all`);
+  const refusedOut = (refused.output || '') + (refused.error || '');
+  const claudeRoot = join(noClaudeHome, '.claude');
+  if (!refused.success && /not found/i.test(refusedOut) && !existsSync(claudeRoot)) {
+    pass('sync engine refuses a home with no .claude and creates nothing');
+  } else {
+    fail(
+      'sync engine missing-target refusal',
+      `expected a refusal that creates nothing, got exit ${refused.exitCode}, exists=${existsSync(claudeRoot)}`
+    );
+  }
+
+  const created = run(
+    `node tools/sync/engine.mjs --home ${noClaudeHome} --target all --create-target`
+  );
+  if (created.success && existsSync(join(claudeRoot, 'CLAUDE.md'))) {
+    pass('sync engine --create-target installs into a fresh home');
+  } else {
+    fail(
+      'sync engine --create-target',
+      `exit ${created.exitCode}: ${((created.output || '') + (created.error || '')).slice(-300)}`
+    );
+  }
+}
+
 // TEST 6: Context operations
 if (!jsonOutput) console.log('\nRunning context operation tests...\n');
 
@@ -924,12 +958,23 @@ if (!jsonOutput) console.log('\nRunning installer tests...\n');
       //      then puts its bin directory at the front of PATH — which would shadow the
       //      stub with the real tool. Neutralising the two paths is what makes the stub
       //      stick; without it this test silently passes for the wrong reason.
+      // TMPDIR is redirected into the test root because the installer keeps its log there
+      // until the clone has happened. Nothing the installer writes may land outside.
+      const installerTmp = join(TEMP_ROOT, 'installer-tmp');
+      mkdirSync(installerTmp, { recursive: true });
+
       const runInstaller = (args, extraEnv = {}, script = tempInstaller) =>
         spawnSync('bash', [script, ...args], {
-          env: { ...process.env, HOME: installerTestHome, TERM: 'dumb', ...extraEnv },
+          env: {
+            ...process.env,
+            HOME: installerTestHome,
+            TMPDIR: installerTmp,
+            TERM: 'dumb',
+            ...extraEnv,
+          },
           stdio: ['ignore', 'pipe', 'pipe'],
           encoding: 'utf-8',
-          timeout: 20000,
+          timeout: 120000,
         });
 
       // --help must describe the scripted install, not a download page.
@@ -1028,6 +1073,78 @@ if (!jsonOutput) console.log('\nRunning installer tests...\n');
       // later test could pick up off PATH by accident.
       rmSync(stubNode, { force: true });
       rmSync(stubGit, { force: true });
+
+      // A full install: clone into a fresh target and run the sync engine. Nothing
+      // previously exercised this path, and it was broken outright — the installer wrote
+      // install.log into the very directory it was about to clone into, and `git clone`
+      // refuses a destination that exists and is not empty. Every fresh install failed.
+      //
+      // The "remote" is built from this checkout's *tracked working-tree files* — not from
+      // `git clone --bare`, which would ship HEAD and so test the last commit instead of the
+      // change in front of you. It is reached over file://, so the test needs no network. Only
+      // tracked files are copied, which keeps `user/` (gitignored) out of it by construction.
+      {
+        const fakeRemote = join(TEMP_ROOT, 'fake-remote', 'edwin.git');
+        const cloneHome = join(TEMP_ROOT, 'installer-clone-home');
+        mkdirSync(cloneHome, { recursive: true });
+
+        const buildFakeRemote = () => {
+          const listed = run(`git -C "${REPO_ROOT}" ls-files`);
+          if (!listed.success) return listed;
+          mkdirSync(fakeRemote, { recursive: true });
+          for (const rel of listed.output.split('\n').filter(Boolean)) {
+            const src = join(REPO_ROOT, rel);
+            const dest = join(fakeRemote, rel);
+            if (!dest.startsWith(TEMP_ROOT)) {
+              return { success: false, output: `path escaped the temp root: ${dest}` };
+            }
+            if (!existsSync(src)) continue; // deleted but still tracked
+            mkdirSync(dirname(dest), { recursive: true });
+            copyFileSync(src, dest);
+          }
+          // -c avoids depending on the machine's git identity, and keeps the tester's name
+          // out of anything this suite creates.
+          const id = '-c user.name=edwin-test -c user.email=test@example.invalid';
+          return run(
+            `git -C "${fakeRemote}" init --quiet && ` +
+              `git ${id} -C "${fakeRemote}" add -A && ` +
+              `git ${id} -C "${fakeRemote}" commit --quiet -m "test fixture"`
+          );
+        };
+
+        const bare = buildFakeRemote();
+
+        if (!bare.success) {
+          fail('macOS installer full install', `could not build the local fake remote: ${bare.output}`);
+        } else {
+          const r = runInstaller(
+            ['--repo-url', `file://${fakeRemote}`, '--yes', '--skip-deps', '--no-pause'],
+            { HOME: cloneHome }
+          );
+          const out = r.stdout + r.stderr;
+          const target = join(cloneHome, 'edwin');
+          const cloned = existsSync(join(target, '.git'));
+          const hasEngine = existsSync(join(target, 'tools', 'sync', 'engine.mjs'));
+          const synced = existsSync(join(cloneHome, '.claude', 'CLAUDE.md'));
+
+          if (r.status === 0 && cloned && hasEngine && synced) {
+            pass('macOS installer: clones into a fresh target and runs the sync engine');
+          } else {
+            fail(
+              'macOS installer full install',
+              `exit ${r.status}, cloned=${cloned}, engine=${hasEngine}, synced=${synced}: ${out.slice(-400)}`
+            );
+          }
+
+          // The log must not be written where it would block the clone. It belongs outside
+          // the target until the clone has happened, and is copied in afterwards.
+          if (existsSync(join(target, 'install.log'))) {
+            pass('macOS installer: install.log ends up inside the installed repo');
+          } else {
+            fail('macOS installer log placement', 'expected install.log to be copied into the install dir');
+          }
+        }
+      }
     } else {
       skip('macOS installer', 'EDWIN-Install.command not found');
     }

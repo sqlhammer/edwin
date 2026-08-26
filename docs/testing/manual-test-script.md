@@ -78,6 +78,34 @@ _Record any errors or unexpected behavior_
 
 ---
 
+### 1.4 Windows install regressions — repository URL and clone target
+
+These two defects made every fresh Windows install fail. They are checked explicitly because 1.1 passing on a
+machine that already had EDWIN would not have caught either one.
+
+**Instruction:**
+1. Make sure `%USERPROFILE%\edwin` does not exist (rename it aside if it does).
+2. Double-click `EDWIN-Install.cmd` and enter the repository as `owner/edwin` — the shorthand, with no
+   `https://` and no `.git`.
+3. Read the line that begins `Cloning repository from`.
+4. Let the install finish, then check `%USERPROFILE%\edwin\install.log` exists.
+5. Run the installer a second time without deleting anything.
+
+**Expected:**
+- The clone line reads `...github.com/owner/edwin.git` — exactly one `.git`, not `edwin.git.git` or
+  `edwin.git.git.git`.
+- The clone succeeds. It must **not** report `destination path ... already exists and is not an empty
+  directory`.
+- `install.log` is present in `%USERPROFILE%\edwin` when the install finishes.
+- The second run detects the existing install and takes the update path rather than failing.
+
+**Result:** [ ] Pass [ ] Fail
+
+**Notes:**
+_Record the exact clone URL line, verbatim_
+
+---
+
 ## Test Group 2: macOS Installation (Double-Click)
 
 ### 2.1 Double-click installer on macOS
@@ -477,10 +505,13 @@ but no Windows machine was available. Treat them as unverified until a tester si
 
 ## Summary
 
-**Total tests:** 24 (4.1 is setup for 4.2 and carries no Pass/Fail cell)
+**Total tests:** 25 (4.1 is setup for 4.2 and carries no Pass/Fail cell)
 
 Cells 7.3, 7.4, 7.5 and 7.6 cover code that has never been run on Windows. If a tester signs off the
 whole script without them, the sign-off does not cover Windows prerequisite installation.
+
+Cell 1.4 covers two defects that made every fresh Windows install fail. Run it on a machine with no
+existing `%USERPROFILE%\edwin`, or it proves nothing.
 
 **Passed:** _____
 

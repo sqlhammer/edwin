@@ -18,6 +18,7 @@
  *
  * Options:
  *   --target <code|desktop|all>    Target harness (default: all)
+ *   --create-target                Create ~/.claude if absent instead of failing
  *   --dry-run                      Show what would be done without changing anything
  *   --uninstall                    Remove EDWIN-managed content
  *   --force                        Overwrite files without checking
@@ -70,6 +71,7 @@ const REPO_ROOT = join(__dirname, '..', '..');
 const args = process.argv.slice(2);
 const opts = {
   target: 'all',
+  createTarget: false,
   dryRun: false,
   uninstall: false,
   force: false,
@@ -90,6 +92,9 @@ for (let i = 0; i < args.length; i++) {
     case '--target':
       opts.target = next;
       i++;
+      break;
+    case '--create-target':
+      opts.createTarget = true;
       break;
     case '--dry-run':
       opts.dryRun = true;
@@ -120,7 +125,7 @@ for (let i = 0; i < args.length; i++) {
 if (opts.help) {
   const help = readFileSync(__filename, 'utf-8')
     .split('\n')
-    .slice(3, 32)
+    .slice(3, 33)
     .map((line) => line.replace(/^ \* ?/, ''))
     .join('\n');
   console.log(help);
@@ -749,6 +754,7 @@ function sync(target) {
   const results = {
     target: target.label,
     detected: target.detected,
+    targetCreated: null,
     coworkDetected: target.coworkDetected,
     claudeMd: {},
     skills: {},
@@ -756,10 +762,22 @@ function sync(target) {
     needsMigration: [],
   };
 
+  // A missing ~/.claude normally means the harness isn't installed, and installing into a
+  // directory nothing reads is worse than saying so. The double-click installers are the
+  // exception: they run on machines where Claude may not have been started yet, and dying
+  // here after cloning the repository leaves the user with nothing. They pass
+  // --create-target. It stays opt-in so a mistyped --home cannot silently populate a
+  // directory the user never meant to create.
   if (!target.detected) {
     const claudeRoot = join(HOME_DIR, '.claude');
-    results.error = `${target.label} directory not found at ${claudeRoot}`;
-    return results;
+    if (!opts.createTarget) {
+      results.error = `${target.label} directory not found at ${claudeRoot}`;
+      return results;
+    }
+    if (!opts.dryRun) {
+      mkdirSync(claudeRoot, { recursive: true });
+    }
+    results.targetCreated = claudeRoot;
   }
 
   // Load manifest
@@ -828,6 +846,10 @@ function formatResults(results) {
     }
 
     lines.push(`✓ ${result.target}`);
+
+    if (result.targetCreated) {
+      lines.push(`  Created ${result.targetCreated} (Claude had not been run on this machine)`);
+    }
 
     if (result.coworkDetected) {
       lines.push('  Cowork detected — will pick up these skills');

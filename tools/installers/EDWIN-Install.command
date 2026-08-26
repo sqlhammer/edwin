@@ -15,8 +15,12 @@ set -euo pipefail
 DEFAULT_INSTALL_DIR="$HOME/edwin"
 INSTALL_DIR="$DEFAULT_INSTALL_DIR"
 
-# Log file
-LOG_FILE="$INSTALL_DIR/install.log"
+# Log file. Deliberately NOT inside INSTALL_DIR: `git clone` refuses a destination that
+# exists and is not empty, so writing the log there before cloning made the installer
+# create the obstacle it then tripped over — a fresh install could never succeed. The log
+# is copied into the install directory once the clone has happened.
+LOG_FILE="${TMPDIR:-/tmp}/edwin-install.log"
+FINAL_LOG_FILE="$INSTALL_DIR/install.log"
 
 # Repository to clone (read from package.json, or prompted)
 REPO_URL=""
@@ -26,6 +30,10 @@ ASSUME_YES=0
 
 # Install missing prerequisites rather than only reporting them
 INSTALL_DEPS=1
+
+# Wait for a keypress before closing. A double-clicked .command owns its Terminal window,
+# so without this every message scrolls past and vanishes.
+NO_PAUSE=0
 
 show_usage() {
     cat <<'USAGE'
@@ -38,6 +46,7 @@ Options:
   --repo-url <url>   Repository to install from (otherwise read from package.json or prompted)
   --yes              Answer yes to every confirmation; required for unattended runs
   --skip-deps        Report missing Git or Node.js instead of installing them
+  --no-pause         Do not wait for a keypress before closing
   --help             Show this help
 
 Missing prerequisites are installed for you. Git and Node.js come from Homebrew when it is
@@ -62,6 +71,10 @@ while [ $# -gt 0 ]; do
             ;;
         --skip-deps)
             INSTALL_DEPS=0
+            shift
+            ;;
+        --no-pause)
+            NO_PAUSE=1
             shift
             ;;
         --help|-h)
@@ -133,9 +146,12 @@ confirm() {
 
 # Pause and wait for user to press a key
 pause() {
+    if [ "$NO_PAUSE" -eq 1 ]; then
+        return 0
+    fi
     echo ""
     echo "Press any key to close this window..."
-    read -n 1 -s
+    read -n 1 -s || true
 }
 
 # Exit with error message and pause
@@ -193,8 +209,9 @@ validate_repo_url() {
         url="https://github.com/$url.git"
     fi
 
-    # Must be a git URL (https or git@)
-    if [[ "$url" =~ ^https://.*\.git$ ]] || [[ "$url" =~ ^git@.*:.*\.git$ ]]; then
+    # Must be a git URL (https, git@, or file:// — the last one so the clone path can be
+    # exercised against a local repository instead of only against the live network).
+    if [[ "$url" =~ ^https://.*\.git$ ]] || [[ "$url" =~ ^git@.*:.*\.git$ ]] || [[ "$url" =~ ^file:// ]]; then
         echo "$url"
         return 0
     fi
@@ -673,8 +690,10 @@ clone_or_update_repo() {
     else
         # Need to clone
         if [ -d "$INSTALL_DIR" ]; then
-            # Directory exists - check if it's empty or only contains our log file
-            local file_count=$(find "$INSTALL_DIR" -mindepth 1 ! -name "install.log" | wc -l)
+            # git clone requires an empty destination, so this must be a plain emptiness
+            # check. It used to exempt install.log, which only masked the fact that the
+            # installer had just written that log here and would fail on it.
+            local file_count=$(find "$INSTALL_DIR" -mindepth 1 | wc -l)
             if [ "$file_count" -gt 0 ]; then
                 # Directory has other files, not safe to use
                 echo ""
@@ -689,7 +708,7 @@ clone_or_update_repo() {
                 echo ""
                 exit_with_error "Non-git directory exists at $INSTALL_DIR"
             fi
-            # Directory is empty or only has our log - safe to use for clone
+            # Empty — safe to clone into
         fi
 
         # Get repository URL from package.json if running from within a clone
@@ -781,7 +800,10 @@ run_sync_engine() {
     echo "Installing EDWIN skills and persona..."
     echo ""
 
-    if ! node "$engine_path" --target all >> "$LOG_FILE" 2>&1; then
+    # --create-target: the engine refuses a missing ~/.claude by default, which is right for a
+    # manual sync but wrong here. Someone running a double-click installer may not have started
+    # Claude yet, and failing at the last step would leave them with a clone and nothing else.
+    if ! node "$engine_path" --target all --create-target >> "$LOG_FILE" 2>&1; then
         log_error "Sync engine failed"
         echo ""
         echo "The sync engine encountered an error."
@@ -842,6 +864,16 @@ main() {
 
     log "Installation completed successfully"
     log "========================================"
+
+    # The log lived outside INSTALL_DIR so it could not block the clone. Put a copy where
+    # the documentation says to look for it. Best-effort: a failed copy must not fail an
+    # otherwise successful install.
+    if [ "$LOG_FILE" != "$FINAL_LOG_FILE" ] && [ -d "$INSTALL_DIR" ]; then
+        if cp "$LOG_FILE" "$FINAL_LOG_FILE" 2>/dev/null; then
+            echo "Install log: $FINAL_LOG_FILE"
+            echo ""
+        fi
+    fi
 
     pause
 }

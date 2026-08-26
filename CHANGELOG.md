@@ -143,7 +143,7 @@ new skills from conversation, and tooling for installation, validation, scheduli
   web portals, scheduled tasks, updating, and troubleshooting — with `docs/index.html` as a hub organised by
   "I want to…". Inline CSS and no external requests, so every page works offline. Each opens with "What
   you'll need" and "How long this takes". (WU-15)
-- `tools/test/run-e2e.mjs` — end-to-end harness (38 checks at WU-16, 43 after WU-17) covering doctor, the sync engine, context
+- `tools/test/run-e2e.mjs` — end-to-end harness (38 checks at WU-16, 43 after WU-17, 47 after the installer fixes) covering doctor, the sync engine, context
   operations, memory, brags, the scheduler, bundle export, both installers, and the no-personal-data
   contract. Every check runs against a temp `HOME` or a `--root` scratch tree and the suite hashes the real
   `user/` directory before and after to prove it was untouched. `npm test`. (WU-16)
@@ -157,6 +157,36 @@ new skills from conversation, and tooling for installation, validation, scheduli
 - `docs/roadmap-v0.3.md` recording everything deliberately deferred out of v0.2. (WU-16)
 
 ### Fixed
+- Both double-click installers wrote their log file into the directory they were about to clone
+  into, and `git clone` refuses a destination that exists and is not empty. **No fresh install
+  could ever succeed on either platform.** The emptiness check exempted `install.log`, which only
+  hid the fact that the installer had just created the obstacle itself. The log now lives in the
+  system temp directory and is copied into the install directory once the clone has happened.
+  Found by a user on Windows 11; the same defect was present on macOS. (WU-07)
+- The Windows installer appended `.git` to the repository URL on every call to its validation
+  routine, producing `edwin.git.git.git` and a failed clone. `echo %VAR% | findstr "\.git$"` can
+  never match: `echo` emits the space that sits before the pipe, so the line ends in a space and
+  the `$` anchor always fails. The same trap silently broke the `owner/repo` shorthand the prompt
+  advertises. Suffix and prefix tests now use substring comparison. (WU-07)
+- The Windows installer read `repository.url` from `package.json` by splitting on `:`, which
+  splits the URL at its own scheme colon and yielded `git+https`. It now cuts at the scheme
+  instead, and leaves `REPO_URL` untouched when the file has no usable line, so a malformed
+  `package.json` falls through to the prompt rather than producing a mangled URL. (WU-07)
+- The sync engine refused a home directory with no `~/.claude`, which is correct for a manual
+  sync but made the double-click installers fail at the final step on a machine where Claude had
+  never been started — after cloning, leaving the user with nothing. The engine gained
+  `--create-target`, which the installers pass; the default still fails closed so a mistyped
+  `--home` cannot silently populate a directory nobody asked for. (WU-06)
+- Both installers gained `--no-pause`. A double-clicked installer is hosted by `cmd /c` (or owns
+  its Terminal window), so the window closes the instant the script ends and takes every error
+  message with it. Early-exit paths now pause like the success path does, and the flag exists so
+  the test suite can drive a full install without blocking on a keypress. (WU-07)
+- `tools/test/run-e2e.mjs` never exercised the clone path, which is why a total install failure
+  shipped. It now builds a fake remote from this checkout's tracked working-tree files and drives
+  a complete install over `file://` into a fresh temp `HOME` — no network, no personal data. Both
+  installers accept `file://` specifically so this is testable offline. The remote is built from
+  the working tree rather than by `git clone --bare`, which would test the last commit instead of
+  the change in front of the author. (WU-16)
 - `edwin-doctor` counted one line too many in every file, because a trailing newline yields an empty final
   segment from `split('\n')`. This inflated every size check, including the persona and memory-digest
   budgets, and falsely flagged a 250-line skill as over the 250-line guideline. (WU-16)

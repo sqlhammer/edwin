@@ -12,12 +12,23 @@ REM ============================================================================
 
 set "DEFAULT_INSTALL_DIR=%USERPROFILE%\edwin"
 set "INSTALL_DIR=%DEFAULT_INSTALL_DIR%"
-set "LOG_FILE=%INSTALL_DIR%\install.log"
 set "MIN_NODE_VERSION=18"
+
+REM The log is deliberately NOT inside INSTALL_DIR. `git clone` refuses a destination that
+REM exists and is not empty, so writing the log there before cloning made the installer
+REM create the obstacle it then tripped over -- a fresh install could never succeed. A copy
+REM is placed in the install directory once the clone has happened.
+set "LOG_FILE=%TEMP%\edwin-install.log"
+set "FINAL_LOG_FILE=%INSTALL_DIR%\install.log"
 
 set "REPO_URL="
 set "ASSUME_YES=0"
 set "INSTALL_DEPS=1"
+
+REM A double-clicked .cmd runs under `cmd /c`, so the window closes the moment the script
+REM ends -- taking any error message with it. Every exit therefore pauses first. An
+REM installer whose failures are invisible is worse than one that fails loudly.
+set "NO_PAUSE=0"
 
 :parse_args
 if "%~1"=="" goto :args_done
@@ -46,15 +57,22 @@ if /i "%~1"=="--skip-deps" (
     shift
     goto :parse_args
 )
+if /i "%~1"=="--no-pause" (
+    set "NO_PAUSE=1"
+    shift
+    goto :parse_args
+)
 if /i "%~1"=="--help" goto :show_usage
 if /i "%~1"=="-h" goto :show_usage
 echo Error: unknown option: %~1 >&2
 echo. >&2
 call :usage_text >&2
+if "%NO_PAUSE%"=="0" pause
 exit /b 2
 
 :show_usage
 call :usage_text
+if "%NO_PAUSE%"=="0" pause
 exit /b 0
 
 :usage_text
@@ -67,6 +85,7 @@ echo Options:
 echo   --repo-url ^<url^>   Repository to install from ^(otherwise read from package.json or prompted^)
 echo   --yes              Answer yes to every confirmation; required for unattended runs
 echo   --skip-deps        Report missing Git or Node.js instead of installing them
+echo   --no-pause         Do not wait for a keypress before closing
 echo   --help             Show this help
 echo.
 echo Missing prerequisites are installed for you. Git and Node.js come from winget when it
@@ -84,14 +103,13 @@ REM Note: log file directory is created by :log and :log_error when needed
 
 goto :skip_functions
 
+REM Note: neither logger creates INSTALL_DIR. It must not exist before the clone.
 :log
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%" 2>nul
 echo [%date% %time%] %* >> "%LOG_FILE%"
 echo %*
 goto :eof
 
 :log_error
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%" 2>nul
 echo [%date% %time%] ERROR: %* >> "%LOG_FILE%"
 echo ERROR: %* >&2
 goto :eof
@@ -102,7 +120,7 @@ echo.
 echo Installation failed. Check the log file for details:
 echo   %LOG_FILE%
 echo.
-pause
+if "%NO_PAUSE%"=="0" pause
 exit /b 1
 
 :command_exists
@@ -126,6 +144,23 @@ if errorlevel 255 (
 if errorlevel 2 exit /b 1
 if errorlevel 1 exit /b 0
 exit /b 1
+
+REM Installed Node major version. Output: %NODE_MAJOR%, always a number (0 when unusable).
+REM Anything non-numeric must collapse to 0: an empty or garbage value reaches
+REM `if !NODE_MAJOR! lss 18` as a syntax error, and a syntax error terminates cmd
+REM immediately -- which closes a double-clicked window with nothing on screen at all.
+:node_major
+set "NODE_MAJOR=0"
+call :command_exists node
+if errorlevel 1 goto :eof
+set "NODE_RAW="
+for /f "usebackq tokens=1 delims=." %%a in (`node -v 2^>nul`) do if not defined NODE_RAW set "NODE_RAW=%%a"
+if not defined NODE_RAW goto :eof
+set "NODE_RAW=%NODE_RAW:v=%"
+echo(%NODE_RAW%|findstr /r /c:"^[0-9][0-9]*$" >nul
+if errorlevel 1 goto :eof
+set "NODE_MAJOR=%NODE_RAW%"
+goto :eof
 
 REM winget is present on Windows 10 1809+ and Windows 11. It can also exist as a broken
 REM App Execution Alias, so being on PATH is not enough -- it has to actually answer.
@@ -277,38 +312,71 @@ exit /b 0
 :validate_repo_url
 REM Input: %VALIDATE_INPUT%
 REM Output: %VALIDATE_OUTPUT% (empty if invalid)
+REM
+REM Must be idempotent: main validates again a URL that :prompt_for_repo_url already
+REM validated. An earlier version tested the suffix with
+REM     echo %VALIDATE_INPUT% | findstr "\.git$"
+REM which can never match. echo emits the space that sits before the pipe, so the piped
+REM line ends in a space rather than "t" and the $ anchor always fails. Every call
+REM therefore appended another ".git", producing edwin.git.git.git -- and the owner/repo
+REM shorthand this prompt advertises never matched either. Suffix and prefix tests here use
+REM substring comparison, which has no such trap.
 set "VALIDATE_OUTPUT="
 
 REM Strip quotes if present
 set "VALIDATE_INPUT=%VALIDATE_INPUT:"=%"
 
-REM Check if empty
+REM set /p keeps exactly what was typed or pasted, trailing spaces included.
+for /f "tokens=* delims= " %%a in ("%VALIDATE_INPUT%") do set "VALIDATE_INPUT=%%a"
+:validate_trim_trailing
+if "%VALIDATE_INPUT:~-1%"==" " (
+    set "VALIDATE_INPUT=%VALIDATE_INPUT:~0,-1%"
+    goto :validate_trim_trailing
+)
+
 if "%VALIDATE_INPUT%"=="" goto :eof
 
-REM Check if it's owner/repo format (simple check for slash with no other special chars)
-echo %VALIDATE_INPUT% | findstr /r "^[a-zA-Z0-9_-][a-zA-Z0-9_-]*/[a-zA-Z0-9_-][a-zA-Z0-9_-]*$" >nul
-if not errorlevel 1 (
-    set "VALIDATE_OUTPUT=https://github.com/%VALIDATE_INPUT%.git"
-    goto :eof
-)
+REM Recognised as a URL already: take it as given. file:// is accepted so the clone path can
+REM be exercised against a local repository rather than only against the live network.
+if /i "%VALIDATE_INPUT:~0,8%"=="https://" goto :validate_as_url
+if /i "%VALIDATE_INPUT:~0,7%"=="http://" goto :validate_as_url
+if /i "%VALIDATE_INPUT:~0,6%"=="ssh://" goto :validate_as_url
+if /i "%VALIDATE_INPUT:~0,4%"=="git@" goto :validate_as_url
+if /i "%VALIDATE_INPUT:~0,7%"=="file://" goto :validate_no_suffix
 
-REM Check if it's a valid git URL
-echo %VALIDATE_INPUT% | findstr /r "^https://.*\.git$" >nul
-if not errorlevel 1 (
-    set "VALIDATE_OUTPUT=%VALIDATE_INPUT%"
-    goto :eof
-)
+REM owner/repo shorthand: one slash, nothing exotic either side.
+echo(%VALIDATE_INPUT%|findstr /r /c:"^[a-zA-Z0-9._-][a-zA-Z0-9._-]*/[a-zA-Z0-9._-][a-zA-Z0-9._-]*$" >nul
+if errorlevel 1 goto :eof
+set "VALIDATE_OUTPUT=https://github.com/%VALIDATE_INPUT%"
+goto :validate_append_git
 
-REM Try adding .git if it's https but missing .git
-echo %VALIDATE_INPUT% | findstr /r "^https://" >nul
-if not errorlevel 1 (
-    echo %VALIDATE_INPUT% | findstr "\.git$" >nul
-    if errorlevel 1 (
-        set "VALIDATE_OUTPUT=%VALIDATE_INPUT%.git"
-        goto :eof
-    )
-)
+:validate_as_url
+set "VALIDATE_OUTPUT=%VALIDATE_INPUT%"
 
+:validate_append_git
+if /i not "%VALIDATE_OUTPUT:~-4%"==".git" set "VALIDATE_OUTPUT=%VALIDATE_OUTPUT%.git"
+goto :eof
+
+REM A local path is taken exactly as given -- no .git is appended to it.
+:validate_no_suffix
+set "VALIDATE_OUTPUT=%VALIDATE_INPUT%"
+goto :eof
+
+REM Read repository.url out of package.json. Input: %1 = path. Output: %REPO_URL% (left
+REM unchanged when the file has no usable url line, so a bad package.json falls through to
+REM the prompt rather than producing a mangled URL).
+:read_package_url
+set "PKG_LINE="
+for /f "usebackq delims=" %%a in (`findstr /c:"\"url\"" "%~1" 2^>nul`) do if not defined PKG_LINE set "PKG_LINE=%%a"
+if not defined PKG_LINE goto :eof
+
+echo(%PKG_LINE%|findstr /c:"https" >nul
+if errorlevel 1 goto :eof
+
+set "PKG_URL=https%PKG_LINE:*https=%"
+set "PKG_URL=%PKG_URL:"=%"
+if "%PKG_URL:~-1%"=="," set "PKG_URL=%PKG_URL:~0,-1%"
+if not "%PKG_URL%"=="" set "REPO_URL=%PKG_URL%"
 goto :eof
 
 :prompt_for_repo_url
@@ -425,18 +493,15 @@ if errorlevel 1 (
     )
 
     call :log Git installed
+) else (
+    for /f "usebackq tokens=*" %%v in (`git --version 2^>nul`) do call :log Found %%v
 )
 
 REM ----------------------------------------------------------------------------
 REM Node.js
 REM ----------------------------------------------------------------------------
 
-set "NODE_MAJOR=0"
-call :command_exists node
-if not errorlevel 1 (
-    for /f "tokens=1 delims=." %%a in ('node -v') do set "NODE_MAJOR=%%a"
-    set "NODE_MAJOR=!NODE_MAJOR:~1!"
-)
+call :node_major
 
 if !NODE_MAJOR! lss %MIN_NODE_VERSION% (
     echo.
@@ -478,12 +543,7 @@ if !NODE_MAJOR! lss %MIN_NODE_VERSION% (
 
     call :refresh_tool_path
 
-    set "NODE_MAJOR=0"
-    call :command_exists node
-    if not errorlevel 1 (
-        for /f "tokens=1 delims=." %%a in ('node -v') do set "NODE_MAJOR=%%a"
-        set "NODE_MAJOR=!NODE_MAJOR:~1!"
-    )
+    call :node_major
 
     if !NODE_MAJOR! lss %MIN_NODE_VERSION% (
         echo.
@@ -495,6 +555,8 @@ if !NODE_MAJOR! lss %MIN_NODE_VERSION% (
     )
 
     call :log Node.js installed
+) else (
+    for /f "usebackq tokens=*" %%v in (`node -v 2^>nul`) do call :log Found Node.js %%v
 )
 
 REM Check for Claude Code or Claude Desktop
@@ -595,9 +657,11 @@ if exist "%INSTALL_DIR%\.git\" (
 ) else (
     REM Need to clone
     if exist "%INSTALL_DIR%\" (
-        REM Directory exists - check if it's empty or only contains our log file
+        REM git clone requires an empty destination, so this is a plain emptiness check. It
+        REM used to exempt install.log, which only masked the fact that the installer had
+        REM just written that log here and would then fail to clone over it.
         set "DIR_HAS_FILES=0"
-        for /f %%f in ('dir /b /a-d "%INSTALL_DIR%" 2^>nul ^| findstr /v /i "install.log"') do (
+        for /f %%f in ('dir /b /a-d "%INSTALL_DIR%" 2^>nul') do (
             set "DIR_HAS_FILES=1"
         )
         for /f %%d in ('dir /b /ad "%INSTALL_DIR%" 2^>nul') do (
@@ -618,7 +682,7 @@ if exist "%INSTALL_DIR%\.git\" (
             echo.
             call :exit_with_error Non-git directory exists at %INSTALL_DIR%
         )
-        REM Directory is empty or only has our log - safe to use for clone
+        REM Empty -- safe to clone into
     )
 
     REM Get repository URL from package.json if running from within a clone
@@ -627,12 +691,12 @@ if exist "%INSTALL_DIR%\.git\" (
         set "PACKAGE_JSON=%SCRIPT_DIR%..\..\package.json"
 
         if exist "!PACKAGE_JSON!" (
-            REM Extract repository URL from package.json
-            for /f "tokens=2 delims=:, " %%a in ('findstr /C:"\"url\"" "!PACKAGE_JSON!" 2^>nul') do (
-                set "REPO_URL=%%~a"
-            )
-            REM Strip git+ prefix if present
-            set "REPO_URL=!REPO_URL:git+=!"
+            REM Extract the repository URL from package.json. Splitting the line on ":"
+            REM cannot work -- the URL contains one -- so cut at the scheme instead:
+            REM %VAR:*https=% drops everything up to and including the first "https", and
+            REM prepending it back reconstructs the URL from there. That also drops any
+            REM "git+" prefix for free.
+            call :read_package_url "!PACKAGE_JSON!"
         )
     )
 
@@ -721,7 +785,10 @@ echo.
 echo Installing EDWIN skills and persona...
 echo.
 
-node "%ENGINE_PATH%" --target all >> "%LOG_FILE%" 2>&1
+REM --create-target: the engine refuses a missing %USERPROFILE%\.claude by default, which is right
+REM for a manual sync but wrong here. Someone running a double-click installer may not have started
+REM Claude yet, and failing at the last step would leave them with a clone and nothing else.
+node "%ENGINE_PATH%" --target all --create-target >> "%LOG_FILE%" 2>&1
 if errorlevel 1 (
     call :log_error Sync engine failed
     echo.
@@ -754,5 +821,15 @@ echo.
 echo Installation completed successfully >> "%LOG_FILE%"
 echo ======================================== >> "%LOG_FILE%"
 
-pause
+REM The log lived outside INSTALL_DIR so it could not block the clone. Put a copy where the
+REM documentation says to look. Best-effort: a failed copy must not fail a good install.
+if exist "%INSTALL_DIR%\" (
+    copy /y "%LOG_FILE%" "%FINAL_LOG_FILE%" >nul 2>&1
+    if not errorlevel 1 (
+        echo Install log: %FINAL_LOG_FILE%
+        echo.
+    )
+)
+
+if "%NO_PAUSE%"=="0" pause
 exit /b 0
