@@ -84,9 +84,44 @@ new skills from conversation, and tooling for installation, validation, scheduli
 - `tools/sync/Sync-Edwin.ps1` — PowerShell path for machines without Node, explicit about the features it
   cannot offer. (WU-06)
 - `npm run sync`. (WU-06)
+- Memory system that EDWIN owns rather than borrowing: `edwin-memory` skill, the `memory-capture` persona
+  hook that notices facts worth keeping and offers once, and `tools/memory/memory.mjs` to record, recall,
+  forget, and digest entries in `user/memory/`. Deliberately independent of any harness's own memory
+  feature, so EDWIN remembers the same things in Claude Code, Desktop, and a browser. (WU-17)
+- The memory digest is substituted into the `EDWIN:MEMORY` block of the generated `CLAUDE.md` by the sync
+  engine, so recall costs no tool calls. `edwin-doctor` enforces a digest line budget, because a digest that
+  grows without bound quietly taxes every context window. (WU-17)
+- `npm run memory`. (WU-17)
 - `user/config.json` gains `website` and a `paths` object (`notes`, `blogDrafts`, `careerBackground`) for
   the optional locations `blog-writer` and `executive-coach` ask about. Onboarding does not ask for them;
   a skill asks the first time it needs one and offers to save the answer. (WU-04)
+- EDWIN is installable as a Claude plugin: `.claude-plugin/plugin.json` and `marketplace.json`, with
+  `tools/bundle/build-plugin.mjs` generating the plugin's `skills/` tree from `core/skills/`. Because a
+  plugin installs by cloning, that tree is generated *and* committed, so `edwin-doctor` checks it for drift
+  and names the stale skills. (WU-08)
+- `edwin-activate` skill — a plugin can install skills but cannot write the user's `CLAUDE.md`, so a
+  plugin-only install has EDWIN's skills without EDWIN's persona. "Activate EDWIN" closes that gap. (WU-08)
+- `tools/installers/` — double-click installers for people who will not clone a repository:
+  `EDWIN-Install`/`EDWIN-Update` as `.command` (macOS) and `.cmd` (Windows). They check prerequisites, fetch
+  EDWIN, run the sync engine, and log the run. The macOS scripts detect the Gatekeeper quarantine attribute
+  and explain the right-click-Open step instead of failing silently. Run as a lone downloaded file, with no
+  `package.json` beside them, they ask for the repository address rather than giving up. (WU-07)
+- `edwin-skill-creator` — turns a workflow breakdown or a plain conversational request into a valid,
+  installed skill, reviewed with the user in plain language rather than raw markdown, validated through
+  `edwin-doctor --json`, and installed via the sync engine. (WU-10)
+- `edwin-persona-creator` and the `persona-host` hook — users can create personas ("a patient French
+  tutor") from a batched interview. EDWIN stays the host and personas are announced modes it adopts, one at
+  a time; a persona can never override safety behaviour or the user's own config, a rule embedded in
+  `core/templates/persona-skill.md.tmpl` so every generated persona carries it. Ships `writing-editor` as a
+  worked example. (WU-11)
+- `edwin-scheduler` and `tools/schedule/register-task.{sh,ps1}` — EDWIN can run itself on a cadence via
+  launchd or Task Scheduler, invoking `claude -p` headless with the prompt read from a file to sidestep
+  shell-quoting problems in both schedulers. Neither script may narrow a schedule silently: malformed cron,
+  invalid weekdays, week-wrapping ranges, and Windows day-lists on a non-weekly schedule all fail loudly
+  rather than quietly scheduling something else. (WU-12)
+- `README.md` rewritten so a reader can say what EDWIN is and pick an install path within the first screen,
+  plus `CONTRIBUTING.md` covering the conventions contract, the clean-doctor requirement, and the work-unit
+  layout. (WU-14)
 
 ### Changed
 - All 13 v0.1 skills rewritten to the v0.2 format: frontmatter (`name`, `description`, `contexts`,

@@ -1,2 +1,10 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Windows batch installers must be CRLF: cmd.exe mis-parses labels and multi-line
+# blocks in LF-only files. The macOS .command scripts must stay LF for the same
+# reason in reverse — bash chokes on CR.
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.command text eol=lf
+*.sh text eol=lf
