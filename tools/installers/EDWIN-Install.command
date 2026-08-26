@@ -454,7 +454,9 @@ run_sync_engine() {
 
 main() {
     # Clear screen and show banner
-    clear
+    # Never let a cosmetic screen-clear abort the installer: clear exits non-zero
+    # when TERM is unset or minimal, and set -e would kill us here with no output.
+    clear || true
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  EDWIN Installer"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

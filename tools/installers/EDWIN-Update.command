@@ -46,7 +46,9 @@ exit_with_error() {
 # ============================================================================
 
 main() {
-    clear
+    # Never let a cosmetic screen-clear abort the installer: clear exits non-zero
+    # when TERM is unset or minimal, and set -e would kill us here with no output.
+    clear || true
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "  EDWIN Update"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
