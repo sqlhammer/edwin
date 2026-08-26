@@ -186,10 +186,19 @@ const checks = [
     run: checkMemoryFilesParse,
   },
 
-  // Extension point for WU-18
-  // Add checks here:
-  // - brags.md parses (WU-18)
-  // - categories.json parses with all referenced categories existing (WU-18)
+  // Brags (WU-18)
+  {
+    id: 'brags-files-parse',
+    title: 'Brags files parse',
+    group: 'brags',
+    run: checkBragsFilesParse,
+  },
+  {
+    id: 'brags-categories-valid',
+    title: 'Brags category references',
+    group: 'brags',
+    run: checkBragsCategoriesValid,
+  },
 
   // Plugin build drift (WU-08)
   {
@@ -904,6 +913,108 @@ function checkMemoryFilesParse(ctx) {
         const lineNum = lines.indexOf(comments[i]) + 1;
         addFinding('memory-files-parse', 'warning', 'memory', filePath, lineNum,
           `Comment metadata should be in format: <!-- date | context | source -->`);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// BRAGS CHECKS (WU-18)
+// ============================================================================
+
+function checkBragsFilesParse(ctx) {
+  const bragsPath = path.join(REPO_ROOT, 'user/brags/brags.md');
+  const categoriesPath = path.join(REPO_ROOT, 'user/brags/categories.json');
+
+  // Check brags.md
+  if (fileExists(bragsPath)) {
+    const content = readFile(bragsPath);
+    if (!content) {
+      addFinding('brags-files-parse', 'error', 'brags', bragsPath, null,
+        `File exists but not readable`);
+    } else {
+      // Check comment format: <!-- date | category | size | context -->
+      const commentPattern = /<!-- .+ \| .+ \| .+ \| .+ -->/;
+      const lines = content.split('\n');
+      const comments = lines.filter(line => line.trim().startsWith('<!--') && line.trim().endsWith('-->'));
+
+      for (let i = 0; i < comments.length; i++) {
+        const comment = comments[i].trim();
+        if (!commentPattern.test(comment)) {
+          const lineNum = lines.indexOf(comments[i]) + 1;
+          addFinding('brags-files-parse', 'warning', 'brags', bragsPath, lineNum,
+            `Comment metadata should be in format: <!-- date | category | size | context -->`);
+        }
+      }
+    }
+  }
+
+  // Check categories.json
+  if (fileExists(categoriesPath)) {
+    const content = readFile(categoriesPath);
+    if (!content) {
+      addFinding('brags-files-parse', 'error', 'brags', categoriesPath, null,
+        `File exists but not readable`);
+    } else {
+      try {
+        const categories = JSON.parse(content);
+        if (typeof categories !== 'object' || categories === null || Array.isArray(categories)) {
+          addFinding('brags-files-parse', 'error', 'brags', categoriesPath, null,
+            `categories.json must be an object mapping category names to descriptions`);
+        } else {
+          // Every value must be a description string. Without this, a wrong-shaped
+          // file (e.g. {"categories": [...]}) parses fine and then every entry in
+          // brags.md is reported as referencing a non-existent category — which
+          // points at the wrong file.
+          const badKeys = Object.entries(categories)
+            .filter(([, v]) => typeof v !== 'string')
+            .map(([k]) => k);
+          if (badKeys.length > 0) {
+            addFinding('brags-files-parse', 'error', 'brags', categoriesPath, null,
+              `categories.json values must be description strings; not a string for: ${badKeys.join(', ')}`);
+          } else {
+            // Store in ctx for use by checkBragsCategoriesValid
+            ctx.bragCategories = categories;
+          }
+        }
+      } catch (err) {
+        addFinding('brags-files-parse', 'error', 'brags', categoriesPath, null,
+          `JSON parse error: ${err.message}`);
+      }
+    }
+  }
+}
+
+function checkBragsCategoriesValid(ctx) {
+  const bragsPath = path.join(REPO_ROOT, 'user/brags/brags.md');
+  const categoriesPath = path.join(REPO_ROOT, 'user/brags/categories.json');
+
+  // Only run if both files exist
+  if (!fileExists(bragsPath) || !fileExists(categoriesPath)) {
+    return; // Absence is OK for user/ files
+  }
+
+  const categories = ctx.bragCategories;
+  if (!categories) {
+    return; // categories.json didn't parse, already reported
+  }
+
+  const bragsContent = readFile(bragsPath);
+  if (!bragsContent) return;
+
+  // Parse entries and check that all referenced categories exist
+  const lines = bragsContent.split('\n');
+  const comments = lines.filter(line => line.trim().startsWith('<!--') && line.trim().endsWith('-->'));
+
+  for (let i = 0; i < comments.length; i++) {
+    const comment = comments[i].trim();
+    const parts = comment.slice(4, -3).split('|').map(s => s.trim());
+    if (parts.length >= 2) {
+      const category = parts[1];
+      if (category && !categories[category]) {
+        const lineNum = lines.indexOf(comments[i]) + 1;
+        addFinding('brags-categories-valid', 'error', 'brags', bragsPath, lineNum,
+          `Entry references non-existent category: "${category}"`);
       }
     }
   }

@@ -122,6 +122,22 @@ new skills from conversation, and tooling for installation, validation, scheduli
 - `README.md` rewritten so a reader can say what EDWIN is and pick an install path within the first screen,
   plus `CONTRIBUTING.md` covering the conventions contract, the clean-doctor requirement, and the work-unit
   layout. (WU-14)
+- `edwin-export` and `tools/bundle/build-bundle.mjs` — exports EDWIN as a paste-ready bundle for harnesses
+  with no filesystem: a custom-instructions file plus one knowledge file per skill. Skill bodies live in
+  `knowledge/` only, never duplicated into the instructions, so the instructions stay an index. Portals that
+  cannot take knowledge files get a condensed single-file variant instead of a truncated full one. (WU-13)
+- `tools/bundle/portal-limits.json` — per-portal instruction limits, each carrying a `verified` flag and its
+  source. Only Microsoft Copilot's 8,000-character limit is documented publicly; Claude Projects and Gemini
+  Gems are recorded as unknown rather than guessed. EDWIN will not truncate or fail against a threshold it
+  cannot cite — it reports the size and says the limit is unpublished. (WU-13)
+- `npm run bundle`. (WU-13)
+- Wins tracking: the `edwin-brag` skill, the `brag-detection` persona hook, and `tools/memory/brags.mjs`
+  managing `user/brags/`. EDWIN notices accomplishments as they happen and offers once to record them, sized
+  small/notable/major, so the brag document is assembled from contemporaneous notes rather than reconstructed
+  from memory at review time. Generates review-oriented or personal-retrospective documents over any date
+  range. (WU-18)
+- `edwin-doctor` gains `brags-files-parse` and `brags-categories-valid`, so a hand-edited brag log that
+  references a category that no longer exists is caught before a brag document is generated from it. (WU-18)
 
 ### Changed
 - All 13 v0.1 skills rewritten to the v0.2 format: frontmatter (`name`, `description`, `contexts`,
