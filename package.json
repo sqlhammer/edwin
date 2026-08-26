@@ -16,7 +16,8 @@
     "doctor": "node tools/validate/edwin-doctor.mjs",
     "sync": "node tools/sync/engine.mjs",
     "bundle": "node tools/bundle/build-bundle.mjs",
-    "build-plugin": "node tools/bundle/build-plugin.mjs"
+    "build-plugin": "node tools/bundle/build-plugin.mjs",
+    "memory": "node tools/memory/memory.mjs"
   },
   "engines": {
     "node": ">=18"

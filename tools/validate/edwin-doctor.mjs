@@ -171,10 +171,22 @@ const checks = [
     run: checkUserState,
   },
 
-  // Extension point for WU-17, WU-18
+  // Memory (WU-17)
+  {
+    id: 'memory-digest-size',
+    title: 'Memory digest size',
+    group: 'memory',
+    run: checkMemoryDigestSize,
+  },
+  {
+    id: 'memory-files-parse',
+    title: 'Memory files parse',
+    group: 'memory',
+    run: checkMemoryFilesParse,
+  },
+
+  // Extension point for WU-18
   // Add checks here:
-  // - Memory digest < 60 lines (WU-17)
-  // - Memory files parse (WU-17)
   // - brags.md parses (WU-18)
   // - categories.json parses with all referenced categories existing (WU-18)
 ];
@@ -818,6 +830,73 @@ function checkUserState(ctx) {
   } catch (err) {
     addFinding('user-state', 'warning', 'user', statePath, null,
       `Failed to parse JSON: ${err.message}`);
+  }
+}
+
+// ============================================================================
+// MEMORY CHECKS
+// ============================================================================
+
+function checkMemoryDigestSize(ctx) {
+  const digestPath = path.join(REPO_ROOT, 'user/memory/digest.md');
+  if (!fileExists(digestPath)) return; // Absence is OK for user/ files
+
+  const content = readFile(digestPath);
+  if (!content) return;
+
+  const lines = countLines(content);
+  if (lines > 60) {
+    addFinding('memory-digest-size', 'error', 'memory', digestPath, null,
+      `Digest is ${lines} lines (max 60)`);
+  }
+}
+
+function checkMemoryFilesParse(ctx) {
+  const memoryPath = path.join(REPO_ROOT, 'user/memory/memory.md');
+  const pendingPath = path.join(REPO_ROOT, 'user/memory/pending.md');
+
+  const files = [
+    { path: memoryPath, name: 'memory.md' },
+    { path: pendingPath, name: 'pending.md' },
+  ];
+
+  for (const { path: filePath, name } of files) {
+    if (!fileExists(filePath)) continue; // Absence is OK
+
+    const content = readFile(filePath);
+    if (!content) {
+      addFinding('memory-files-parse', 'error', 'memory', filePath, null,
+        `File exists but not readable`);
+      continue;
+    }
+
+    // Check for expected sections in memory.md
+    if (name === 'memory.md') {
+      const requiredSections = ['## Preferences', '## People', '## Work patterns', '## Facts', '## Dislikes', '## Tombstones'];
+      const missingSections = requiredSections.filter(section => !content.includes(section));
+
+      if (missingSections.length > 0) {
+        addFinding('memory-files-parse', 'warning', 'memory', filePath, null,
+          `Missing expected sections: ${missingSections.join(', ')}`);
+      }
+    }
+
+    // Check comment format (basic validation)
+    const commentPattern = /<!-- .+ \| .+ \| .+ -->/;
+    const lines = content.split('\n');
+    const comments = lines.filter(line => line.trim().startsWith('<!--') && line.trim().endsWith('-->'));
+
+    for (let i = 0; i < comments.length; i++) {
+      const comment = comments[i].trim();
+      // Skip tombstone comments (different format)
+      if (comment.includes('tombstone:')) continue;
+
+      if (!commentPattern.test(comment)) {
+        const lineNum = lines.indexOf(comments[i]) + 1;
+        addFinding('memory-files-parse', 'warning', 'memory', filePath, lineNum,
+          `Comment metadata should be in format: <!-- date | context | source -->`);
+      }
+    }
   }
 }
 

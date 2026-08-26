@@ -380,13 +380,21 @@ function composeCLAUDEMd() {
   // Timestamp
   const lastSync = new Date().toISOString();
 
+  // Read memory digest if available
+  const digestPath = join(USER_DIR, 'memory', 'digest.md');
+  let memoryDigest = '';
+  if (existsSync(digestPath)) {
+    memoryDigest = readFileSync(digestPath, 'utf-8').trim();
+  }
+
   // Substitute tokens
   let composed = templateBody
     .replace(/\{\{PERSONA_BODY\}\}/g, personaBody)
     .replace(/\{\{SKILL_INDEX\}\}/g, skillIndex)
     .replace(/\{\{ACTIVE_CONTEXT\}\}/g, activeContext)
     .replace(/\{\{FRAMEWORK_VERSION\}\}/g, version)
-    .replace(/\{\{LAST_SYNC\}\}/g, lastSync);
+    .replace(/\{\{LAST_SYNC\}\}/g, lastSync)
+    .replace(/\{\{MEMORY_DIGEST\}\}/g, memoryDigest);
 
   // Handle ADDRESS_AS: if empty, remove the sentence containing it
   if (!addressAs) {
