@@ -1,6 +1,6 @@
 {
   "name": "edwin",
-  "version": "0.2.0-dev",
+  "version": "0.2.0",
   "description": "EDWIN — Electronic Digital Workforce Intelligence Network. A portable personal AI assistant framework for Claude.",
   "type": "module",
   "bin": {
@@ -18,7 +18,8 @@
     "bundle": "node tools/bundle/build-bundle.mjs",
     "build-plugin": "node tools/bundle/build-plugin.mjs",
     "memory": "node tools/memory/memory.mjs",
-    "brags": "node tools/memory/brags.mjs"
+    "brags": "node tools/memory/brags.mjs",
+    "test": "node tools/test/run-e2e.mjs"
   },
   "engines": {
     "node": ">=18"

@@ -949,8 +949,12 @@ if (!jsonOutput) console.log('\nRunning personal data audit...\n');
 
 {
   const denylistPath = join(REPO_ROOT, 'tools', 'validate', 'denylist.txt');
-  // Pattern strings assembled to avoid triggering the personal-data detector on this file
-  const searchPatterns = ['derik', 'sqlhammer', '/Us' + 'ers/', 'C:\\Us' + 'ers\\'];
+
+  // Every pattern below is assembled from fragments rather than written literally. This file is tracked,
+  // so a literal here would be found by its own audit — which happened once, and only after the file was
+  // first committed. Same reason the comments never spell the patterns out.
+  const OWNER = 'sql' + 'hammer';        // the GitHub account that hosts the canonical remote
+  const searchPatterns = ['de' + 'rik', OWNER, '/Us' + 'ers/', 'C:\\Us' + 'ers\\'];
 
   // Add patterns from denylist if it exists
   if (existsSync(denylistPath)) {
@@ -961,10 +965,15 @@ if (!jsonOutput) console.log('\nRunning personal data audit...\n');
     searchPatterns.push(...denylist);
   }
 
-  // Search in core/, tools/, docs/ (excluding docs/testing/), and root CLAUDE.md
-  // Exclude patterns that are legitimate (like sqlhammer in repo references)
-  const excludeDirs = ['user', 'node_modules', '.git', 'dist', 'specs'];
-  const excludePatterns = ['docs/testing', 'docs/plugin-compatibility.md'];
+  // conventions.md §11 permits exactly one appearance of the account name: the project's own canonical
+  // remote in install instructions. Rather than exempting whole files — which would let a genuine leak
+  // hide in an exempted one — a line is only allowed if it carries the canonical remote itself.
+  const canonicalRemote = [
+    `github.com/${OWNER}/edwin`,
+    `github:${OWNER}/edwin`,
+  ];
+  // The plugin marketplace schema requires owner.name to be the hosting account; there is no URL form.
+  const marketplaceOwner = `.claude-plugin/marketplace.json`;
 
   let findings = [];
 
@@ -973,20 +982,17 @@ if (!jsonOutput) console.log('\nRunning personal data audit...\n');
     if (pattern.includes('yourusername')) continue;
 
     const escapedPattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const grepCmd = `git grep -in "${escapedPattern}" -- core tools docs CLAUDE.md 2>/dev/null || true`;
+    const grepCmd = `git grep -in "${escapedPattern}" -- . ':!specs' ':!docs/testing' ':!user' 2>/dev/null || true`;
     const result = run(grepCmd);
 
     if (result.output) {
       const lines = result.output.split('\n').filter(l => l.trim());
-      // Filter out acceptable locations
       const filtered = lines.filter(line => {
-        // Exclude lines from specs/, docs/testing/, and docs/plugin-compatibility.md
-        // sqlhammer is legitimate in those contexts (canonical repo references)
-        if (line.includes('specs/') || line.includes('docs/testing/')) return false;
-        if (line.includes('plugin-compatibility.md') && pattern === 'sqlhammer') return false;
-        if (line.includes('edwin-activate/SKILL.md') && pattern === 'sqlhammer') return false;
-        if (line.includes('docs/') && line.includes('.html') && pattern === 'sqlhammer') return false; // GitHub links in docs
         if (line.includes('denylist.txt')) return false; // Examples in denylist are OK
+        if (pattern === OWNER) {
+          if (canonicalRemote.some(url => line.includes(url))) return false;
+          if (line.startsWith(`${marketplaceOwner}:`)) return false;
+        }
         return true;
       });
       if (filtered.length > 0) {

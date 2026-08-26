@@ -35,7 +35,7 @@ The sync engine maintains a manifest at `~/.edwin/installed.json` that tracks wh
 ```json
 {
   "schemaVersion": 1,
-  "version": "0.2.0-dev",
+  "version": "0.2.0",
   "lastSync": "2026-08-26T...",
   "targets": ["code"],
   "skills": {

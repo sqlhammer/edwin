@@ -3,7 +3,7 @@
 All notable changes to EDWIN are recorded here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [semver](https://semver.org/).
 
-## [Unreleased] — 0.2.0-dev
+## [0.2.0] — 2026-08-26
 
 v0.2 turns EDWIN from a folder of Claude Code skills into a portable personal-assistant framework: a
 persona, skills grouped into contexts, personal data separated from the framework, meta-skills that build
@@ -138,6 +138,38 @@ new skills from conversation, and tooling for installation, validation, scheduli
   range. (WU-18)
 - `edwin-doctor` gains `brags-files-parse` and `brags-categories-valid`, so a hand-edited brag log that
   references a category that no longer exists is caught before a brag document is generated from it. (WU-18)
+- Nine self-contained HTML user guides in `docs/`, written for a reader whose only prior experience is
+  ChatGPT in a browser: getting started on macOS and Windows, using EDWIN, creating skills, memory and wins,
+  web portals, scheduled tasks, updating, and troubleshooting — with `docs/index.html` as a hub organised by
+  "I want to…". Inline CSS and no external requests, so every page works offline. Each opens with "What
+  you'll need" and "How long this takes". (WU-15)
+- `tools/test/run-e2e.mjs` — 38-check end-to-end harness covering doctor, the sync engine, context
+  operations, memory, brags, the scheduler, bundle export, both installers, and the no-personal-data
+  contract. Every check runs against a temp `HOME` or a `--root` scratch tree and the suite hashes the real
+  `user/` directory before and after to prove it was untouched. `npm test`. (WU-16)
+- `--root <path>` on `tools/memory/memory.mjs` and `tools/sync/context.mjs`, and `--limits <path>` on
+  `tools/bundle/build-bundle.mjs`, so those tools can be exercised without writing to real personal data or
+  editing the tracked portal limits. A tool that can only be tested against live user data is treated as
+  incomplete. (WU-16)
+- `docs/testing/v0.2-test-report.md` and `docs/testing/manual-test-script.md` — automated results plus a
+  numbered script for the cells a single macOS machine cannot cover: Windows, Gatekeeper double-click,
+  web-portal upload, and conversational behaviour. (WU-16)
+- `docs/roadmap-v0.3.md` recording everything deliberately deferred out of v0.2. (WU-16)
+
+### Fixed
+- `edwin-doctor` counted one line too many in every file, because a trailing newline yields an empty final
+  segment from `split('\n')`. This inflated every size check, including the persona and memory-digest
+  budgets, and falsely flagged a 250-line skill as over the 250-line guideline. (WU-16)
+- `edwin-doctor`'s `brags-files-parse` accepted any `user/brags/categories.json` that was valid JSON,
+  including a wrong-shaped one whose values were not description strings. The downstream
+  `brags-categories-valid` check then reported every entry in `brags.md` as referencing a missing category —
+  blaming the wrong file. It now rejects non-string values and names them. (WU-16)
+- Both macOS `.command` installers died silently on some terminals. `clear` exits non-zero when `TERM` is
+  unset or minimal, and it ran as the first statement of `main()` under `set -euo pipefail`, so the installer
+  aborted with no output at all. A cosmetic screen-clear can no longer abort an install. (WU-16)
+- `tools/memory/brags.mjs` labelled months using `new Date('YYYY-MM-01')`, which parses as UTC midnight and
+  renders local — shifting the label back a month for anyone behind UTC. Month labels are now derived by
+  string parsing, with no `Date` involved. (WU-16)
 
 ### Changed
 - All 13 v0.1 skills rewritten to the v0.2 format: frontmatter (`name`, `description`, `contexts`,

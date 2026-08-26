@@ -161,7 +161,7 @@ Web portals do not support scheduling.
 ```
 edwin/
 ├── core/                     # Framework source (persona, skills, contexts)
-│   ├── VERSION               # Framework semver (0.2.0-dev)
+│   ├── VERSION               # Framework semver (0.2.0)
 │   ├── persona/              # EDWIN's character, operating rules, hooks
 │   ├── skills/<name>/        # One directory per skill
 │   ├── contexts/             # Context definitions
@@ -248,6 +248,9 @@ Hand-written content in your `CLAUDE.md` outside the `<!-- EDWIN:BEGIN -->` / `<
 Full troubleshooting guide: [docs/troubleshooting.html](docs/troubleshooting.html)
 
 ## Documentation
+
+Start at the [guide index](docs/index.html) — it organises everything below by "I want to…". Open it in a
+browser; the guides are self-contained HTML and work offline.
 
 - [Getting Started (macOS)](docs/getting-started-mac.html)
 - [Getting Started (Windows)](docs/getting-started-windows.html)

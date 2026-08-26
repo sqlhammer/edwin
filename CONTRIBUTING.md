@@ -81,7 +81,7 @@ During development, changes accumulate in the `## [Unreleased]` section under th
 
 ## Versioning
 
-- **Framework version:** `core/VERSION`, semver. Currently `0.2.0-dev` during development, `0.2.0` at release.
+- **Framework version:** `core/VERSION`, semver. `0.2.0` at release; the working branch carries `<next>-dev` between releases.
 - **Skill versions:** `version` in frontmatter, semver, independent. Patch for wording, minor for new behaviour, major for a changed trigger or removed capability.
 
 EDWIN bumps skill versions automatically when it edits a skill on the user's behalf.
@@ -108,6 +108,8 @@ npm run sync         # Install skills and persona to ~/.claude/ (sync engine)
 npm run bundle       # Generate web-portal bundles
 npm run build-plugin # Rebuild skills/ from core/skills/ for plugin packaging
 npm run memory       # Memory helper (record, recall, forget, digest)
+npm run brags        # Wins helper (log, list, generate a brag document)
+npm test             # End-to-end suite (38 checks, temp directories only)
 ```
 
 ## Definition of Done
@@ -115,7 +117,7 @@ npm run memory       # Memory helper (record, recall, forget, digest)
 A work unit is complete when:
 
 1. Every acceptance criterion in its spec is satisfied.
-2. `npm run doctor` exits 0.
+2. `npm run doctor` exits 0 and `npm test` exits 0.
 3. No personal data has leaked into committed files (checked by doctor's leakage scan).
 4. Every new skill has `## Degradation` and `## Examples`, and its dialogue is hyper-concise.
 5. Every new script runs on both macOS and Windows, supports `--help`, and has zero dependencies.
@@ -125,6 +127,14 @@ Discovered gaps outside scope are written up in the completion report, not fixed
 
 ## Testing
 
+- **End-to-end suite:** `npm test` must exit 0. It runs 38 checks against temp directories and a temp
+  `HOME`, and fails if the real `user/` directory changed during the run. A new tool belongs in it.
+- **Testability is part of the tool.** Anything that writes under `user/` takes `--root <path>`; anything
+  that reads tracked config takes an override for it (`--limits` on the bundler). A tool that can only be
+  exercised against live personal data is incomplete, not merely awkward.
+- **Assert the failure, not the success.** A check named "rejects X" must prove the rejection came from the
+  logic under test and not from argument validation upstream of it. Defeat your own guard once and confirm
+  the check goes red.
 - **Doctor validation:** `npm run doctor` must pass.
 - **Idempotency:** Run `npm run sync` or `npm run build-plugin` twice — second run should report no changes.
 - **Cross-platform:** Scripts must run on macOS and Windows. Use `path.join`, never string concatenation for paths. Use `os.homedir()`, never `$HOME` or `%USERPROFILE%`.
@@ -135,7 +145,8 @@ Discovered gaps outside scope are written up in the completion report, not fixed
 1. **One PR per work unit.** Keep changes focused.
 2. **Title format:** `WU-##: description` (e.g., `WU-14: add README and CONTRIBUTING`).
 3. **Description:** Link to the spec, summarize what was done, note any discovered gaps.
-4. **Doctor must pass:** CI should run `npm run doctor` and fail the PR if it doesn't exit 0.
+4. **Doctor and tests must pass:** CI should run `npm run doctor` and `npm test`, and fail the PR if either
+   does not exit 0.
 5. **No personal data:** The doctor's leakage scan must find nothing. Add your own name/paths to `tools/validate/denylist.txt` locally but do not commit real data.
 
 ## Commit Messages
