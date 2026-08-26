@@ -33,6 +33,18 @@ new skills from conversation, and tooling for installation, validation, scheduli
   config. (WU-02)
 - `core/templates/CLAUDE.md.tmpl` — the persona composition template and its token contract, consumed by
   the sync engine. (WU-02)
+- `edwin-doctor` (`tools/validate/edwin-doctor.mjs`) — structure validator that turns the conventions into
+  an executable contract: skill frontmatter and required body sections, context definitions, the persona
+  line budget, hook format, template parsing, and a scan for personal-data leakage. Zero dependencies, with
+  a vendored frontmatter parser that refuses what it cannot parse rather than mis-parsing it. (WU-05)
+- `edwin-doctor --json` emits a stable findings object, and `--skill <path>` validates one skill — the
+  contract the skill creator consumes to check its own output. `--root <path>` allows validating a tree
+  other than the repo. (WU-05)
+- `tools/validate/denylist.txt` — user-extensible personal-data patterns, shipping with commented
+  placeholders only so the file itself stays portable. (WU-05)
+- `tools/validate/Edwin-Doctor.ps1` — PowerShell wrapper that uses Node when present and falls back to a
+  frontmatter-only check when it is not, announcing the reduced coverage. (WU-05)
+- `npm run doctor`. (WU-05)
 
 ### Changed
 - v0.1's flat `SKILLS/` folder moved to `core/skills/`; the npx installer and PowerShell sync script were

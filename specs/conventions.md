@@ -380,3 +380,93 @@ A work unit is complete when:
 5. Every new script runs on both macOS and Windows path semantics, supports `--help`, and has zero
    dependencies.
 6. Discovered gaps outside scope are written up in the completion report for WU-16, not fixed inline.
+
+---
+
+## 12. Validation
+
+### Running the doctor
+
+```bash
+npm run doctor              # Validate entire repo
+npm run doctor -- --skill core/skills/<name>   # Single skill
+npm run doctor -- --json    # JSON output for tooling
+npm run doctor -- --quiet   # Errors only
+```
+
+Exit codes: `0` success (warnings allowed), `1` validation failed, `2` bad usage.
+
+### What it checks
+
+| Check group | What it validates |
+|---|---|
+| **Skills** | Frontmatter present and complete (`name`, `description`, `contexts`, `version`, `requires`, `author`); name is kebab-case and matches directory; description is 40–500 chars with "when to use" signal; contexts exist in `contexts.json`; version is valid semver; required body sections present (`## Purpose`, `## When to use`, `## Instructions`, `## Degradation`, `## Examples`); line count under 250 (warning). |
+| **Contexts** | `contexts.json` parses; Global context exists; context names are unique; every context has a description; warns on contexts no skill references. |
+| **Persona** | Required files exist (`identity.md`, `operating-rules.md`, `harness-detection.md`); combined line count under 300 (warn) / 400 (error); hook files follow format (`### Hook:`, `**Owner skill:**`, `**Fires when:**`) and stay under 15 lines. |
+| **Templates** | Files in `core/templates/` are readable; YAML frontmatter (if present) parses. |
+| **Leakage** | Scans `core/`, `tools/`, `docs/`, and root `CLAUDE.md` against `tools/validate/denylist.txt` plus built-in patterns for home paths. Excludes `specs/` and `docs/testing/` from scan. Reports file and line for every hit. |
+| **User data** | If `user/config.json` or `user/state.json` exist, validates against §9 schemas (warns on unknown or missing keys; absence is not an error). |
+
+### Extending the doctor
+
+(For WU-17, WU-18, and future work units that add checks)
+
+Checks are registered in a flat array near the top of `edwin-doctor.mjs`. To add a check:
+
+```javascript
+// In the checks array:
+{
+  id: 'memory-digest',           // Unique check ID
+  title: 'Memory digest size',   // Human-readable title
+  group: 'memory',               // Grouping for output
+  run: checkMemoryDigest,        // Function to run
+}
+
+// Then implement the check function:
+function checkMemoryDigest(ctx) {
+  const digestPath = path.join(REPO_ROOT, 'user/memory/digest.md');
+  const content = readFile(digestPath);
+  if (!content) return; // Absence is OK for user/ files
+
+  const lines = countLines(content);
+  if (lines > 60) {
+    addFinding('memory-digest', 'error', 'memory', digestPath, null,
+      `Digest is ${lines} lines (max 60)`);
+  }
+}
+```
+
+The `ctx` object is shared across all checks and can store data needed by later checks (e.g., `ctx.contextsData` is populated by `contexts-parse` and consumed by skill frontmatter validation).
+
+### JSON output schema
+
+Used by `edwin-setup` (WU-10) and other tooling:
+
+```json
+{
+  "ok": true,
+  "version": "1.0.0",
+  "counts": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "findings": [
+    {
+      "id": "skill-frontmatter",
+      "level": "error",
+      "group": "skills",
+      "file": "/path/to/file",
+      "line": 42,
+      "message": "Missing required frontmatter key: description"
+    }
+  ]
+}
+```
+
+`line` may be `null` for file-level findings. `level` is `"error"` or `"warning"`.
+
+### Personal data denylist
+
+`tools/validate/denylist.txt` ships with commented placeholder entries. Users running EDWIN locally should add their own name, paths, and account handles to prevent accidental leakage into committed code.
+
+Entries are case-insensitive substrings or, if wrapped in `/.../`, regular expressions. Lines starting with `#` are comments. The validator also includes built-in patterns for common home directory paths (`/Users/<name>`, `/home/<name>`, `C:\Users\<name>`, drive-letter repo paths).
