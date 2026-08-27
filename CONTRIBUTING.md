@@ -147,6 +147,12 @@ Discovered gaps outside scope are written up in the completion report, not fixed
   point is to do something, one check must make it do that thing end to end. Use a local `file://` fixture
   built from the tracked working tree rather than the network, and build it from the working tree rather than
   `git clone --bare`, which ships `HEAD` and would test the last commit instead of your change.
+- **Test the artifact the user receives.** Windows scripts were once stored LF with `eol=crlf` in
+  `.gitattributes`, and the suite asserted exactly that — a committed blob normalised to LF. The guarantee
+  only applies on checkout, and the people who double-click an installer download the raw file instead, which
+  is served byte for byte. `cmd` silently skips the inner lines of a multi-line block in an LF-only file, so
+  the installer failed with no error message while the suite stayed green. `*.cmd` and `*.ps1` are now
+  `-text` with CRLF committed. Assert what is *stored*, not what a checkout would have produced.
 - **Doctor validation:** `npm run doctor` must pass.
 - **Idempotency:** Run `npm run sync` or `npm run build-plugin` twice — second run should report no changes.
 - **Cross-platform:** Scripts must run on macOS and Windows. Use `path.join`, never string concatenation for paths. Use `os.homedir()`, never `$HOME` or `%USERPROFILE%`.

@@ -226,6 +226,10 @@
             <p><strong>What happened:</strong> The tool was installed, but this window doesn't know about it yet. A terminal is given the list of installed programs when it starts and doesn't notice later additions. Common on Windows.</p>
 
             <p><strong>Fix:</strong> Close the window and run the installer again. A fresh window sees the new tool. If it happens a second time, the install genuinely failed — check the log the installer names on screen (<code>install.log</code> in your EDWIN folder) for what the tool's own installer reported.</p>
+
+            <p><strong>If you never saw a prompt asking to install anything,</strong> this is a different problem: the copy of <code>EDWIN-Install.cmd</code> you're running has the wrong line endings. Windows needs each line to end with a carriage return; a file saved in the Unix style makes <code>cmd</code> skip whole sections without reporting anything, and it can land on this message having attempted nothing. The tell-tale sign is a log that stops after <code>Checking prerequisites...</code>.</p>
+
+            <p><strong>Fix:</strong> Download the installer again from the repository's <code>tools/installers/</code> folder. If you copied it out of a Mac or Linux folder — a shared drive or a network folder — copy it again from a Windows checkout instead, or open it in Notepad and use <strong>Save As</strong> with the encoding line-ending option set to <strong>Windows (CRLF)</strong>.</p>
         </div>
 
         <div class="problem">

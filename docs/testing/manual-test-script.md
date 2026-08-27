@@ -64,7 +64,7 @@ _Record any errors or unexpected behavior_
 ### 1.3 Windows scheduler registration
 
 **Instruction:**
-1. In the cloned EDWIN repo, run `tools\schedule\register-task.cmd --help` in PowerShell
+1. In the cloned EDWIN repo, run `tools\schedule\register-task.ps1 --help` in PowerShell
 2. Note the help output
 3. Run with `--dry-run` and valid parameters
 

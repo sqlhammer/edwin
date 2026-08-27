@@ -1149,35 +1149,69 @@ if (!jsonOutput) console.log('\nRunning installer tests...\n');
       skip('macOS installer', 'EDWIN-Install.command not found');
     }
 
-    // Check Windows installer CRLF: test what git delivers on checkout, not working tree
-    // The repo is LF-normalized; .gitattributes ensures CRLF on checkout for *.cmd
-    const winCmdPath = 'tools/installers/EDWIN-Install.cmd';
-    const winCmd = join(REPO_ROOT, winCmdPath);
-    if (existsSync(winCmd)) {
-      // Check 1: committed blob is LF-normalized (no \r in git's object)
-      const showResult = run(`git show HEAD:${winCmdPath}`);
-      if (showResult.success && !showResult.output.includes('\r')) {
-        // Check 2: git check-attr confirms eol=crlf
-        const attrResult = run(`git check-attr eol -- ${winCmdPath}`);
-        if (attrResult.success && attrResult.output.includes('eol: crlf')) {
-          pass('Windows installer: LF-normalized in repo, eol=crlf on checkout');
-        } else {
-          fail('Windows installer line endings', `git check-attr eol should be crlf: ${attrResult.output}`);
-        }
-      } else {
-        fail('Windows installer normalization', 'Committed blob contains CR (should be LF-normalized)');
-      }
-    } else {
-      skip('Windows installer', 'EDWIN-Install.cmd not found');
-    }
+    // Line endings are asserted on the bytes *stored in git*, because that is what a browser
+    // download serves. The previous version of this check asserted the opposite — that the
+    // committed blob was LF-normalised — and leaned on `eol=crlf` to fix it up on checkout.
+    // That guarantee never reaches the people these installers exist for: they click
+    // "Download raw file", which serves the blob verbatim. cmd.exe given an LF-only file
+    // silently skips the inner lines of a multi-line `if (...) else (...)` block and lands
+    // somewhere unintended with no error, which is exactly how it failed on Windows 11.
+    {
+      const listed = run('git ls-files "*.cmd" "*.ps1" "*.command" "*.sh"');
+      const files = listed.success ? listed.output.split('\n').filter(Boolean) : [];
 
-    // Same check for macOS installer - should have eol=lf
-    const macCmdPath = 'tools/installers/EDWIN-Install.command';
-    const macAttrResult = run(`git check-attr eol -- ${macCmdPath}`);
-    if (macAttrResult.success && macAttrResult.output.includes('eol: lf')) {
-      pass('macOS installer: eol=lf on checkout');
-    } else {
-      fail('macOS installer eol attribute', `Expected eol: lf, got: ${macAttrResult.output}`);
+      if (files.length === 0) {
+        fail('line endings', `no Windows or shell scripts found to check: ${listed.output}`);
+      } else {
+        const wrong = [];
+        let windowsCount = 0;
+        let shellCount = 0;
+
+        for (const rel of files) {
+          // The working tree is read rather than `git show HEAD:`, so an uncommitted change
+          // is caught before it is committed rather than after. Under -text this is the same
+          // question: git converts nothing in either direction, so working tree, index, and
+          // blob are byte-identical. The `text: unset` assertion below is what makes that so.
+          const content = readFileSync(join(REPO_ROOT, rel), 'latin1');
+          const wantsCrlf = rel.endsWith('.cmd') || rel.endsWith('.ps1');
+          // A lone LF is one not preceded by CR. Counting CRs is not enough: a file with
+          // mixed endings has plenty of CRs and still breaks.
+          const loneLf = (content.match(/(?<!\r)\n/g) || []).length;
+          const crlf = (content.match(/\r\n/g) || []).length;
+
+          if (wantsCrlf) {
+            windowsCount++;
+            if (loneLf > 0 || crlf === 0) {
+              wrong.push(`${rel}: wants CRLF, has ${crlf} CRLF and ${loneLf} lone LF`);
+            }
+          } else {
+            shellCount++;
+            if (crlf > 0) {
+              wrong.push(`${rel}: wants LF, has ${crlf} CRLF`);
+            }
+          }
+        }
+
+        if (wrong.length === 0) {
+          pass(
+            `line endings as stored in git: ${windowsCount} Windows script(s) CRLF, ${shellCount} shell script(s) LF`
+          );
+        } else {
+          fail('line endings as stored in git', wrong.join('; '));
+        }
+      }
+
+      // -text is what makes the stored bytes authoritative. With `text eol=crlf` instead, git
+      // normalises to LF on commit and the raw download is LF again — the defect this replaced.
+      const attrs = run('git check-attr text -- tools/installers/EDWIN-Install.cmd');
+      if (attrs.success && /text: unset/.test(attrs.output)) {
+        pass('Windows scripts are -text, so stored bytes survive a raw download');
+      } else {
+        fail(
+          'gitattributes -text',
+          `expected "text: unset" for *.cmd (normalisation off), got: ${attrs.output.trim()}`
+        );
+      }
     }
   } else {
     skip('installer tests', 'installers directory not found');

@@ -157,6 +157,17 @@ new skills from conversation, and tooling for installation, validation, scheduli
 - `docs/roadmap-v0.3.md` recording everything deliberately deferred out of v0.2. (WU-16)
 
 ### Fixed
+- Every Windows script was stored in the repository with LF line endings, relying on
+  `.gitattributes` `eol=crlf` to fix them up **on checkout** — a guarantee that never reaches the
+  people the double-click installers exist for, because they click "Download raw file", which
+  serves the stored bytes verbatim. Given an LF-only file, `cmd.exe` silently skips the inner
+  lines of a multi-line `if (...) else (...)` block and lands somewhere unintended with no error
+  message: on Windows 11 the installer jumped straight to "Node.js still isn't usable after the
+  install attempt" without ever printing a prompt or attempting an install. `*.cmd` and `*.ps1`
+  are now `-text` and committed with CRLF bytes, so what git stores is what cmd needs;
+  `*.command` and `*.sh` are `-text` with LF for the same reason in reverse. The end-to-end suite
+  asserted the *opposite* of this — that the committed blob was LF-normalised — so it was
+  actively defending the defect. (WU-07)
 - Both double-click installers wrote their log file into the directory they were about to clone
   into, and `git clone` refuses a destination that exists and is not empty. **No fresh install
   could ever succeed on either platform.** The emptiness check exempted `install.log`, which only

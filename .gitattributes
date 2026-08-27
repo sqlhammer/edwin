@@ -1,10 +1,19 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
-# Windows batch installers must be CRLF: cmd.exe mis-parses labels and multi-line
-# blocks in LF-only files. The macOS .command scripts must stay LF for the same
-# reason in reverse — bash chokes on CR.
-*.cmd text eol=crlf
-*.ps1 text eol=crlf
-*.command text eol=lf
-*.sh text eol=lf
+# Windows scripts are stored with CRLF bytes, not normalized to LF with `eol=crlf`.
+#
+# cmd.exe mis-parses multi-line `if (...) else (...)` blocks in an LF-only file: the
+# block's inner lines are silently skipped and execution lands somewhere unintended,
+# with no error message. `eol=crlf` alone does not prevent this, because it only applies
+# on checkout — and the people these installers are for do not check the repository out.
+# They click "Download raw file" in a browser, which serves the stored bytes verbatim. So
+# the bytes in the repository have to be the bytes cmd needs.
+#
+# -text disables normalization in both directions, so what is committed is what is served.
+*.cmd -text
+*.ps1 -text
+
+# The macOS scripts are the mirror image: bash chokes on CR, and these are also served raw.
+*.command -text
+*.sh -text
