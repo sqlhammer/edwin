@@ -172,10 +172,12 @@
         <h2>Step 1: Download the installer</h2>
 
         <div class="step-box">
-            <h3>Download EDWIN-Install.cmd</h3>
-            <p>Go to the EDWIN folder (the repository on your computer or on GitHub) and find the file:</p>
-            <p><code>tools\installers\EDWIN-Install.cmd</code></p>
-            <p>Download this file to your <strong>Downloads</strong> folder, or anywhere you can easily find it.</p>
+            <h3>Download two files, into the same folder</h3>
+            <p>Go to the EDWIN folder (the repository on your computer or on GitHub) and find <strong>both</strong> of these:</p>
+            <p><code>tools\installers\EDWIN-Install.cmd</code><br>
+            <code>tools\installers\EDWIN-Install.ps1</code></p>
+            <p>Download both into your <strong>Downloads</strong> folder, or anywhere you can easily find them — but into the <strong>same</strong> folder. The <code>.cmd</code> is the file you double-click; the <code>.ps1</code> next to it is the installer itself. If you only take the first one, it will tell you the second is missing rather than doing anything half-finished.</p>
+            <p>Two files rather than one because Windows won't run a PowerShell script when you double-click it — it opens it in an editor instead. The <code>.cmd</code> exists purely to start the real installer.</p>
         </div>
 
         <h2>Step 2: Run the installer</h2>

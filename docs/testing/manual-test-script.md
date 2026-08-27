@@ -25,12 +25,16 @@ Each step has:
 ### 1.1 Double-click installer on Windows
 
 **Instruction:**
-1. On a Windows machine, download `tools/installers/EDWIN-Install.cmd`
-2. Double-click the file
+1. On a Windows machine, download **both** `tools/installers/EDWIN-Install.cmd` and
+   `tools/installers/EDWIN-Install.ps1` into the same folder. The `.cmd` is a launcher; the `.ps1` is the
+   installer.
+2. Double-click the `.cmd`
 3. Follow prompts to provide repository URL when asked
 4. Wait for installation to complete
 
 **Expected:**
+- A Command Prompt window opens, PowerShell starts, and the EDWIN banner appears — no execution-policy
+  error, and no editor window opening the script instead of running it
 - Installer prompts for GitHub repository URL
 - Clones the repository to a local directory
 - Runs npm install
@@ -103,6 +107,33 @@ machine that already had EDWIN would not have caught either one.
 
 **Notes:**
 _Record the exact clone URL line, verbatim_
+
+---
+
+### 1.5 Windows launcher — the `.ps1` and the execution policy
+
+The Windows installer is a PowerShell script started by a small `.cmd` launcher, because Windows opens a
+`.ps1` in an editor when you double-click it. This cell covers the two ways that hand-off can go wrong on a
+real machine, neither of which is reachable from the test suite.
+
+**Instruction:**
+1. Put `EDWIN-Install.cmd` in a folder **on its own**, with no `.ps1` beside it, and double-click it.
+2. Put both files back together. Right-click `EDWIN-Install.ps1` and choose **Run with PowerShell** (not the
+   `.cmd`) on a machine whose execution policy is the default `Restricted` or `AllSigned`.
+3. Now double-click `EDWIN-Install.cmd` instead.
+
+**Expected:**
+- Step 1 prints that `EDWIN-Install.ps1` was not found, names the exact path it looked in, tells you to
+  download the whole installers folder, and **waits** for a keypress rather than closing instantly.
+- Step 2 may be refused by Windows with a "running scripts is disabled on this system" error. That is
+  expected and is what the launcher exists to avoid — it is not an EDWIN defect.
+- Step 3 runs regardless of the machine's execution policy, and does **not** change that policy: after the
+  install, `Get-ExecutionPolicy` returns the same value it did before.
+
+**Result:** [ ] Pass [ ] Fail
+
+**Notes:**
+_Record `Get-ExecutionPolicy` before and after_
 
 ---
 
@@ -422,7 +453,8 @@ but no Windows machine was available. Treat them as unverified until a tester si
 ### 7.3 Windows — prerequisites missing, winget available (UNVERIFIED)
 
 **Instruction:**
-1. On a Windows 10/11 machine without Node.js and without Git, double-click `EDWIN-Install.cmd`
+1. On a Windows 10/11 machine without Node.js and without Git, double-click `EDWIN-Install.cmd` (with
+   `EDWIN-Install.ps1` beside it)
 2. Press `Y` at each "Install ... now?" prompt
 3. Click **Yes** at each UAC prompt
 
@@ -459,11 +491,12 @@ but no Windows machine was available. Treat them as unverified until a tester si
 
 **Instruction:**
 1. Run the installer with a prerequisite missing and answer `N`
-2. Run it again as `EDWIN-Install.cmd --skip-deps` (or `bash EDWIN-Install.command --skip-deps`)
+2. Run it again as `EDWIN-Install.cmd -SkipDeps` on Windows, or `bash EDWIN-Install.command --skip-deps`
+   on macOS (the Windows installer also still accepts `--skip-deps`)
 
 **Expected:**
 - Declining stops the installer with a message naming the missing tool and how to install it yourself
-- `--skip-deps` stops the same way and says to re-run without `--skip-deps` to have it installed
+- `-SkipDeps` / `--skip-deps` stops the same way and says to re-run without it to have the tool installed
 - Neither path leaves a half-configured EDWIN behind
 
 **Result:** [ ] Pass [ ] Fail
@@ -473,13 +506,14 @@ but no Windows machine was available. Treat them as unverified until a tester si
 ### 7.6 Unattended run (UNVERIFIED on Windows)
 
 **Instruction:**
-1. Run the installer with `--yes` and a prerequisite missing
+1. Run the installer with `-Yes` (Windows) or `--yes` (macOS) and a prerequisite missing
 2. Separately, run it with its input redirected from nothing and **no** `--yes`:
    - macOS: `bash EDWIN-Install.command < /dev/null`
-   - Windows: `EDWIN-Install.cmd < NUL`
+   - Windows: `EDWIN-Install.cmd < NUL`, or from PowerShell
+     `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\EDWIN-Install.ps1 -NoPause`
 
 **Expected:**
-- `--yes` installs without asking, and echoes the answer it assumed
+- `-Yes` / `--yes` installs without asking, and echoes the answer it assumed
 - With no console and no `--yes`, the installer **declines** and exits — it must not silently consent
   to installing software on a machine nobody is watching
 

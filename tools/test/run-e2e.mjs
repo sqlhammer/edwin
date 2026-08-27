@@ -1213,6 +1213,361 @@ if (!jsonOutput) console.log('\nRunning installer tests...\n');
         );
       }
     }
+
+    // ---- Windows installer ----
+    //
+    // The Windows installer was ~840 lines of batch until three separate failures on a real
+    // Windows 11 machine, every one of them cmd.exe mis-parsing a nested `if (...) else (...)`
+    // block — which it does without printing anything, so the window simply closed. None of it
+    // was assertable from macOS, and reviewing that dialect line by line kept missing defects
+    // a single run would have caught.
+    //
+    // It is PowerShell now, and this section is the deciding reason: pwsh runs on macOS, so
+    // the checks below are executions rather than readings. The remaining .cmd files are
+    // launchers — Windows will not run a .ps1 on double-click — and the guard on them is that
+    // they stay too small to hide a bug.
+    {
+      const cmdListed = run('git ls-files "*.cmd"');
+      const cmdFiles = cmdListed.success ? cmdListed.output.split('\n').filter(Boolean) : [];
+      const overweight = [];
+
+      for (const rel of cmdFiles) {
+        const text = readFileSync(join(REPO_ROOT, rel), 'latin1');
+        const lines = text.split(/\r?\n/).length;
+        // `for /f`, and any `if`/`for` block spanning lines, are the constructs cmd mis-parses.
+        // A launcher needs none of them, so their absence is the invariant worth asserting.
+        const hasForF = /\bfor\s+\/f\b/i.test(text);
+        const hasMultilineBlock = /\b(if|for|else)\b[^\r\n]*\(\s*(\r?\n)/i.test(text);
+        if (lines > 60 || hasForF || hasMultilineBlock) {
+          overweight.push(
+            `${rel}: ${lines} lines${hasForF ? ', uses for /f' : ''}${hasMultilineBlock ? ', has a multi-line block' : ''}`
+          );
+        }
+      }
+
+      if (cmdFiles.length === 0) {
+        fail('cmd launchers', `no .cmd files found: ${cmdListed.output}`);
+      } else if (overweight.length === 0) {
+        pass(`cmd launchers stay thin: no multi-line blocks or for /f (${cmdFiles.length} file(s))`);
+      } else {
+        fail('cmd launchers stay thin', overweight.join('; '));
+      }
+
+      // Every launcher must point at a .ps1 that exists, or a double-click lands on the
+      // "not found next to this file" path instead of installing anything.
+      const danglingShims = [];
+      for (const rel of cmdFiles) {
+        const text = readFileSync(join(REPO_ROOT, rel), 'latin1');
+        for (const m of text.matchAll(/%~dp0([A-Za-z0-9._-]+\.ps1)/g)) {
+          if (!existsSync(join(REPO_ROOT, dirname(rel), m[1]))) {
+            danglingShims.push(`${rel} -> ${m[1]}`);
+          }
+        }
+      }
+      if (danglingShims.length === 0) {
+        pass('every cmd launcher points at a PowerShell script that exists');
+      } else {
+        fail('cmd launcher targets', danglingShims.join('; '));
+      }
+    }
+
+    {
+      const psListed = run('git ls-files "*.ps1"');
+      const psFiles = psListed.success ? psListed.output.split('\n').filter(Boolean) : [];
+      const pwshAvailable = run('command -v pwsh').success;
+
+      if (psFiles.length === 0) {
+        fail('PowerShell scripts', `none found: ${psListed.output}`);
+      } else if (!pwshAvailable) {
+        skip('PowerShell script checks', 'pwsh not installed on this machine');
+      } else {
+        // A syntax error is what killed the batch installer silently. PowerShell's own parser
+        // settles the question for every tracked .ps1, including the ones only Windows runs.
+        const parseScript = `
+          $bad = @()
+          foreach ($f in @(${psFiles.map((f) => `'${join(REPO_ROOT, f)}'`).join(',')})) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($f, [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) { foreach ($e in $errors) { $bad += "$([System.IO.Path]::GetFileName($f)):$($e.Extent.StartLineNumber) $($e.Message)" } }
+          }
+          if ($bad.Count -gt 0) { Write-Output ($bad -join '; '); exit 1 }
+          Write-Output 'clean'
+        `;
+        const parsed = spawnSync('pwsh', ['-NoProfile', '-Command', parseScript], {
+          encoding: 'utf-8',
+          timeout: 60000,
+        });
+        if (parsed.status === 0) {
+          pass(`every tracked PowerShell script parses (${psFiles.length} file(s))`);
+        } else {
+          fail('PowerShell parse', (parsed.stdout || parsed.stderr || '').trim().slice(0, 500));
+        }
+
+        // ---- Executing the Windows installer, on macOS ----
+        const winInstaller = join(REPO_ROOT, 'tools', 'installers', 'EDWIN-Install.ps1');
+        const winUpdater = join(REPO_ROOT, 'tools', 'installers', 'EDWIN-Update.ps1');
+        const psHome = join(TEMP_ROOT, 'ps-home');
+        const psTemp = join(TEMP_ROOT, 'ps-temp');
+        mkdirSync(join(psHome, '.claude'), { recursive: true });
+        mkdirSync(psTemp, { recursive: true });
+
+        const runPs = (script, args, extraEnv = {}) =>
+          spawnSync('pwsh', ['-NoProfile', '-File', script, ...args], {
+            env: {
+              ...process.env,
+              HOME: psHome,
+              TMPDIR: psTemp,
+              // USERPROFILE is what the installer prefers; setting it keeps the macOS run on
+              // the same code path Windows takes.
+              USERPROFILE: psHome,
+              ...extraEnv,
+            },
+            stdio: ['ignore', 'pipe', 'pipe'],
+            encoding: 'utf-8',
+            timeout: 180000,
+          });
+
+        // Same fixture strategy as the macOS installer test: a local repository built from
+        // this checkout's *tracked working-tree* files. Not `git clone --bare`, which ships
+        // HEAD and would test the last commit rather than the change in front of the author.
+        const psRemote = join(TEMP_ROOT, 'ps-fake-remote', 'edwin.git');
+        const buildPsRemote = () => {
+          const listed = run(`git -C "${REPO_ROOT}" ls-files`);
+          if (!listed.success) return listed;
+          for (const rel of listed.output.split('\n').filter(Boolean)) {
+            const src = join(REPO_ROOT, rel);
+            const dest = join(psRemote, rel);
+            if (!dest.startsWith(TEMP_ROOT)) {
+              return { success: false, output: `path escaped the temp root: ${dest}` };
+            }
+            if (!existsSync(src)) continue; // deleted but still tracked
+            mkdirSync(dirname(dest), { recursive: true });
+            copyFileSync(src, dest);
+          }
+          const id = '-c user.name=edwin-test -c user.email=test@example.invalid';
+          return run(
+            `git -C "${psRemote}" init --quiet && ` +
+              `git ${id} -C "${psRemote}" add -A && ` +
+              `git ${id} -C "${psRemote}" commit --quiet -m "test fixture"`
+          );
+        };
+
+        const built = buildPsRemote();
+        const remoteUrl = `file://${psRemote}`;
+
+        if (!built.success) {
+          fail('Windows installer full install', `could not build the local fake remote: ${built.output}`);
+        } else {
+          const target = join(psHome, 'edwin');
+          const r = runPs(winInstaller, [
+            '-RepoUrl', remoteUrl,
+            '-InstallDir', target,
+            '-Yes',
+            '-NoPause',
+          ]);
+          const cloned = existsSync(join(target, '.git'));
+          const synced = existsSync(join(psHome, '.claude', 'CLAUDE.md'));
+          const logCopied = existsSync(join(target, 'install.log'));
+
+          if (r.status === 0 && cloned && synced) {
+            pass('Windows installer: clones into a fresh target and runs the sync engine');
+          } else {
+            fail(
+              'Windows installer full install',
+              `exit ${r.status}, cloned=${cloned}, synced=${synced}: ${((r.stdout || '') + (r.stderr || '')).slice(-500)}`
+            );
+          }
+
+          if (logCopied) {
+            pass('Windows installer: install.log ends up inside the installed repo');
+          } else {
+            fail('Windows installer log placement', 'expected install.log to be copied into the install dir');
+          }
+
+          // The updater needs a real prior install to run against, which the check above just
+          // produced.
+          const u = runPs(winUpdater, ['-InstallDir', target, '-NoPause']);
+          if (u.status === 0 && /Update Complete/.test(u.stdout || '')) {
+            pass('Windows updater: fast-forwards an existing install and re-syncs');
+          } else {
+            fail(
+              'Windows updater',
+              `exit ${u.status}: ${((u.stdout || '') + (u.stderr || '')).slice(-500)}`
+            );
+          }
+
+          // Changes inside user/ are personal data and must survive an update; changes anywhere
+          // else must stop it, naming the files rather than overwriting them. Both halves are
+          // asserted in one run so a blanket refusal cannot pass as the discriminating one.
+          mkdirSync(join(target, 'user'), { recursive: true });
+          writeFileSync(join(target, 'user', 'notes.md'), 'personal, must survive\n');
+          const u2 = runPs(winUpdater, ['-InstallDir', target, '-NoPause']);
+          if (u2.status === 0 && existsSync(join(target, 'user', 'notes.md'))) {
+            pass('Windows updater: uncommitted changes under user/ are preserved, not refused');
+          } else {
+            fail(
+              'Windows updater user/ tolerance',
+              `exit ${u2.status}: ${((u2.stdout || '') + (u2.stderr || '')).slice(-400)}`
+            );
+          }
+
+          writeFileSync(join(target, 'README.md'), 'locally edited, outside user/\n');
+          const u3 = runPs(winUpdater, ['-InstallDir', target, '-NoPause']);
+          const u3out = (u3.stdout || '') + (u3.stderr || '');
+          if (u3.status !== 0 && /uncommitted changes outside of user\//i.test(u3out) && /README\.md/.test(u3out)) {
+            pass('Windows updater: refuses changes outside user/ and names the files');
+          } else {
+            fail(
+              'Windows updater outside-user refusal',
+              `expected a refusal naming README.md, got exit ${u3.status}: ${u3out.slice(-400)}`
+            );
+          }
+
+          // A non-empty target is the defect that once made every fresh install fail: the
+          // installer wrote its own log into the clone destination and git then refused it.
+          const occupied = join(psHome, 'occupied');
+          mkdirSync(occupied, { recursive: true });
+          writeFileSync(join(occupied, 'something.txt'), 'in the way\n');
+          const busy = runPs(winInstaller, [
+            '-RepoUrl', remoteUrl,
+            '-InstallDir', occupied,
+            '-Yes',
+            '-NoPause',
+          ]);
+          if (busy.status !== 0 && /Non-git directory exists/.test((busy.stdout || '') + (busy.stderr || ''))) {
+            pass('Windows installer refuses a non-empty target instead of failing in git');
+          } else {
+            fail(
+              'Windows installer non-empty target',
+              `expected a refusal naming the directory, got exit ${busy.status}`
+            );
+          }
+
+          // `owner/repo` shorthand and the legacy `--repo-url` spelling both have to survive,
+          // and the .git suffix must be appended exactly once. Appending it on every call is
+          // what produced edwin.git.git.git on Windows. Resolution is asserted through the
+          // clone attempt's own error message, so it is the real code path being read.
+          const shorthand = runPs(winInstaller, [
+            '--repo-url', 'edwin-test-owner/edwin',
+            '-InstallDir', join(psHome, 'shorthand'),
+            '-Yes',
+            '-NoPause',
+          ]);
+          const shorthandOut = (shorthand.stdout || '') + (shorthand.stderr || '');
+          if (
+            shorthand.status !== 0 &&
+            /https:\/\/github\.com\/edwin-test-owner\/edwin\.git/.test(shorthandOut) &&
+            !/\.git\.git/.test(shorthandOut)
+          ) {
+            pass('Windows installer: owner/repo shorthand and --repo-url both resolve, .git added once');
+          } else {
+            fail(
+              'Windows installer URL resolution',
+              `expected one https://github.com/edwin-test-owner/edwin.git: ${shorthandOut.slice(-400)}`
+            );
+          }
+        }
+
+        // Prerequisite refusals. A missing tool is simulated by running with a PATH that has
+        // only the stub directory on it, so `git` genuinely is not there. Each refusal is
+        // paired with the control run above (which found the real git and node), otherwise
+        // these would pass just as happily against an installer broken for another reason.
+        // No test may install software, so only the paths that decline are exercised.
+        const stubBin = join(TEMP_ROOT, 'ps-stub-bin');
+        mkdirSync(stubBin, { recursive: true });
+        const realNode = run('command -v node').output.trim();
+        if (realNode) {
+          copyFileSync(realNode, join(stubBin, 'node'));
+          chmodSync(join(stubBin, 'node'), 0o755);
+        }
+        const pwshPath = run('command -v pwsh').output.trim();
+
+        const runPsBare = (args, pathValue) =>
+          spawnSync(pwshPath, ['-NoProfile', '-File', winInstaller, ...args], {
+            env: { ...process.env, HOME: psHome, TMPDIR: psTemp, USERPROFILE: psHome, PATH: pathValue },
+            stdio: ['ignore', 'pipe', 'pipe'],
+            encoding: 'utf-8',
+            timeout: 60000,
+          });
+
+        {
+          const noGit = join(psHome, 'no-git-target');
+          const r = runPsBare(
+            ['-RepoUrl', remoteUrl, '-InstallDir', noGit, '-SkipDeps', '-Yes', '-NoPause'],
+            stubBin
+          );
+          const out = (r.stdout || '') + (r.stderr || '');
+          if (r.status !== 0 && /Git is not installed \(run without -SkipDeps/.test(out) && !existsSync(noGit)) {
+            pass('Windows installer: -SkipDeps reports missing Git instead of installing it');
+          } else {
+            fail('Windows installer -SkipDeps', `exit ${r.status}: ${out.slice(-400)}`);
+          }
+        }
+
+        {
+          // No -Yes and no console: the installer must decline rather than consent by default.
+          // stdio stdin is 'ignore', which is what [Console]::IsInputRedirected detects.
+          const declined = join(psHome, 'declined-target');
+          const r = runPsBare(['-RepoUrl', remoteUrl, '-InstallDir', declined, '-NoPause'], stubBin);
+          const out = (r.stdout || '') + (r.stderr || '');
+          if (
+            r.status !== 0 &&
+            /No console available to ask/.test(out) &&
+            /installation was declined/.test(out) &&
+            !existsSync(declined)
+          ) {
+            pass('Windows installer: no console and no -Yes declines the install');
+          } else {
+            fail('Windows installer no-console decline', `exit ${r.status}: ${out.slice(-400)}`);
+          }
+        }
+
+        {
+          // Node present but too old. A stub reporting v16 exercises the version comparison
+          // rather than the missing-tool branch.
+          const oldBin = join(TEMP_ROOT, 'ps-old-node-bin');
+          mkdirSync(oldBin, { recursive: true });
+          writeFileSync(join(oldBin, 'node'), '#!/bin/sh\necho v16.20.2\n');
+          chmodSync(join(oldBin, 'node'), 0o755);
+          const realGit = run('command -v git').output.trim();
+          if (realGit) {
+            copyFileSync(realGit, join(oldBin, 'git'));
+            chmodSync(join(oldBin, 'git'), 0o755);
+          }
+          const oldTarget = join(psHome, 'old-node-target');
+          const r = runPsBare(
+            ['-RepoUrl', remoteUrl, '-InstallDir', oldTarget, '-SkipDeps', '-Yes', '-NoPause'],
+            oldBin
+          );
+          const out = (r.stdout || '') + (r.stderr || '');
+          if (r.status !== 0 && /Node\.js 18 or higher is required/.test(out) && !existsSync(oldTarget)) {
+            pass('Windows installer: Node.js 16 is rejected as too old');
+          } else {
+            fail('Windows installer old Node', `exit ${r.status}: ${out.slice(-400)}`);
+          }
+        }
+
+        {
+          const r = runPs(winInstaller, ['--not-a-real-option']);
+          const out = (r.stdout || '') + (r.stderr || '');
+          if (r.status === 2 && /unknown option: --not-a-real-option/.test(out)) {
+            pass('Windows installer: unknown option exits 2 with usage');
+          } else {
+            fail('Windows installer unknown option', `expected exit 2, got ${r.status}: ${out.slice(-300)}`);
+          }
+        }
+
+        {
+          const r = runPs(winInstaller, ['-Help']);
+          const out = r.stdout || '';
+          if (r.status === 0 && /-SkipDeps/.test(out) && /winget/.test(out)) {
+            pass('Windows installer: -Help documents the scripted prerequisite install');
+          } else {
+            fail('Windows installer help', `exit ${r.status}: ${out.slice(0, 300)}`);
+          }
+        }
+      }
+    }
   } else {
     skip('installer tests', 'installers directory not found');
   }

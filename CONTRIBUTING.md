@@ -109,7 +109,7 @@ npm run bundle       # Generate web-portal bundles
 npm run build-plugin # Rebuild skills/ from core/skills/ for plugin packaging
 npm run memory       # Memory helper (record, recall, forget, digest)
 npm run brags        # Wins helper (log, list, generate a brag document)
-npm test             # End-to-end suite (47 checks, temp directories only)
+npm test             # End-to-end suite (62 checks, temp directories only)
 ```
 
 ## Definition of Done
@@ -127,7 +127,7 @@ Discovered gaps outside scope are written up in the completion report, not fixed
 
 ## Testing
 
-- **End-to-end suite:** `npm test` must exit 0. It runs 47 checks against temp directories and a temp
+- **End-to-end suite:** `npm test` must exit 0. It runs 62 checks against temp directories and a temp
   `HOME`, and fails if the real `user/` directory changed during the run. A new tool belongs in it.
 - **Testability is part of the tool.** Anything that writes under `user/` takes `--root <path>`; anything
   that reads tracked config takes an override for it (`--limits` on the bundler). A tool that can only be
@@ -153,6 +153,14 @@ Discovered gaps outside scope are written up in the completion report, not fixed
   is served byte for byte. `cmd` silently skips the inner lines of a multi-line block in an LF-only file, so
   the installer failed with no error message while the suite stayed green. `*.cmd` and `*.ps1` are now
   `-text` with CRLF committed. Assert what is *stored*, not what a checkout would have produced.
+- **Prefer a language you can execute here.** The Windows installer was batch, and three consecutive
+  failures on a real Windows 11 machine were found by the user and none by the suite — every one of them
+  `cmd.exe` mis-parsing a nested block, which it does without printing anything. Reviewing that dialect line
+  by line kept missing defects a single run would have caught. It is PowerShell now, `pwsh` runs on macOS,
+  and the first execution surfaced two defects that no amount of reading had. When a platform-specific
+  script must exist, choose the interpreter that is available on both the target and the developer's
+  machine, and keep the un-runnable part small enough that it cannot hide a bug — the `.cmd` files are
+  launchers of 40 and 33 lines with no branching, and a check enforces that they stay that way.
 - **Doctor validation:** `npm run doctor` must pass.
 - **Idempotency:** Run `npm run sync` or `npm run build-plugin` twice — second run should report no changes.
 - **Cross-platform:** Scripts must run on macOS and Windows. Use `path.join`, never string concatenation for paths. Use `os.homedir()`, never `$HOME` or `%USERPROFILE%`.

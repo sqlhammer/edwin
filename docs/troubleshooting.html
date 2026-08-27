@@ -227,9 +227,25 @@
 
             <p><strong>Fix:</strong> Close the window and run the installer again. A fresh window sees the new tool. If it happens a second time, the install genuinely failed — check the log the installer names on screen (<code>install.log</code> in your EDWIN folder) for what the tool's own installer reported.</p>
 
-            <p><strong>If you never saw a prompt asking to install anything,</strong> this is a different problem: the copy of <code>EDWIN-Install.cmd</code> you're running has the wrong line endings. Windows needs each line to end with a carriage return; a file saved in the Unix style makes <code>cmd</code> skip whole sections without reporting anything, and it can land on this message having attempted nothing. The tell-tale sign is a log that stops after <code>Checking prerequisites...</code>.</p>
+            <p><strong>If you never saw a prompt asking to install anything,</strong> check that you are running the current installer. Earlier versions of the Windows installer were a Command Prompt script that could skip whole sections without reporting anything, and land on this message having attempted nothing. The current one is a PowerShell script (<code>EDWIN-Install.ps1</code>, started by <code>EDWIN-Install.cmd</code>) and reports what it did. Download both files again from the repository's <code>tools/installers/</code> folder into the same folder.</p>
+        </div>
 
-            <p><strong>Fix:</strong> Download the installer again from the repository's <code>tools/installers/</code> folder. If you copied it out of a Mac or Linux folder — a shared drive or a network folder — copy it again from a Windows checkout instead, or open it in Notepad and use <strong>Save As</strong> with the encoding line-ending option set to <strong>Windows (CRLF)</strong>.</p>
+        <div class="problem">
+            <h3>Symptom (Windows): "EDWIN-Install.ps1 was not found next to this file"</h3>
+            <p><strong>What happened:</strong> You downloaded <code>EDWIN-Install.cmd</code> on its own. That file is only a launcher — the installer itself is <code>EDWIN-Install.ps1</code>, and Windows needs the launcher because double-clicking a PowerShell script opens it in an editor rather than running it.</p>
+
+            <p><strong>Fix:</strong> Download <code>EDWIN-Install.ps1</code> from the repository's <code>tools/installers/</code> folder into the <em>same</em> folder as the <code>.cmd</code>, then double-click the <code>.cmd</code> again. The message on screen names the exact path it looked in.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom (Windows): "running scripts is disabled on this system"</h3>
+            <p><strong>What happened:</strong> You ran <code>EDWIN-Install.ps1</code> directly and Windows' execution policy blocked it. This is why the <code>.cmd</code> launcher exists: it starts PowerShell with the policy bypassed for that one script only, changing nothing about your machine's settings.</p>
+
+            <p><strong>Fix:</strong> Double-click <code>EDWIN-Install.cmd</code> instead. To run it from a PowerShell window by hand, use the same form the launcher does:</p>
+            <ol>
+                <li><code>powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\EDWIN-Install.ps1</code></li>
+            </ol>
+            <p>There is no need to change your execution policy permanently, and you should not need administrator rights for this part — only for installing Node.js or Git, if they are missing.</p>
         </div>
 
         <div class="problem">

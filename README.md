@@ -64,7 +64,7 @@ Pick the path that fits your comfort level. All four install the same framework.
 
 **macOS:** Download [tools/installers/EDWIN-Install.command](tools/installers/EDWIN-Install.command), then **right-click** and select **Open** the first time (Gatekeeper quarantine). The installer checks prerequisites, clones the repository, and runs the sync engine.
 
-**Windows:** Download [tools/installers/EDWIN-Install.cmd](tools/installers/EDWIN-Install.cmd) and double-click. The installer handles everything.
+**Windows:** Download both [tools/installers/EDWIN-Install.cmd](tools/installers/EDWIN-Install.cmd) and [tools/installers/EDWIN-Install.ps1](tools/installers/EDWIN-Install.ps1) **into the same folder**, then double-click the `.cmd`. The installer is the PowerShell script; the `.cmd` is a launcher, because Windows opens a `.ps1` in an editor rather than running it on double-click. PowerShell itself needs no installing — it ships with Windows.
 
 Both installers prompt for the repository URL if downloaded standalone. After installation, open Claude and say "set up EDWIN" to complete configuration.
 

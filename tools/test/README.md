@@ -35,8 +35,13 @@ Automated and manual testing infrastructure for WU-16.
 
 ✓ **Installers & Scheduler**
 - Scheduler: dry-run produces valid plist (validated with `plutil`)
-- macOS installer: LF line endings, requires repo URL
-- Windows installer: CRLF line endings present
+- Line endings *as stored in git*, per interpreter — CRLF for `.cmd`/`.ps1`, LF for `.command`/`.sh` — since
+  a raw download serves the stored bytes verbatim
+- macOS installer: full install over `file://`, requires repo URL, `--skip-deps` and no-console refusals
+- Windows installer (PowerShell, run via `pwsh`): every `.ps1` parses, full install over `file://`, the
+  updater over the result including its refusal on changes outside `user/`, non-empty target, URL
+  resolution, missing Git, Node.js 16, no-console decline
+- The two `.cmd` launchers stay thin and point at a `.ps1` that exists
 
 ✓ **Personal Data Audit**
 - Greps tracked files for patterns in denylist.txt and common leaks
@@ -47,7 +52,7 @@ Automated and manual testing infrastructure for WU-16.
 - Windows-specific functionality (this runs on macOS)
 - Real Claude Desktop / Cowork UI interactions
 - Browser portal paste workflow
-- Double-click installer end-to-end (clones from remote)
+- The double-click gesture itself, UAC, winget, and MSI installs (the installer logic *is* tested)
 - Non-technical user following HTML guides
 - Uninstall-clean verification on real install
 
@@ -132,9 +137,16 @@ If the final safety check fails, **the test run itself is a failure** (exit 1), 
 
 ## Known Limitations
 
-- **macOS only**: Windows paths, Task Scheduler, and `.cmd` installers cannot be fully tested on this machine
+- **macOS only**: Windows paths, Task Scheduler, UAC, winget/MSI installs, and the double-click experience
+  cannot be tested on this machine. The Windows installer's *logic* can be, and is: it is PowerShell, `pwsh`
+  runs here, and the suite drives a full install, the updater, and the refusal paths by execution. The `.cmd`
+  files are launchers, checked only for staying thin (no `for /f`, no multi-line block, under 60 lines) and
+  for pointing at a `.ps1` that exists.
+- **`pwsh` required for the Windows checks**: they skip, loudly, if it is not installed —
+  `brew install powershell/tap/powershell`
 - **No real UI**: Cannot test Claude Desktop/Cowork/web portal interactions
-- **No remote clone**: Cannot test the full double-click installer (requires GitHub remote)
+- **No remote clone**: Both installers accept `file://`, so the full install is tested against a local
+  fixture built from the tracked working tree. No network, and no GitHub remote needed.
 - **No real scheduling**: Tests only `--dry-run` mode and plist validation
 
 These are covered in the manual test script.
@@ -154,13 +166,13 @@ These are covered in the manual test script.
 | Bundle export | ✓ | | Dry-run mode |
 | Plugin build | ✓ | | Includes claude CLI test if available |
 | Scheduler scripts | ✓ | | Dry-run + plist validation |
-| Installer validation | Partial | ✓ | Line endings automated, full flow manual |
+| Installer validation | ✓ | Partial | Full install over `file://` on both platforms, plus refusals; winget/MSI/UAC manual |
 | Personal data audit | ✓ | | |
-| Double-click install | | ✓ | Requires remote repo |
+| Double-click install | Partial | ✓ | Installer logic automated against a `file://` fixture; the double-click itself is manual |
 | Onboarding flow | | ✓ | Requires real UI |
 | Windows paths | | ✓ | This is macOS |
 | Skill trigger/routing | | ✓ | Requires real harness |
 | Scheduled task fires | | ✓ | Requires OS scheduler |
 | Bundle paste to portal | | ✓ | Requires web browser |
-| Update preserves user/ | | ✓ | Requires real install |
+| Update preserves user/ | ✓ | Partial | Windows updater automated over an installed fixture; macOS is manual |
 | Uninstall clean | | ✓ | Requires real install |

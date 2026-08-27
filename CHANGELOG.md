@@ -143,7 +143,7 @@ new skills from conversation, and tooling for installation, validation, scheduli
   web portals, scheduled tasks, updating, and troubleshooting — with `docs/index.html` as a hub organised by
   "I want to…". Inline CSS and no external requests, so every page works offline. Each opens with "What
   you'll need" and "How long this takes". (WU-15)
-- `tools/test/run-e2e.mjs` — end-to-end harness (38 checks at WU-16, 43 after WU-17, 47 after the installer fixes) covering doctor, the sync engine, context
+- `tools/test/run-e2e.mjs` — end-to-end harness (38 checks at WU-16, 43 after WU-17, 47 after the installer fixes, 62 once the Windows installer became PowerShell and therefore executable on macOS) covering doctor, the sync engine, context
   operations, memory, brags, the scheduler, bundle export, both installers, and the no-personal-data
   contract. Every check runs against a temp `HOME` or a `--root` scratch tree and the suite hashes the real
   `user/` directory before and after to prove it was untouched. `npm test`. (WU-16)
@@ -208,6 +208,12 @@ new skills from conversation, and tooling for installation, validation, scheduli
 - Both macOS `.command` installers died silently on some terminals. `clear` exits non-zero when `TERM` is
   unset or minimal, and it ran as the first statement of `main()` under `set -euo pipefail`, so the installer
   aborted with no output at all. A cosmetic screen-clear can no longer abort an install. (WU-16)
+- The Windows updater crashed with `The property 'Count' cannot be found on this object` instead of
+  reporting uncommitted changes outside `user/`. PowerShell unrolls a single-element array on return, so one
+  changed file came back as a bare string and `.Count` threw under `Set-StrictMode`. Anyone with exactly one
+  local edit outside `user/` got an internal error rather than the list of files and the instructions to
+  commit or stash them. Found by the new end-to-end check for that refusal path — the branch had never been
+  executed. (WU-07)
 - `tools/memory/brags.mjs` labelled months using `new Date('YYYY-MM-01')`, which parses as UTC midnight and
   renders local — shifting the label back a month for anyone behind UTC. Month labels are now derived by
   string parsing, with no `Date` involved. (WU-16)
@@ -238,11 +244,26 @@ new skills from conversation, and tooling for installation, validation, scheduli
   README prerequisites line rewritten to describe the scripted installs, the sudo/UAC prompts they cause,
   and the real failure modes: declined consent, `--skip-deps`, a `PATH` that needs a new window, and a
   checksum mismatch. (WU-17)
+- **The Windows installer and updater are PowerShell.** `EDWIN-Install.cmd` and `EDWIN-Update.cmd` were
+  ~840 and ~380 lines of batch; they are now 40- and 33-line launchers that hand off to
+  `EDWIN-Install.ps1` and `EDWIN-Update.ps1`. Three separate failures on a real Windows 11 machine were
+  all the same root cause — `cmd.exe` mis-parsing a nested `if (...) else (...)` block, which it does
+  *without printing anything*, so the window simply closed — and none of them were reachable from the
+  test suite, because nothing on macOS can execute batch. PowerShell 5.1 ships with every supported
+  Windows, so this costs the user nothing; the launchers exist only because Windows will not run a `.ps1`
+  on double-click. Functions, exceptions, and one top-level `catch` replace the labels, `goto`s, and
+  errorlevel flags entirely, so an unanticipated failure is *reported* rather than silent. Every option is
+  a real PowerShell parameter (`-RepoUrl`, `-InstallDir`, `-Yes`, `-SkipDeps`, `-NoPause`, `-Help`), with
+  the previous `--repo-url`-style spellings still accepted so existing instructions and scripts keep
+  working. (WU-07)
 - **Verification status:** the macOS paths were exercised on a real machine, including a live download with
   checksum verification and a deliberately corrupted package to prove the mismatch is caught. The Windows
-  `.cmd` paths were written against live URL probes and reviewed, but **never executed** — no Windows
-  machine was available. `docs/testing/manual-test-script.md` §7 covers them and marks them UNVERIFIED.
-  (WU-17)
+  paths are now exercised too: `pwsh` runs on macOS, so the suite drives a full install over `file://`,
+  the updater over the result, and the refusal paths (non-empty target, unresolvable URL, missing Git
+  under `-SkipDeps`, Node.js 16, no console and no `-Yes`) by *execution* rather than review — 15 checks
+  that could not exist while the installer was batch. What still needs a Windows machine is what is
+  genuinely Windows-specific: winget and MSI installs, UAC, and the double-click experience.
+  `docs/testing/manual-test-script.md` §7 covers those and marks them UNVERIFIED. (WU-17)
 - All 13 v0.1 skills rewritten to the v0.2 format: frontmatter (`name`, `description`, `contexts`,
   `version`, `requires`, `author`) plus the required body sections, including a `## Degradation` ladder that
   none of them previously had. Their methodologies are preserved; the structure around them is new. (WU-04)
