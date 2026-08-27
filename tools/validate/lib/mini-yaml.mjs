@@ -19,6 +19,11 @@
  * - Complex nested structures beyond one level
  * - Tags (!!)
  * - Advanced flow mappings beyond simple lists
+ *
+ * LINE ENDINGS: split on /\r?\n/, not '\n'. Git on Windows checks these files out as CRLF, so a
+ * parser that splits on '\n' alone leaves a '\r' on the end of every line. Relying on a .trim()
+ * at each comparison site works until someone forgets one — and a forgotten one fails silently,
+ * because unparsed frontmatter looks like absent frontmatter. Strip it once, here.
  */
 
 export class YAMLParseError extends Error {
@@ -35,7 +40,7 @@ export class YAMLParseError extends Error {
  * @returns {{ frontmatter: object | null, content: string, error: string | null }}
  */
 export function extractFrontmatter(content) {
-  const lines = content.split('\n');
+  const lines = content.split(/\r?\n/);
 
   // Check for opening fence
   if (lines.length === 0 || lines[0].trim() !== '---') {
@@ -72,7 +77,7 @@ export function extractFrontmatter(content) {
  * @returns {object}
  */
 export function parseYAML(yaml) {
-  const lines = yaml.split('\n');
+  const lines = yaml.split(/\r?\n/);
   const result = {};
   let currentKey = null;
   let currentValue = [];

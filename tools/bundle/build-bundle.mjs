@@ -53,6 +53,10 @@ import {
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
+// One frontmatter parser for the whole repo. This file used to carry its own copy, which had
+// drifted into comparing lines against '---' without trimming — so on a Windows checkout every
+// skill parsed as having no frontmatter, and every non-Global export came out empty.
+import { extractFrontmatter } from '../validate/lib/mini-yaml.mjs';
 
 // Node version check
 const nodeMajor = parseInt(process.version.slice(1).split('.')[0], 10);
@@ -213,55 +217,6 @@ function validateContext(contextName, contexts) {
   return contexts.some((c) => c.name === contextName);
 }
 
-// Import extractFrontmatter from mini-yaml
-function extractFrontmatter(content) {
-  const lines = content.split('\n');
-
-  if (lines[0] !== '---') {
-    return { frontmatter: null, body: content, error: null };
-  }
-
-  let endIdx = -1;
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i] === '---') {
-      endIdx = i;
-      break;
-    }
-  }
-
-  if (endIdx === -1) {
-    return { frontmatter: null, body: content, error: 'Unclosed frontmatter' };
-  }
-
-  const yamlLines = lines.slice(1, endIdx);
-  const body = lines.slice(endIdx + 1).join('\n');
-
-  // Parse YAML (minimal - scalars and lists only)
-  const frontmatter = {};
-  for (const line of yamlLines) {
-    if (line.trim() === '' || line.trim().startsWith('#')) continue;
-
-    const colonIdx = line.indexOf(':');
-    if (colonIdx === -1) continue;
-
-    const key = line.slice(0, colonIdx).trim();
-    let value = line.slice(colonIdx + 1).trim();
-
-    // Handle flow sequences [a, b, c]
-    if (value.startsWith('[') && value.endsWith(']')) {
-      value = value
-        .slice(1, -1)
-        .split(',')
-        .map((v) => v.trim())
-        .filter((v) => v.length > 0);
-    }
-
-    frontmatter[key] = value;
-  }
-
-  return { frontmatter, body, error: null };
-}
-
 // Read skill frontmatter and body
 function readSkill(skillName) {
   const skillPath = join(SKILLS_DIR, skillName, 'SKILL.md');
@@ -269,8 +224,8 @@ function readSkill(skillName) {
     return null;
   }
 
-  const content = readFileSync(skillPath, 'utf-8');
-  const { frontmatter, body, error } = extractFrontmatter(content);
+  const raw = readFileSync(skillPath, 'utf-8');
+  const { frontmatter, content: body, error } = extractFrontmatter(raw);
 
   if (error) {
     return null;

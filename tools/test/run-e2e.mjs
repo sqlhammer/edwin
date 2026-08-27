@@ -778,6 +778,129 @@ if (!jsonOutput) console.log('\nRunning bundle export tests...\n');
   }
 }
 
+{
+  // Every bundle check above this point exports Global, which is the one context that needs no
+  // frontmatter to be selected -- so a parser that read no frontmatter at all still produced a
+  // plausible-looking Global bundle. Meanwhile a Windows checkout (CRLF, courtesy of git's
+  // autocrlf) made `lines[0] !== '---'` true for every skill, and every non-Global export came
+  // back "No skills found for context". Exercise a real context, over CRLF sources, against the
+  // artifact.
+  const contexts = JSON.parse(
+    readFileSync(join(REPO_ROOT, 'core', 'contexts', 'contexts.json'), 'utf-8')
+  ).contexts.map(c => c.name).filter(n => n !== 'Global');
+
+  if (contexts.length === 0) {
+    fail('bundle CRLF', 'No non-Global context defined; cannot exercise context filtering');
+  } else {
+    const ctx = contexts[0];
+    const crlfRepo = join(TEMP_ROOT, 'crlf-repo');
+    assertInTempDir(crlfRepo, TEMP_ROOT);
+    mkdirSync(crlfRepo, { recursive: true });
+
+    // A copy, so the CRLF rewrite never touches the working tree.
+    const copied = run(
+      `cp -R "${join(REPO_ROOT, 'core')}" "${join(REPO_ROOT, 'tools')}" ` +
+        `"${join(REPO_ROOT, 'package.json')}" "${crlfRepo}/"`
+    );
+
+    if (!copied.success) {
+      fail('bundle CRLF', `Could not stage a repo copy: ${copied.error || copied.output}`);
+    } else {
+      const skillsDir = join(crlfRepo, 'core', 'skills');
+      let converted = 0;
+      for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const skillFile = join(skillsDir, entry.name, 'SKILL.md');
+        if (!existsSync(skillFile)) continue;
+        assertInTempDir(skillFile, TEMP_ROOT);
+        const lf = readFileSync(skillFile, 'utf-8').replace(/\r\n/g, '\n');
+        writeFileSync(skillFile, lf.replace(/\n/g, '\r\n'), 'utf-8');
+        converted++;
+      }
+
+      const bundler = join(crlfRepo, 'tools', 'bundle', 'build-bundle.mjs');
+      const ctxResult = run(`node "${bundler}" --context ${ctx} --portal claude 2>&1`, crlfRepo);
+      const knowledgeDir = join(crlfRepo, 'dist', 'bundles', 'claude', ctx, 'knowledge');
+      const skillCount =
+        existsSync(knowledgeDir) ? readdirSync(knowledgeDir).filter(f => f.endsWith('.md')).length : 0;
+
+      if (converted === 0) {
+        fail('bundle CRLF', 'Staged no CRLF skill files; the check would prove nothing');
+      } else if (!ctxResult.success) {
+        fail(
+          `bundle: ${ctx} context exports from CRLF sources`,
+          `Exit ${ctxResult.exitCode}: ${ctxResult.output.slice(0, 300)}`
+        );
+      } else if (skillCount === 0) {
+        fail(
+          `bundle: ${ctx} context exports from CRLF sources`,
+          `Exited 0 but wrote no skills to ${knowledgeDir}`
+        );
+      } else {
+        pass(`bundle: ${ctx} context exports ${skillCount} skills from CRLF sources`);
+      }
+
+      // Global is not immune either: without frontmatter, every description in the skill index
+      // is blank and persona-type skills stop being filtered out. Both are silent.
+      const globalResult = run(`node "${bundler}" --context Global --portal claude 2>&1`, crlfRepo);
+      const instructionsPath = join(crlfRepo, 'dist', 'bundles', 'claude', 'Global', 'instructions.txt');
+
+      if (!globalResult.success || !existsSync(instructionsPath)) {
+        fail(
+          'bundle: CRLF sources keep Global descriptions and persona filtering',
+          `Exit ${globalResult.exitCode}: ${globalResult.output.slice(0, 300)}`
+        );
+      } else {
+        const instructions = readFileSync(instructionsPath, 'utf-8');
+        // Skill index lines are "**name** — description". An empty description leaves the dash bare.
+        const blankDescriptions = instructions
+          .split(/\r?\n/)
+          .filter(l => /^\*\*[a-z0-9-]+\*\* — *$/.test(l));
+        const personaSkills = readdirSync(join(crlfRepo, 'core', 'skills'), { withFileTypes: true })
+          .filter(e => e.isDirectory())
+          .filter(e => {
+            const f = join(crlfRepo, 'core', 'skills', e.name, 'SKILL.md');
+            return existsSync(f) && /^type:\s*persona\s*$/m.test(readFileSync(f, 'utf-8'));
+          })
+          .map(e => e.name);
+        const leaked = personaSkills.filter(n => instructions.includes(n));
+
+        if (blankDescriptions.length > 0) {
+          fail(
+            'bundle: CRLF sources keep Global descriptions and persona filtering',
+            `${blankDescriptions.length} skills have an empty description, e.g. "${blankDescriptions[0]}"`
+          );
+        } else if (leaked.length > 0) {
+          fail(
+            'bundle: CRLF sources keep Global descriptions and persona filtering',
+            `persona-type skills present in the bundle: ${leaked.join(', ')}`
+          );
+        } else {
+          pass('bundle: CRLF sources keep Global descriptions and persona filtering');
+        }
+      }
+    }
+  }
+}
+
+{
+  // The bug this guards was a copy-pasted parser drifting from the shared one. Keep it shared:
+  // a second local definition is how the drift gets reintroduced.
+  const bundler = readFileSync(join(REPO_ROOT, 'tools', 'bundle', 'build-bundle.mjs'), 'utf-8');
+  const definesOwn = /function\s+extractFrontmatter\s*\(/.test(bundler);
+  const importsShared = /import\s*\{[^}]*extractFrontmatter[^}]*\}\s*from\s*['"][^'"]*mini-yaml\.mjs['"]/.test(
+    bundler
+  );
+
+  if (definesOwn) {
+    fail('bundle: uses the shared frontmatter parser', 'build-bundle.mjs defines its own extractFrontmatter');
+  } else if (!importsShared) {
+    fail('bundle: uses the shared frontmatter parser', 'build-bundle.mjs does not import mini-yaml');
+  } else {
+    pass('bundle: uses the shared frontmatter parser');
+  }
+}
+
 // TEST 10: Plugin build
 if (!jsonOutput) console.log('\nRunning plugin build tests...\n');
 

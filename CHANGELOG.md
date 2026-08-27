@@ -143,7 +143,7 @@ new skills from conversation, and tooling for installation, validation, scheduli
   web portals, scheduled tasks, updating, and troubleshooting — with `docs/index.html` as a hub organised by
   "I want to…". Inline CSS and no external requests, so every page works offline. Each opens with "What
   you'll need" and "How long this takes". (WU-15)
-- `tools/test/run-e2e.mjs` — end-to-end harness (38 checks at WU-16, 43 after WU-17, 47 after the installer fixes, 65 once the Windows installer became PowerShell and therefore executable on macOS) covering doctor, the sync engine, context
+- `tools/test/run-e2e.mjs` — end-to-end harness (38 checks at WU-16, 43 after WU-17, 47 after the installer fixes, 68 once the Windows installer became PowerShell and therefore executable on macOS) covering doctor, the sync engine, context
   operations, memory, brags, the scheduler, bundle export, both installers, and the no-personal-data
   contract. Every check runs against a temp `HOME` or a `--root` scratch tree and the suite hashes the real
   `user/` directory before and after to prove it was untouched. `npm test`. (WU-16)
@@ -157,6 +157,21 @@ new skills from conversation, and tooling for installation, validation, scheduli
 - `docs/roadmap-v0.3.md` recording everything deliberately deferred out of v0.2. (WU-16)
 
 ### Fixed
+- `build-bundle.mjs` carried its own copy of the frontmatter parser — under a comment reading
+  "Import extractFrontmatter from mini-yaml", which is what it should have done — and the copy had
+  dropped the shared parser's `.trim()`, testing each line against `'---'` exactly. Git checks
+  markdown out as CRLF on Windows, so the opening fence read `'---\r'`, every skill parsed as
+  having *no* frontmatter, and the failure was silent because absent frontmatter is
+  indistinguishable from unparsed frontmatter. Every non-Global export died with "No skills found
+  for context"; Global exports survived only in appearance — with no frontmatter there is no
+  `description` to put in the skill index (the field the persona routes on) and no `type: persona`
+  to filter on, so all 23 descriptions came out blank and `writing-editor` leaked in. The bundler
+  now imports the shared parser, which splits on `/\r?\n/` rather than `'\n'` so the line ending
+  is stripped once at the source instead of at each comparison site. Three checks added: a real
+  non-Global context exported from deliberately CRLF sources, an assertion that Global keeps its
+  descriptions and its persona filtering, and a guard that the bundler has not grown a second
+  parser. Every bundle check before this exported `Global`, the one context selected without
+  reading frontmatter at all — which is why nothing caught it. (WU-13)
 - Every Windows script was stored in the repository with LF line endings, relying on
   `.gitattributes` `eol=crlf` to fix them up **on checkout** — a guarantee that never reaches the
   people the double-click installers exist for, because they click "Download raw file", which
