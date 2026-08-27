@@ -143,7 +143,7 @@ new skills from conversation, and tooling for installation, validation, scheduli
   web portals, scheduled tasks, updating, and troubleshooting — with `docs/index.html` as a hub organised by
   "I want to…". Inline CSS and no external requests, so every page works offline. Each opens with "What
   you'll need" and "How long this takes". (WU-15)
-- `tools/test/run-e2e.mjs` — end-to-end harness (38 checks at WU-16, 43 after WU-17, 47 after the installer fixes, 62 once the Windows installer became PowerShell and therefore executable on macOS) covering doctor, the sync engine, context
+- `tools/test/run-e2e.mjs` — end-to-end harness (38 checks at WU-16, 43 after WU-17, 47 after the installer fixes, 65 once the Windows installer became PowerShell and therefore executable on macOS) covering doctor, the sync engine, context
   operations, memory, brags, the scheduler, bundle export, both installers, and the no-personal-data
   contract. Every check runs against a temp `HOME` or a `--root` scratch tree and the suite hashes the real
   `user/` directory before and after to prove it was untouched. `npm test`. (WU-16)
@@ -256,11 +256,17 @@ new skills from conversation, and tooling for installation, validation, scheduli
   a real PowerShell parameter (`-RepoUrl`, `-InstallDir`, `-Yes`, `-SkipDeps`, `-NoPause`, `-Help`), with
   the previous `--repo-url`-style spellings still accepted so existing instructions and scripts keep
   working. (WU-07)
+- `-Branch <name>` on the Windows installer (`--branch` also accepted), because a repository whose default
+  branch holds an older layout produces a *complete* clone of the wrong version — and the installer then
+  reported "the sync engine is missing… the download was incomplete or corrupted", sending a user to hunt
+  for a broken download that was in fact perfect. The message now names the branch it cloned, says the
+  clone succeeded, and points at `-Branch`. A complete clone of the wrong thing is indistinguishable from
+  a truncated one unless the diagnosis says which it is. (WU-07)
 - **Verification status:** the macOS paths were exercised on a real machine, including a live download with
   checksum verification and a deliberately corrupted package to prove the mismatch is caught. The Windows
   paths are now exercised too: `pwsh` runs on macOS, so the suite drives a full install over `file://`,
   the updater over the result, and the refusal paths (non-empty target, unresolvable URL, missing Git
-  under `-SkipDeps`, Node.js 16, no console and no `-Yes`) by *execution* rather than review — 15 checks
+  under `-SkipDeps`, Node.js 16, no console and no `-Yes`) by *execution* rather than review — 18 checks
   that could not exist while the installer was batch. What still needs a Windows machine is what is
   genuinely Windows-specific: winget and MSI installs, UAC, and the double-click experience.
   `docs/testing/manual-test-script.md` §7 covers those and marks them UNVERIFIED. (WU-17)

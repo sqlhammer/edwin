@@ -109,7 +109,7 @@ npm run bundle       # Generate web-portal bundles
 npm run build-plugin # Rebuild skills/ from core/skills/ for plugin packaging
 npm run memory       # Memory helper (record, recall, forget, digest)
 npm run brags        # Wins helper (log, list, generate a brag document)
-npm test             # End-to-end suite (62 checks, temp directories only)
+npm test             # End-to-end suite (65 checks, temp directories only)
 ```
 
 ## Definition of Done
@@ -127,7 +127,7 @@ Discovered gaps outside scope are written up in the completion report, not fixed
 
 ## Testing
 
-- **End-to-end suite:** `npm test` must exit 0. It runs 62 checks against temp directories and a temp
+- **End-to-end suite:** `npm test` must exit 0. It runs 65 checks against temp directories and a temp
   `HOME`, and fails if the real `user/` directory changed during the run. A new tool belongs in it.
 - **Testability is part of the tool.** Anything that writes under `user/` takes `--root <path>`; anything
   that reads tracked config takes an override for it (`--limits` on the bundler). A tool that can only be

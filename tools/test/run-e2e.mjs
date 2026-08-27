@@ -1331,6 +1331,8 @@ if (!jsonOutput) console.log('\nRunning installer tests...\n');
         // this checkout's *tracked working-tree* files. Not `git clone --bare`, which ships
         // HEAD and would test the last commit rather than the change in front of the author.
         const psRemote = join(TEMP_ROOT, 'ps-fake-remote', 'edwin.git');
+        const ALT_BRANCH = 'alt-version';
+        const LEGACY_BRANCH = 'older-layout';
         const buildPsRemote = () => {
           const listed = run(`git -C "${REPO_ROOT}" ls-files`);
           if (!listed.success) return listed;
@@ -1345,10 +1347,32 @@ if (!jsonOutput) console.log('\nRunning installer tests...\n');
             copyFileSync(src, dest);
           }
           const id = '-c user.name=edwin-test -c user.email=test@example.invalid';
-          return run(
+          const init = run(
             `git -C "${psRemote}" init --quiet && ` +
               `git ${id} -C "${psRemote}" add -A && ` +
               `git ${id} -C "${psRemote}" commit --quiet -m "test fixture"`
+          );
+          if (!init.success) return init;
+
+          // The default branch stays the one with the framework in it, so the plain-install
+          // checks above keep testing what a plain clone gets. Two extra branches model the
+          // cases -Branch exists for: a non-default branch carrying the version you want, and
+          // an older layout with no sync engine — which is what a user hit when the repository's
+          // default branch was still v0.1. A complete clone of the wrong version is
+          // indistinguishable from a truncated download unless the installer says which it is.
+          const head = run(`git -C "${psRemote}" rev-parse --abbrev-ref HEAD`);
+          if (!head.success) return head;
+          const defaultBranch = head.output.trim();
+
+          return run(
+            `git -C "${psRemote}" checkout --quiet -b ${ALT_BRANCH} && ` +
+              `touch "${join(psRemote, 'BRANCH-MARKER.txt')}" && ` +
+              `git ${id} -C "${psRemote}" add -A && ` +
+              `git ${id} -C "${psRemote}" commit --quiet -m "marker only on ${ALT_BRANCH}" && ` +
+              `git -C "${psRemote}" checkout --quiet -b ${LEGACY_BRANCH} ${defaultBranch} && ` +
+              `git -C "${psRemote}" rm -r --quiet tools/sync && ` +
+              `git ${id} -C "${psRemote}" commit --quiet -m "older layout, no sync engine" && ` +
+              `git -C "${psRemote}" checkout --quiet ${defaultBranch}`
           );
         };
 
@@ -1465,6 +1489,80 @@ if (!jsonOutput) console.log('\nRunning installer tests...\n');
               'Windows installer URL resolution',
               `expected one https://github.com/edwin-test-owner/edwin.git: ${shorthandOut.slice(-400)}`
             );
+          }
+
+          // -Branch must clone that branch's *content*, not merely check the name out. The
+          // marker file exists only on the alt branch, so its presence is the proof. The legacy
+          // `--branch` spelling is exercised here rather than in a separate check, since a fold
+          // that reached the wrong parameter would leave the marker absent too.
+          {
+            const branched = join(psHome, 'branched');
+            const r = runPs(winInstaller, [
+              '--repo-url', remoteUrl,
+              '--branch', ALT_BRANCH,
+              '-InstallDir', branched,
+              '-Yes',
+              '-NoPause',
+            ]);
+            const marker = existsSync(join(branched, 'BRANCH-MARKER.txt'));
+            const onBranch = run(`git -C "${branched}" rev-parse --abbrev-ref HEAD`).output.trim();
+            if (r.status === 0 && marker && onBranch === ALT_BRANCH) {
+              pass('Windows installer: -Branch/--branch clones that branch, content and all');
+            } else {
+              fail(
+                'Windows installer -Branch',
+                `exit ${r.status}, marker=${marker}, HEAD=${onBranch}: ${((r.stdout || '') + (r.stderr || '')).slice(-400)}`
+              );
+            }
+          }
+
+          // The defect this replaced: a repository whose default branch held an older layout
+          // produced "the download was incomplete or corrupted", sending a user to look for a
+          // broken clone that was in fact perfect. The message must name the branch and point at
+          // -Branch, and must not blame the download.
+          {
+            const wrongVersion = join(psHome, 'wrong-version');
+            const r = runPs(winInstaller, [
+              '-RepoUrl', remoteUrl,
+              '-Branch', LEGACY_BRANCH,
+              '-InstallDir', wrongVersion,
+              '-Yes',
+              '-NoPause',
+            ]);
+            const out = (r.stdout || '') + (r.stderr || '');
+            if (
+              r.status !== 0 &&
+              /does not look like EDWIN/i.test(out) &&
+              new RegExp(LEGACY_BRANCH).test(out) &&
+              /-Branch/.test(out) &&
+              !/corrupt/i.test(out)
+            ) {
+              pass('Windows installer: a clone with no sync engine blames the branch, not the download');
+            } else {
+              fail(
+                'Windows installer wrong-version diagnosis',
+                `expected the branch named and no "corrupt", got exit ${r.status}: ${out.slice(-500)}`
+              );
+            }
+          }
+
+          {
+            // The exit code is deliberately not pinned. `--branch` is the one legacy spelling
+            // that collides with a real parameter name, so pwsh 7 binds it itself and reports a
+            // missing argument (exit 1); Windows PowerShell 5.1 may instead route it to $Rest,
+            // where the folding catches it (exit 2). Both must refuse, name the parameter, and
+            // install nothing — that is what this asserts.
+            const notInstalled = join(psHome, 'branch-no-value');
+            const r = runPs(winInstaller, ['--branch', '-InstallDir', notInstalled]);
+            const out = (r.stdout || '') + (r.stderr || '');
+            if (r.status !== 0 && /branch/i.test(out) && !existsSync(notInstalled)) {
+              pass('Windows installer: --branch with no value refuses and installs nothing');
+            } else {
+              fail(
+                'Windows installer --branch validation',
+                `expected a refusal and no install dir, got exit ${r.status}: ${out.slice(-300)}`
+              );
+            }
           }
         }
 

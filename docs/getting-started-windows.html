@@ -211,6 +211,13 @@
             <p><strong>If it says a tool installed but still can't find it:</strong> close the Command Prompt window and double-click the installer again. Windows only gives a program the list of installed tools when it starts, so a fresh window is sometimes needed. The installer tells you when this is the problem.</p>
         </div>
 
+        <div class="meta-box">
+            <h3>Installing a specific version</h3>
+            <p>Double-clicking gets you whatever version the repository serves by default. If you were told to install a particular one — a branch name like <code>v0.2</code> — open Command Prompt, then run:</p>
+            <p><code>%USERPROFILE%\Downloads\EDWIN-Install.cmd -Branch v0.2</code></p>
+            <p>You'll know you needed this if the installer finishes the download and then says <strong>"This does not look like EDWIN"</strong>. That message means the download worked perfectly but fetched the wrong version — it names the branch it got, so you can compare. Delete the folder it installed into before retrying, because an existing folder is <em>updated</em> rather than replaced.</p>
+        </div>
+
         <h2>Step 3: Restart Claude</h2>
 
         <div class="step-box">

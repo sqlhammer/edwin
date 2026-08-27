@@ -66,7 +66,7 @@ Pick the path that fits your comfort level. All four install the same framework.
 
 **Windows:** Download both [tools/installers/EDWIN-Install.cmd](tools/installers/EDWIN-Install.cmd) and [tools/installers/EDWIN-Install.ps1](tools/installers/EDWIN-Install.ps1) **into the same folder**, then double-click the `.cmd`. The installer is the PowerShell script; the `.cmd` is a launcher, because Windows opens a `.ps1` in an editor rather than running it on double-click. PowerShell itself needs no installing — it ships with Windows.
 
-Both installers prompt for the repository URL if downloaded standalone. After installation, open Claude and say "set up EDWIN" to complete configuration.
+Both installers prompt for the repository URL if downloaded standalone. If the version you want is not the repository's default branch, the Windows installer takes `-Branch <name>` — `EDWIN-Install.cmd -Branch v0.2` clones that branch instead. After installation, open Claude and say "set up EDWIN" to complete configuration.
 
 **Prerequisites:** Git and Node.js 18+. If either is missing the installer offers to install it and does so itself — nothing to download through a browser. It prefers your existing package manager (Homebrew on macOS, winget on Windows) and otherwise fetches the official signed package and verifies its checksum before installing. Pass `--yes` to skip the confirmation, or `--skip-deps` to have it refuse rather than install.
 

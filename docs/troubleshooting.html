@@ -238,6 +238,17 @@
         </div>
 
         <div class="problem">
+            <h3>Symptom: "This does not look like EDWIN" / no sync engine in the clone</h3>
+            <p><strong>What happened:</strong> The download worked. The repository you cloned does not contain EDWIN v0.2 &mdash; almost always because the version you want lives on a branch that is not the repository's default. A complete clone of an older layout looks exactly like a truncated download, which is why the installer names the branch it cloned.</p>
+
+            <p><strong>Fix:</strong> Delete the folder it cloned into (an existing clone gets <em>updated</em>, not replaced), then run the installer again naming the branch:</p>
+            <ol>
+                <li><code>EDWIN-Install.cmd -Branch &lt;name&gt;</code></li>
+            </ol>
+            <p>If you are not sure which branch, look at the repository on GitHub &mdash; the branch dropdown lists them, and the one you want has a <code>tools\sync\engine.mjs</code> file in it.</p>
+        </div>
+
+        <div class="problem">
             <h3>Symptom (Windows): "running scripts is disabled on this system"</h3>
             <p><strong>What happened:</strong> You ran <code>EDWIN-Install.ps1</code> directly and Windows' execution policy blocked it. This is why the <code>.cmd</code> launcher exists: it starts PowerShell with the policy bypassed for that one script only, changing nothing about your machine's settings.</p>
 

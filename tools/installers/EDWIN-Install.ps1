@@ -21,6 +21,11 @@
     from inside a clone, and is prompted for otherwise. Accepts a full URL, `owner/repo`
     shorthand, or a file:// path.
 
+.PARAMETER Branch
+    Branch to clone. Defaults to the repository's default branch. Use this when the version you
+    want is not the default -- cloning the default branch of a repository whose framework lives
+    elsewhere produces a complete clone of the wrong thing, which reads as a corrupt download.
+
 .PARAMETER InstallDir
     Where to install. Defaults to <user profile>\edwin.
 
@@ -41,12 +46,17 @@
     .\EDWIN-Install.ps1 -RepoUrl owner/edwin -Yes
 
 .EXAMPLE
+    .\EDWIN-Install.ps1 -Branch v0.2
+
+.EXAMPLE
     .\EDWIN-Install.ps1 -SkipDeps
 #>
 
 [CmdletBinding()]
 param(
     [string]$RepoUrl,
+
+    [string]$Branch,
 
     [string]$InstallDir,
 
@@ -88,13 +98,15 @@ Usage:
 
 Options:
   -RepoUrl <url>     Repository to install from (otherwise read from package.json or prompted)
+  -Branch <name>     Branch to clone (default: the repository's default branch)
   -InstallDir <dir>  Where to install (default: <user profile>\edwin)
   -Yes               Answer yes to every confirmation; required for unattended runs
   -SkipDeps          Report missing Git or Node.js instead of installing them
   -NoPause           Do not wait for a keypress before closing
   -Help              Show this help
 
-The --repo-url, --yes, --skip-deps, --no-pause and --help spellings are also accepted.
+The --repo-url, --branch, --install-dir, --yes, --skip-deps, --no-pause and --help spellings
+are also accepted.
 
 Missing prerequisites are installed for you. Git and Node.js come from winget when it is
 available; otherwise they are downloaded from their official sources and installed silently.
@@ -116,6 +128,7 @@ function Merge-LegacyArguments {
 
     $result = @{
         RepoUrl    = $Bound.RepoUrl
+        Branch     = $Bound.Branch
         InstallDir = $Bound.InstallDir
         Yes        = $Bound.Yes
         SkipDeps   = $Bound.SkipDeps
@@ -135,6 +148,14 @@ function Merge-LegacyArguments {
                     return $result
                 }
                 $result.RepoUrl = $Arguments[$i + 1]
+                $i++
+            }
+            '^--branch$' {
+                if ($i + 1 -ge $Arguments.Count -or -not $Arguments[$i + 1]) {
+                    $result.Unknown = '--branch requires a branch name'
+                    return $result
+                }
+                $result.Branch = $Arguments[$i + 1]
                 $i++
             }
             '^--install-dir$' {
@@ -796,12 +817,21 @@ function Update-ExistingRepository {
 }
 
 function Install-Repository {
-    param([string]$Dir, [string]$Url)
+    param([string]$Dir, [string]$Url, [string]$Branch)
 
     Write-Step 'repo-clone'
-    Write-Log "Cloning repository from $Url..."
+    if ($Branch) {
+        Write-Log "Cloning repository from $Url (branch $Branch)..."
+    }
+    else {
+        Write-Log "Cloning repository from $Url..."
+    }
 
-    $clone = Invoke-Native -Exe 'git' -Arguments @('clone', $Url, $Dir)
+    $arguments = @('clone')
+    if ($Branch) { $arguments += @('--branch', $Branch) }
+    $arguments += @($Url, $Dir)
+
+    $clone = Invoke-Native -Exe 'git' -Arguments $arguments
     if ($clone.ExitCode -ne 0) {
         Write-LogError 'Failed to clone repository'
         Write-Host ''
@@ -809,8 +839,12 @@ function Install-Repository {
         Write-Host "  - You're not connected to the internet"
         Write-Host '  - The repository URL is incorrect'
         Write-Host "  - You don't have access to the repository"
+        if ($Branch) {
+            Write-Host "  - The branch $Branch does not exist in that repository"
+        }
         Write-Host ''
         Write-Host "Repository URL: $Url"
+        if ($Branch) { Write-Host "Branch: $Branch" }
         Write-Host ''
         throw 'Git clone failed'
     }
@@ -818,8 +852,22 @@ function Install-Repository {
     Write-Log 'Repository cloned successfully'
 }
 
+# Best-effort, for error messages only: naming the branch that was actually checked out is the
+# difference between "your download is corrupt" and "you cloned the wrong version".
+function Get-CheckedOutBranch {
+    param([string]$Dir)
+    try {
+        $result = Invoke-Native -Exe 'git' -Arguments @('-C', $Dir, 'rev-parse', '--abbrev-ref', 'HEAD') -Quiet
+        if ($result.ExitCode -eq 0) { return $result.Output.Trim() }
+    }
+    catch {
+        Write-Verbose "Could not determine the checked-out branch: $($_.Exception.Message)"
+    }
+    return ''
+}
+
 function Initialize-Repository {
-    param([string]$Dir, [string]$Given, [string]$ScriptDir)
+    param([string]$Dir, [string]$Given, [string]$ScriptDir, [string]$Branch)
 
     Write-Log 'Setting up EDWIN repository...'
     Write-Step 'repo-start'
@@ -846,7 +894,7 @@ function Initialize-Repository {
     }
 
     $url = Resolve-RepoUrlOrThrow -Given $Given -ScriptDir $ScriptDir
-    Install-Repository -Dir $Dir -Url $url
+    Install-Repository -Dir $Dir -Url $url -Branch $Branch
 }
 
 # ============================================================================
@@ -861,13 +909,26 @@ function Invoke-SyncEngine {
 
     $enginePath = Join-Path (Join-Path (Join-Path $Dir 'tools') 'sync') 'engine.mjs'
     if (-not (Test-Path $enginePath)) {
-        Write-Banner 'Sync engine not found'
-        Write-Host 'The sync engine is missing from the repository.'
-        Write-Host 'This might mean the download was incomplete or corrupted.'
+        # This used to say the download was "incomplete or corrupted", which sent a user hunting
+        # for a broken clone that was in fact perfect: the repository's default branch simply
+        # held an older layout with no sync engine in it. A complete clone of the wrong version
+        # looks identical to a truncated one unless the message says so.
+        $branch = Get-CheckedOutBranch -Dir $Dir
+        Write-Banner 'This does not look like EDWIN'
+        Write-Host 'The clone succeeded, but there is no sync engine in it, so this is not an'
+        Write-Host 'EDWIN v0.2 repository.'
         Write-Host ''
         Write-Host "Expected location: $enginePath"
+        if ($branch) { Write-Host "Branch cloned:     $branch" }
         Write-Host ''
-        throw 'Sync engine not found'
+        Write-Host 'The likely cause is the branch, not a bad download. If the version you want'
+        Write-Host "is not the repository's default branch, clone it explicitly:"
+        Write-Host ''
+        Write-Host '  EDWIN-Install.cmd -Branch <name>'
+        Write-Host ''
+        Write-Host "Remove $Dir first -- an existing clone is updated, not replaced."
+        Write-Host ''
+        throw 'No sync engine in the cloned repository'
     }
 
     Write-Host ''
@@ -896,6 +957,7 @@ function Invoke-SyncEngine {
 
 $merged = Merge-LegacyArguments -Arguments $Rest -Bound @{
     RepoUrl    = $RepoUrl
+    Branch     = $Branch
     InstallDir = $InstallDir
     Yes        = [bool]$Yes
     SkipDeps   = [bool]$SkipDeps
@@ -916,6 +978,7 @@ if ($merged.Help) {
 }
 
 $RepoUrl = $merged.RepoUrl
+$Branch = $merged.Branch
 $Yes = [bool]$merged.Yes
 $SkipDeps = [bool]$merged.SkipDeps
 $installDir = if ($merged.InstallDir) { $merged.InstallDir } else { Join-Path $script:HomeDir 'edwin' }
@@ -930,6 +993,7 @@ try {
     Write-Host 'This will install EDWIN on your machine.'
     Write-Host ''
     Write-Host "Installation directory: $installDir"
+    if ($Branch) { Write-Host "Branch: $Branch" }
     Write-Host "Log file: $script:LogFile"
     Write-Host ''
 
@@ -941,7 +1005,7 @@ try {
     )
 
     Test-Prerequisites
-    Initialize-Repository -Dir $installDir -Given $RepoUrl -ScriptDir $PSScriptRoot
+    Initialize-Repository -Dir $installDir -Given $RepoUrl -ScriptDir $PSScriptRoot -Branch $Branch
     Invoke-SyncEngine -Dir $installDir
 
     Write-Banner 'Installation Complete!'

@@ -137,6 +137,37 @@ _Record `Get-ExecutionPolicy` before and after_
 
 ---
 
+### 1.6 Windows `-Branch` — installing a version that is not the default
+
+The suite already exercises `-Branch` against a local fixture repository: it proves the named branch is what
+gets checked out, that a branch with no sync engine is diagnosed as the wrong version rather than a corrupt
+download, and that `--branch` with no value is refused. What it cannot exercise is a real remote over HTTPS
+and the double-click path, which is all this cell covers.
+
+**Instruction:**
+1. Make sure `%USERPROFILE%\edwin` does not exist (delete or rename it aside if it does).
+2. Open Command Prompt and run
+   `%USERPROFILE%\Downloads\EDWIN-Install.cmd -Branch <a branch that is not the default>`.
+3. Read the `Branch:` line the installer prints before it clones.
+4. Let it finish, then run `git -C %USERPROFILE%\edwin rev-parse --abbrev-ref HEAD`.
+5. Delete `%USERPROFILE%\edwin` again, and re-run the installer with **no** `-Branch` on a repository whose
+   default branch predates `tools\sync\engine.mjs`.
+
+**Expected:**
+- Step 3 prints `Branch: <name>` — the installer echoes the branch back before doing anything.
+- Step 4 prints that same branch name. The install completes and syncs.
+- Step 5 fails with `This does not look like EDWIN`, states that the clone **succeeded**, names the branch it
+  cloned, and points at `-Branch <name>`. It must **not** say the download was incomplete or corrupted.
+- Step 5 also tells you to remove the directory first, because an existing clone is updated rather than
+  replaced.
+
+**Result:** [ ] Pass [ ] Fail
+
+**Notes:**
+_Record the `Branch:` line and the output of `rev-parse --abbrev-ref HEAD`_
+
+---
+
 ## Test Group 2: macOS Installation (Double-Click)
 
 ### 2.1 Double-click installer on macOS
@@ -539,13 +570,13 @@ but no Windows machine was available. Treat them as unverified until a tester si
 
 ## Summary
 
-**Total tests:** 25 (4.1 is setup for 4.2 and carries no Pass/Fail cell)
+**Total tests:** 26 (4.1 is setup for 4.2 and carries no Pass/Fail cell)
 
 Cells 7.3, 7.4, 7.5 and 7.6 cover code that has never been run on Windows. If a tester signs off the
 whole script without them, the sign-off does not cover Windows prerequisite installation.
 
-Cell 1.4 covers two defects that made every fresh Windows install fail. Run it on a machine with no
-existing `%USERPROFILE%\edwin`, or it proves nothing.
+Cells 1.4 and 1.6 cover defects that made every fresh Windows install fail. Run them on a machine with no
+existing `%USERPROFILE%\edwin`, or they prove nothing.
 
 **Passed:** _____
 
