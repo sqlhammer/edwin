@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troubleshooting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fafafa;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        .meta-box {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4a90e2;
+        }
+        .meta-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .meta-box ul {
+            margin: 0.5rem 0 0 1.5rem;
+        }
+        .meta-box li {
+            margin: 0.3rem 0;
+        }
+        .step-box {
+            background: #f8f9fa;
+            border: 2px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .conversation {
+            background: #e8f4fd;
+            border: 1px solid #b3d9f2;
+            border-radius: 6px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9rem;
+        }
+        .conversation .you {
+            color: #1a5490;
+            font-weight: 600;
+        }
+        .conversation .edwin {
+            color: #2a6f2a;
+            font-weight: 600;
+        }
+        .conversation p {
+            margin: 0.5rem 0;
+        }
+        .tip {
+            background: #e6f7e6;
+            border-left: 4px solid #4caf50;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .tip strong {
+            color: #2a6f2a;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .warning strong {
+            color: #856404;
+        }
+        code {
+            background: #e8e8e8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        ul, ol {
+            margin: 1rem 0 1rem 1.8rem;
+        }
+        li {
+            margin: 0.5rem 0;
+        }
+        a {
+            color: #1a5490;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #5a5a5a;
+            font-size: 0.95rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        th {
+            background: #f0f0f0;
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 2px solid #d0d0d0;
+            font-weight: 600;
+        }
+        td {
+            padding: 0.8rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            color: #6a6a6a;
+            font-size: 0.9rem;
+        }
+        .problem {
+            background: #fff9f0;
+            border: 2px solid #ffb74d;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .problem h3 {
+            margin-top: 0;
+            color: #e65100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Guide Index</a>
+
+        <h1>Troubleshooting</h1>
+
+        <p>This guide covers common issues when installing, updating, or using EDWIN. Each section starts with the symptom as you experience it, then walks through the fix.</p>
+
+        <div class="meta-box">
+            <h3>What you'll need</h3>
+            <ul>
+                <li>Whatever error message or unexpected behaviour you saw — the exact wording helps you find the right section below</li>
+                <li>Terminal (macOS) or Command Prompt (Windows) for some fixes — each step says when</li>
+                <li>Nothing else. You do not need to reinstall EDWIN to work through this guide.</li>
+            </ul>
+        </div>
+
+        <div class="meta-box">
+            <h3>How long this takes</h3>
+            <p>Find your symptom below and read only that section — most fixes take 2 to 5 minutes. You do not need to read this page top to bottom.</p>
+        </div>
+
+        <h2>Installation Issues</h2>
+
+        <div class="problem">
+            <h3>Symptom: "Node.js is not installed and installation was declined" (or the same for Git)</h3>
+            <p><strong>What happened:</strong> The installer offered to install the missing tool and did not get a yes. Either you answered no, or nothing was there to answer — this is what you see when the installer runs unattended, from a script, or with its input redirected.</p>
+
+            <p><strong>Fix — let it install:</strong> Run the installer again and answer <strong>Y</strong> when it asks. To skip the question entirely:</p>
+            <ol>
+                <li><strong>macOS:</strong> open Terminal and run <code>bash ~/Downloads/EDWIN-Install.command --yes</code></li>
+                <li><strong>Windows:</strong> open Command Prompt and run <code>%USERPROFILE%\Downloads\EDWIN-Install.cmd --yes</code></li>
+            </ol>
+
+            <p><strong>Fix — install it yourself instead:</strong> One command, no browser needed:</p>
+            <ol>
+                <li><strong>macOS with Homebrew:</strong> <code>brew install node git</code></li>
+                <li><strong>macOS without Homebrew:</strong> <code>xcode-select --install</code> for Git; for Node.js let the EDWIN installer do it, since it verifies the download's checksum for you</li>
+                <li><strong>Windows:</strong> <code>winget install --exact --id OpenJS.NodeJS.LTS --source winget</code> and <code>winget install --exact --id Git.Git --source winget</code></li>
+            </ol>
+            <p>Then close and reopen your terminal or Command Prompt and run the EDWIN installer again.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: "Node.js still isn't usable after the install attempt" (or the same for Git)</h3>
+            <p><strong>What happened:</strong> The tool was installed, but this window doesn't know about it yet. A terminal is given the list of installed programs when it starts and doesn't notice later additions. Common on Windows.</p>
+
+            <p><strong>Fix:</strong> Close the window and run the installer again. A fresh window sees the new tool. If it happens a second time, the install genuinely failed — check the log the installer names on screen (<code>install.log</code> in your EDWIN folder) for what the tool's own installer reported.</p>
+
+            <p><strong>If you never saw a prompt asking to install anything,</strong> check that you are running the current installer. Earlier versions of the Windows installer were a Command Prompt script that could skip whole sections without reporting anything, and land on this message having attempted nothing. The current one is a PowerShell script (<code>EDWIN-Install.ps1</code>, started by <code>EDWIN-Install.cmd</code>) and reports what it did. Download both files again from the repository's <code>tools/installers/</code> folder into the same folder.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom (Windows): "EDWIN-Install.ps1 was not found next to this file"</h3>
+            <p><strong>What happened:</strong> You downloaded <code>EDWIN-Install.cmd</code> on its own. That file is only a launcher — the installer itself is <code>EDWIN-Install.ps1</code>, and Windows needs the launcher because double-clicking a PowerShell script opens it in an editor rather than running it.</p>
+
+            <p><strong>Fix:</strong> Download <code>EDWIN-Install.ps1</code> from the repository's <code>tools/installers/</code> folder into the <em>same</em> folder as the <code>.cmd</code>, then double-click the <code>.cmd</code> again. The message on screen names the exact path it looked in.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: "This does not look like EDWIN" / no sync engine in the clone</h3>
+            <p><strong>What happened:</strong> The download worked. The repository you cloned does not contain EDWIN v0.2 &mdash; almost always because the version you want lives on a branch that is not the repository's default. A complete clone of an older layout looks exactly like a truncated download, which is why the installer names the branch it cloned.</p>
+
+            <p><strong>Fix:</strong> Delete the folder it cloned into (an existing clone gets <em>updated</em>, not replaced), then run the installer again naming the branch:</p>
+            <ol>
+                <li><code>EDWIN-Install.cmd -Branch &lt;name&gt;</code></li>
+            </ol>
+            <p>If you are not sure which branch, look at the repository on GitHub &mdash; the branch dropdown lists them, and the one you want has a <code>tools\sync\engine.mjs</code> file in it.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom (Windows): "running scripts is disabled on this system"</h3>
+            <p><strong>What happened:</strong> You ran <code>EDWIN-Install.ps1</code> directly and Windows' execution policy blocked it. This is why the <code>.cmd</code> launcher exists: it starts PowerShell with the policy bypassed for that one script only, changing nothing about your machine's settings.</p>
+
+            <p><strong>Fix:</strong> Double-click <code>EDWIN-Install.cmd</code> instead. To run it from a PowerShell window by hand, use the same form the launcher does:</p>
+            <ol>
+                <li><code>powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\EDWIN-Install.ps1</code></li>
+            </ol>
+            <p>There is no need to change your execution policy permanently, and you should not need administrator rights for this part — only for installing Node.js or Git, if they are missing.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom (macOS): the installer asks for your password</h3>
+            <p><strong>What happened:</strong> Installing Node.js or Git for every user on the machine requires administrator rights, so macOS asks. Nothing has gone wrong.</p>
+
+            <p><strong>What to know:</strong> The password goes to macOS, not to EDWIN — the installer never sees it and never stores it. If you would rather not be asked, install the tools yourself first with <code>brew install node git</code>, then run the EDWIN installer; it will find them and skip straight past.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom (Windows): "Do you want to allow this app to make changes to your device?"</h3>
+            <p><strong>What happened:</strong> Same thing — installing Node.js or Git needs administrator rights, so Windows asks. Click <strong>Yes</strong>.</p>
+
+            <p><strong>If you click No,</strong> the installer reports that the tool is still unavailable and stops. Nothing is left half-installed.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom (Windows): "winget is unavailable"</h3>
+            <p><strong>What happened:</strong> The installer prefers <strong>winget</strong>, the software installer built into Windows 10 and 11. Some older or locked-down Windows installations don't have it.</p>
+
+            <p><strong>What happens next:</strong> Nothing you need to do — the installer falls back to downloading Node.js and Git straight from their official sites and installing them silently. It's a message, not an error. If that fallback also fails, the log will say why.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom (macOS): "Cannot be opened because it is from an unidentified developer"</h3>
+            <p><strong>What happened:</strong> macOS blocks the installer because it's not code-signed by a registered Apple developer. This is called "quarantine."</p>
+
+            <p><strong>Fix:</strong></p>
+            <ol>
+                <li>Don't double-click the installer again</li>
+                <li>Right-click (or Control-click) the <strong>EDWIN-Install.command</strong> file</li>
+                <li>Choose <strong>Open</strong> from the menu</li>
+                <li>A dialog appears asking if you're sure</li>
+                <li>Click <strong>Open</strong></li>
+                <li>The installer runs</li>
+            </ol>
+
+            <p>You only need to do this once. After the first run, double-clicking works normally.</p>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: Skills don't appear after installation</h3>
+            <p><strong>What happened:</strong> Claude hasn't reloaded the updated configuration yet.</p>
+
+            <p><strong>Fix:</strong></p>
+            <ol>
+                <li>Close Claude Code or Claude Desktop completely</li>
+                <li>Reopen Claude</li>
+                <li>Start a new conversation</li>
+                <li>Try: "List my skills"</li>
+            </ol>
+
+            <p>If skills still don't appear after restarting:</p>
+            <ol>
+                <li>Check that the file <code>~/.claude/CLAUDE.md</code> (macOS) or <code>%USERPROFILE%\.claude\CLAUDE.md</code> (Windows) exists</li>
+                <li>Open it in a text editor</li>
+                <li>Look for the line <code># EDWIN</code> near the top</li>
+                <li>If it's not there, the sync failed — check the log at <code>~/edwin/install.log</code> or <code>%USERPROFILE%\edwin\install.log</code></li>
+            </ol>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: "EDWIN doesn't seem to know who I am"</h3>
+            <p><strong>What happened:</strong> The onboarding conversation (where EDWIN asks your name and preferences) never ran, or the configuration file is missing.</p>
+
+            <p><strong>Fix:</strong></p>
+            <ol>
+                <li>Check if <code>~/edwin/user/config.json</code> (macOS) or <code>%USERPROFILE%\edwin\user\config.json</code> (Windows) exists</li>
+                <li>If it doesn't exist, start a conversation with EDWIN</li>
+                <li>EDWIN will automatically trigger onboarding and ask for your name, preferences, and context setup</li>
+                <li>Answer the questions</li>
+                <li>When onboarding finishes, the configuration is saved</li>
+            </ol>
+
+            <p>If the file exists but EDWIN still doesn't recognize you, the file may be corrupted:</p>
+            <ol>
+                <li>Open the file in a text editor</li>
+                <li>Check that it looks like valid JSON (starts with <code>{</code>, ends with <code>}</code>)</li>
+                <li>If it's empty or malformed, delete it and trigger onboarding again</li>
+            </ol>
+        </div>
+
+        <h2>Update Issues</h2>
+
+        <div class="problem">
+            <h3>Symptom: Update fails with "uncommitted changes detected"</h3>
+            <p><strong>What happened:</strong> You've edited files outside the <code>user/</code> directory, and the updater won't overwrite them.</p>
+
+            <p><strong>Fix (if you want to keep your changes):</strong></p>
+            <ol>
+                <li>Open Terminal (macOS) or Command Prompt (Windows)</li>
+                <li>Navigate to your EDWIN directory: <code>cd ~/edwin</code> (macOS) or <code>cd %USERPROFILE%\edwin</code> (Windows)</li>
+                <li>Run: <code>git status</code> to see which files changed</li>
+                <li>Run: <code>git add .</code> to stage your changes</li>
+                <li>Run: <code>git commit -m "My custom changes"</code> to commit them</li>
+                <li>Run the updater again</li>
+            </ol>
+
+            <p><strong>Fix (if you don't need your changes):</strong></p>
+            <ol>
+                <li>Open Terminal (macOS) or Command Prompt (Windows)</li>
+                <li>Navigate to your EDWIN directory: <code>cd ~/edwin</code> (macOS) or <code>cd %USERPROFILE%\edwin</code> (Windows)</li>
+                <li>Run: <code>git restore .</code> to discard changes</li>
+                <li>Run the updater again</li>
+            </ol>
+
+            <div class="tip">
+                <p><strong>Note:</strong> Changes in the <code>user/</code> directory never block updates and are always preserved.</p>
+            </div>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: Update fails with "failed to pull updates"</h3>
+            <p><strong>What happened:</strong> The updater couldn't download from the repository. This happens if you're offline, or if your local branch has diverged from the remote.</p>
+
+            <p><strong>Fix (if offline):</strong></p>
+            <ol>
+                <li>Connect to the internet</li>
+                <li>Run the updater again</li>
+            </ol>
+
+            <p><strong>Fix (if branch has diverged):</strong></p>
+            <ol>
+                <li>Open Terminal (macOS) or Command Prompt (Windows)</li>
+                <li>Navigate to your EDWIN directory: <code>cd ~/edwin</code> (macOS) or <code>cd %USERPROFILE%\edwin</code> (Windows)</li>
+                <li>Run: <code>git status</code> to check the state</li>
+                <li>Run: <code>git log</code> to see recent commits</li>
+                <li>If you've made commits you want to keep, push them to a fork or new branch first</li>
+                <li>If you want to discard local commits and sync with the upstream version, run: <code>git reset --hard origin/main</code></li>
+                <li>Run the updater again</li>
+            </ol>
+
+            <div class="warning">
+                <p><strong>Warning:</strong> <code>git reset --hard</code> is destructive — it discards all local commits and changes. Only use it if you're certain you don't need them.</p>
+            </div>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: Update completes but skills don't change</h3>
+            <p><strong>What happened:</strong> Claude hasn't reloaded the configuration yet.</p>
+
+            <p><strong>Fix:</strong></p>
+            <ol>
+                <li>Close Claude Code or Claude Desktop completely</li>
+                <li>Reopen Claude</li>
+                <li>Start a new conversation</li>
+                <li>Try: "List my skills" to confirm the update</li>
+            </ol>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: Sync engine failed during update</h3>
+            <p><strong>What happened:</strong> The update downloaded successfully, but the sync engine (which installs the changes into Claude) encountered an error.</p>
+
+            <p><strong>Fix:</strong></p>
+            <ol>
+                <li>Check the log file:
+                    <ul>
+                        <li><strong>macOS:</strong> <code>~/edwin/install.log</code></li>
+                        <li><strong>Windows:</strong> <code>%USERPROFILE%\edwin\install.log</code></li>
+                    </ul>
+                </li>
+                <li>Look for the last error message</li>
+                <li>Common causes:
+                    <ul>
+                        <li><strong>Invalid skill syntax:</strong> A skill has malformed frontmatter. This is a bug — report it.</li>
+                        <li><strong>File permissions:</strong> The sync engine can't write to <code>~/.claude/</code>. Check that the directory exists and is writable.</li>
+                        <li><strong>Disk full:</strong> Check available disk space.</li>
+                    </ul>
+                </li>
+                <li>If you can't resolve the error, try running the sync engine manually:
+                    <ul>
+                        <li>Open Terminal (macOS) or Command Prompt (Windows)</li>
+                        <li>Navigate to EDWIN: <code>cd ~/edwin</code> (macOS) or <code>cd %USERPROFILE%\edwin</code> (Windows)</li>
+                        <li>Run: <code>node tools/sync/engine.mjs --target all</code></li>
+                        <li>Watch for errors and note the exact message</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <h2>Scheduled Task Issues</h2>
+
+        <div class="problem">
+            <h3>Symptom: Scheduled task never fires</h3>
+            <p><strong>What happened:</strong> The task is registered, but the OS isn't running it. Common causes: machine was asleep, the OS job is missing, or the job file is malformed.</p>
+
+            <p><strong>Fix:</strong></p>
+            <ol>
+                <li>Ask EDWIN: "List my scheduled tasks"</li>
+                <li>If EDWIN reports a mismatch ("task is in the registry but the OS job is missing"), choose to recreate it</li>
+                <li>If no mismatch is reported, check manually:</li>
+            </ol>
+
+            <p><strong>macOS:</strong></p>
+            <ol>
+                <li>Open Terminal</li>
+                <li>Run: <code>launchctl list | grep edwin</code></li>
+                <li>You should see one or more lines starting with <code>com.edwin.task</code></li>
+                <li>If nothing appears, the job isn't loaded</li>
+                <li>Check that the plist file exists: <code>ls ~/Library/LaunchAgents/com.edwin.task.*</code></li>
+                <li>If it exists, load it: <code>launchctl load ~/Library/LaunchAgents/com.edwin.task.[id].plist</code></li>
+            </ol>
+
+            <p><strong>Windows:</strong></p>
+            <ol>
+                <li>Open Command Prompt</li>
+                <li>Run: <code>schtasks /Query /TN "EDWIN\*"</code></li>
+                <li>You should see your scheduled tasks listed</li>
+                <li>If nothing appears, the job is missing — ask EDWIN to recreate it</li>
+            </ol>
+
+            <div class="tip">
+                <p><strong>Machine must be awake:</strong> Scheduled tasks only run when your computer is powered on and awake. If the machine is asleep at the scheduled time, the task won't run.</p>
+            </div>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: Scheduled task runs but produces no output</h3>
+            <p><strong>What happened:</strong> The task fired, but the prompt didn't generate the expected result, or the log file isn't being written.</p>
+
+            <p><strong>Fix:</strong></p>
+            <ol>
+                <li>Check the log file:
+                    <ul>
+                        <li><strong>macOS:</strong> <code>~/edwin/user/schedule-logs/[task-id].log</code></li>
+                        <li><strong>Windows:</strong> <code>%USERPROFILE%\edwin\user\schedule-logs\[task-id].log</code></li>
+                    </ul>
+                </li>
+                <li>If the log file is empty or missing, the task didn't run — see "Scheduled task never fires" above</li>
+                <li>If the log file exists but the output is wrong, refine the prompt and reschedule</li>
+            </ol>
+        </div>
+
+        <h2>Web Portal Issues</h2>
+
+        <div class="problem">
+            <h3>Symptom: Portal rejects pasted bundle as too long</h3>
+            <p><strong>What happened:</strong> The bundle exceeds the portal's character limit for custom instructions.</p>
+
+            <p><strong>Fix:</strong></p>
+            <ol>
+                <li>Check the output folder for a file named <code>CONDENSED_VARIANT.md</code> or <code>FAILURE_MANIFEST.md</code></li>
+                <li>If a condensed variant exists, paste that instead — it omits full skill bodies to fit the limit</li>
+                <li>If even the condensed variant is too long:
+                    <ul>
+                        <li>Export a narrower context (Work or Home instead of Global)</li>
+                        <li>Regenerate without personal data (remove <code>--include-memory</code> and <code>--include-brags</code>)</li>
+                        <li>Use a different portal with a larger or unknown limit (Claude Projects or Gemini instead of Copilot)</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: EDWIN in a web portal doesn't remember things between sessions</h3>
+            <p><strong>What happened:</strong> Web portal bundles are static snapshots. EDWIN can't update its own instructions in a portal.</p>
+
+            <p><strong>Fix:</strong></p>
+            <p>This is a limitation of web portals, not a bug. To keep EDWIN's memory current:</p>
+            <ol>
+                <li>Use EDWIN locally (in Claude Code or Claude Desktop) for memory-related tasks</li>
+                <li>Regenerate and re-paste bundles periodically if you need an updated snapshot</li>
+                <li>Or, accept that the portal version has static memory from when you generated the bundle</li>
+            </ol>
+        </div>
+
+        <h2>General Issues</h2>
+
+        <div class="problem">
+            <h3>Symptom: EDWIN doesn't recognize a skill trigger</h3>
+            <p><strong>What happened:</strong> Your request didn't match any skill's trigger phrases closely enough.</p>
+
+            <p><strong>Fix:</strong></p>
+            <ol>
+                <li>Try being more explicit: "Use the briefing skill on this article"</li>
+                <li>Ask EDWIN: "List my skills" to see what's available</li>
+                <li>Check that the skill you want is in your active context (or switch to Global to see all skills)</li>
+            </ol>
+        </div>
+
+        <div class="problem">
+            <h3>Symptom: EDWIN's responses are too brief or too verbose</h3>
+            <p><strong>What happened:</strong> The verbosity preference doesn't match what you want.</p>
+
+            <p><strong>Fix:</strong></p>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> I'd like more detailed responses</p>
+                <p><span class="edwin">EDWIN:</span> <em>(Adjusts verbosity to "detailed")</em></p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Go back to concise responses</p>
+                <p><span class="edwin">EDWIN:</span> <em>(Adjusts verbosity to "concise")</em></p>
+            </div>
+        </div>
+
+        <h2>Still stuck?</h2>
+
+        <p>If your issue isn't covered here:</p>
+        <ol>
+            <li>Check the <a href="https://github.com/sqlhammer/edwin">EDWIN repository</a> for known issues and updates</li>
+            <li>Ask EDWIN directly: "How do I [your problem]?" — EDWIN knows how EDWIN works</li>
+            <li>File an issue on GitHub with:
+                <ul>
+                    <li>The symptom you're seeing</li>
+                    <li>What you expected to happen</li>
+                    <li>Steps to reproduce</li>
+                    <li>Your OS and EDWIN version (check <code>~/edwin/core/VERSION</code>)</li>
+                </ul>
+            </li>
+        </ol>
+
+        <footer>
+            <p><a href="index.html">← Back to Guide Index</a></p>
+        </footer>
+    </div>
+</body>
+</html>

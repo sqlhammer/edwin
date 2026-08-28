@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "_schema": {
+    "purpose": "Defines the contexts that exist. Which skills belong to a context is NOT stored here — that lives in each skill's frontmatter 'contexts:' list, which is the single source of truth. This file only names and describes the contexts themselves.",
+    "contexts[].name": "Display name. Unique, case-sensitive, used verbatim in skill frontmatter.",
+    "contexts[].description": "One line the user wrote or accepted, shown when listing contexts.",
+    "contexts[].builtin": "Optional boolean. True only for Global, which cannot be renamed or removed.",
+    "activeContext": "Not stored here — it is per-machine and lives in user/state.json.",
+    "export": "A context is the unit of export for web portals: tools/bundle/build-bundle.mjs takes --context <name> and flattens the persona plus that context's skills into a portal-shaped bundle. Global exports everything. Contexts are therefore also a size-management tool: a user with too much to fit inside claude.ai's instruction limit splits their work into narrower contexts and exports those.",
+    "semantics": "All skills remain available in every context. The active context biases navigation, suggestions, and ambiguity resolution — it never restricts access. Global applies no bias."
+  },
+  "contexts": [
+    {
+      "name": "Global",
+      "builtin": true,
+      "description": "Everything at once — no bias toward any one area"
+    },
+    {
+      "name": "Work",
+      "description": "Professional projects, client work, and business tasks"
+    },
+    {
+      "name": "Home",
+      "description": "Personal projects, learning, and household matters"
+    }
+  ]
+}

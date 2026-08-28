@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Using EDWIN in Web Portals</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fafafa;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        .meta-box {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4a90e2;
+        }
+        .meta-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .meta-box ul {
+            margin: 0.5rem 0 0 1.5rem;
+        }
+        .meta-box li {
+            margin: 0.3rem 0;
+        }
+        .step-box {
+            background: #f8f9fa;
+            border: 2px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .conversation {
+            background: #e8f4fd;
+            border: 1px solid #b3d9f2;
+            border-radius: 6px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9rem;
+        }
+        .conversation .you {
+            color: #1a5490;
+            font-weight: 600;
+        }
+        .conversation .edwin {
+            color: #2a6f2a;
+            font-weight: 600;
+        }
+        .conversation p {
+            margin: 0.5rem 0;
+        }
+        .tip {
+            background: #e6f7e6;
+            border-left: 4px solid #4caf50;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .tip strong {
+            color: #2a6f2a;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .warning strong {
+            color: #856404;
+        }
+        code {
+            background: #e8e8e8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        ul, ol {
+            margin: 1rem 0 1rem 1.8rem;
+        }
+        li {
+            margin: 0.5rem 0;
+        }
+        a {
+            color: #1a5490;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #5a5a5a;
+            font-size: 0.95rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        th {
+            background: #f0f0f0;
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 2px solid #d0d0d0;
+            font-weight: 600;
+        }
+        td {
+            padding: 0.8rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            color: #6a6a6a;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Guide Index</a>
+
+        <h1>Using EDWIN in Web Portals</h1>
+
+        <p>EDWIN works in browser-based AI portals like Claude Projects, Gemini Gems, and Microsoft Copilot. You paste EDWIN's instructions and skills into the portal's custom-instructions box.</p>
+
+        <div class="meta-box">
+            <h3>What you'll need</h3>
+            <ul>
+                <li>EDWIN installed locally (see <a href="getting-started-mac.html">Getting Started</a>)</li>
+                <li>An account with one of the supported portals</li>
+                <li>The Terminal (macOS) or Command Prompt (Windows) — just briefly, to generate the bundle</li>
+            </ul>
+        </div>
+
+        <div class="meta-box">
+            <h3>How long this takes</h3>
+            <p>10 minutes to generate and paste. Refreshing after changes takes 2–3 minutes.</p>
+        </div>
+
+        <h2>What gets exported</h2>
+
+        <p>When you export EDWIN for a portal, a script generates a bundle containing:</p>
+        <ul>
+            <li><strong>EDWIN's persona</strong> — who EDWIN is and how it works</li>
+            <li><strong>Skills for your chosen context</strong> — Work, Home, or Global</li>
+            <li><strong>Degradation rewrites</strong> — skills are automatically rewritten to work without shell access or OS-level scheduling</li>
+            <li><strong>Personal data (opt-in)</strong> — your memory digest and logged accomplishments, if you choose to include them</li>
+        </ul>
+
+        <div class="warning">
+            <p><strong>Privacy note:</strong> Only include personal data if you're pasting into your own account. Never share a bundle with personal data.</p>
+        </div>
+
+        <h2>Generating a bundle</h2>
+
+        <div class="step-box">
+            <h3>Step 1: Open your terminal</h3>
+            <p><strong>macOS:</strong> Open Terminal (search for "Terminal" in Spotlight).</p>
+            <p><strong>Windows:</strong> Open Command Prompt or PowerShell (search for "cmd" or "PowerShell" in the Start menu).</p>
+        </div>
+
+        <div class="step-box">
+            <h3>Step 2: Navigate to your EDWIN directory</h3>
+            <p><strong>macOS:</strong> Type <code>cd ~/edwin</code> and press Enter.</p>
+            <p><strong>Windows:</strong> Type <code>cd %USERPROFILE%\edwin</code> and press Enter.</p>
+        </div>
+
+        <div class="step-box">
+            <h3>Step 3: Run the bundle generator</h3>
+            <p>Type this command, replacing <code>Work</code> with your context and <code>claude</code> with your portal:</p>
+            <code>node tools/bundle/build-bundle.mjs --context Work --portal claude</code>
+
+            <p style="margin-top: 1rem;"><strong>Portals:</strong> <code>claude</code>, <code>gemini</code>, <code>copilot</code>, or <code>all</code> to generate bundles for all three.</p>
+
+            <p style="margin-top: 1rem;"><strong>To include personal data:</strong> Add <code>--include-memory</code> or <code>--include-brags</code> to the command. Example:</p>
+            <code>node tools/bundle/build-bundle.mjs --context Work --portal claude --include-memory</code>
+        </div>
+
+        <div class="step-box">
+            <h3>Step 4: Find your bundle</h3>
+            <p>The script writes the bundle to:</p>
+            <p><strong>macOS:</strong> <code>~/edwin/dist/bundles/[portal]/[context]/</code></p>
+            <p><strong>Windows:</strong> <code>%USERPROFILE%\edwin\dist\bundles\[portal]\[context]\</code></p>
+
+            <p style="margin-top: 1rem;">Inside that folder you'll find:</p>
+            <ul>
+                <li><strong>instructions.txt</strong> — the main file you'll paste</li>
+                <li><strong>knowledge/</strong> (if supported by the portal) — skill files to upload</li>
+            </ul>
+        </div>
+
+        <h2>Pasting into each portal</h2>
+
+        <p>Each portal has a slightly different interface. The exact wording of buttons and menus may change, but you're looking for the place where you configure a project or agent with custom instructions.</p>
+
+        <h3>Claude Projects (claude.ai)</h3>
+
+        <div class="step-box">
+            <h3>Creating or editing a project</h3>
+            <ol>
+                <li>Log in to <a href="https://claude.ai">claude.ai</a></li>
+                <li>Find the Projects section in the left sidebar</li>
+                <li>Create a new project or open an existing one</li>
+                <li>Look for a section labeled "Custom instructions" or "Project instructions"</li>
+                <li>Open the <code>instructions.txt</code> file from your bundle folder and copy its entire contents</li>
+                <li>Paste into the custom instructions box</li>
+                <li>If there is a "Project knowledge" or "Knowledge" section, upload all the files from the <code>knowledge/</code> folder</li>
+                <li>Save the project</li>
+            </ol>
+        </div>
+
+        <div class="tip">
+            <p><strong>Character limit unknown:</strong> Claude Projects does not publish a documented character limit. If your paste is rejected, see "What if the bundle is too long" below.</p>
+        </div>
+
+        <h3>Gemini Gems</h3>
+
+        <div class="step-box">
+            <h3>Creating or editing a Gem</h3>
+            <ol>
+                <li>Log in to Gemini</li>
+                <li>Look for a section labeled "Gems", "Create a Gem", or similar</li>
+                <li>Create a new Gem or edit an existing one</li>
+                <li>Find the instructions box (may be labeled "Custom instructions" or "Instructions")</li>
+                <li>Open the <code>instructions.txt</code> file from your bundle folder and copy its entire contents</li>
+                <li>Paste into the instructions box</li>
+                <li>Save the Gem</li>
+            </ol>
+        </div>
+
+        <div class="tip">
+            <p><strong>Character limit unknown:</strong> Gemini does not publish a documented character limit for Gem instructions. If your paste is rejected, see "What if the bundle is too long" below.</p>
+        </div>
+
+        <p><strong>Note:</strong> Gemini does not support uploading knowledge files as of this writing. All skill instructions are inlined in the <code>instructions.txt</code> file.</p>
+
+        <h3>Microsoft Copilot</h3>
+
+        <div class="step-box">
+            <h3>Creating or editing a declarative agent</h3>
+            <ol>
+                <li>Log in to Microsoft 365 Copilot</li>
+                <li>Look for a section labeled "Declarative agents" or "Custom agents"</li>
+                <li>Create a new agent or edit an existing one</li>
+                <li>Find the instructions field</li>
+                <li>Open the <code>instructions.txt</code> file from your bundle folder and copy its entire contents</li>
+                <li>Paste into the instructions field</li>
+                <li>Save the agent</li>
+            </ol>
+        </div>
+
+        <div class="warning">
+            <p><strong>Character limit: 8,000 characters.</strong> Microsoft Copilot enforces a hard limit of 8,000 characters for declarative agent instructions. If your bundle exceeds this, the generator will automatically create a condensed variant. If the condensed variant still exceeds the limit, you'll see a failure message — see "What if the bundle is too long" below.</p>
+        </div>
+
+        <p><strong>Note:</strong> Microsoft Copilot does not support uploading knowledge files as of this writing. The condensed variant omits full skill bodies to fit the limit.</p>
+
+        <h2>What if the bundle is too long?</h2>
+
+        <p>If the portal rejects your paste as too long:</p>
+
+        <ol>
+            <li><strong>Check the output folder</strong> for a file named <code>CONDENSED_VARIANT.md</code> or <code>FAILURE_MANIFEST.md</code>. These explain what happened.</li>
+            <li><strong>Try a narrower context.</strong> Exporting Global includes all skills. Exporting Work or Home includes fewer.</li>
+            <li><strong>Remove personal data.</strong> If you added <code>--include-memory</code> or <code>--include-brags</code>, regenerate without them.</li>
+            <li><strong>Use a different portal.</strong> Claude Projects and Gemini Gems have unknown or larger limits than Copilot.</li>
+        </ol>
+
+        <h2>Refreshing after changes</h2>
+
+        <p>When you edit skills or update EDWIN locally, your portal bundles become stale. To regenerate only the changed bundles:</p>
+
+        <div class="step-box">
+            <h3>Refresh stale bundles</h3>
+            <p>Run this command in your EDWIN directory:</p>
+            <code>node tools/bundle/build-bundle.mjs --context Work --portal all --diff</code>
+
+            <p style="margin-top: 1rem;">The <code>--diff</code> flag checks which bundles are out of date and regenerates only those. The script then prints re-paste instructions for each portal.</p>
+        </div>
+
+        <h2>Limitations in web portals</h2>
+
+        <p>EDWIN works differently in web portals than it does locally in Claude Code or Claude Desktop:</p>
+
+        <ul>
+            <li><strong>No shell access.</strong> Skills that invoke scripts are automatically rewritten to use file-based workarounds or to prompt you for manual steps.</li>
+            <li><strong>No OS scheduling.</strong> The scheduler skill (recurring tasks, reminders) is unavailable. EDWIN will suggest calendar reminders with prepared prompts instead.</li>
+            <li><strong>Memory and brags are static.</strong> If you include personal data, it's a snapshot from when you generated the bundle. EDWIN can't update it in the portal — only locally.</li>
+            <li><strong>No automatic updates.</strong> You must regenerate and re-paste bundles manually after updating EDWIN.</li>
+        </ul>
+
+        <div class="tip">
+            <p><strong>When to use portals:</strong> Web portals are best for using EDWIN on a machine where you can't install Claude Code or Desktop, or when you want a read-only snapshot of your skills for a specific project.</p>
+        </div>
+
+        <h2>Next steps</h2>
+
+        <ul>
+            <li>Regenerate bundles after updating EDWIN — see <a href="updating-edwin.html">Updating EDWIN</a></li>
+            <li>If something goes wrong, see the <a href="troubleshooting.html">Troubleshooting guide</a></li>
+        </ul>
+
+        <footer>
+            <p><a href="index.html">← Back to Guide Index</a></p>
+        </footer>
+    </div>
+</body>
+</html>

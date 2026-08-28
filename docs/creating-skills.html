@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creating Skills</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fafafa;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        .meta-box {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4a90e2;
+        }
+        .meta-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .meta-box ul {
+            margin: 0.5rem 0 0 1.5rem;
+        }
+        .meta-box li {
+            margin: 0.3rem 0;
+        }
+        .step-box {
+            background: #f8f9fa;
+            border: 2px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .conversation {
+            background: #e8f4fd;
+            border: 1px solid #b3d9f2;
+            border-radius: 6px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .conversation .you {
+            color: #1a5490;
+            font-weight: 600;
+        }
+        .conversation .edwin {
+            color: #2a6f2a;
+            font-weight: 600;
+        }
+        .conversation p {
+            margin: 0.5rem 0;
+        }
+        .conversation em {
+            color: #6a6a6a;
+            font-style: italic;
+        }
+        .tip {
+            background: #e6f7e6;
+            border-left: 4px solid #4caf50;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .tip strong {
+            color: #2a6f2a;
+        }
+        .story-intro {
+            background: #fef7e6;
+            border-left: 4px solid #f59e0b;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 4px;
+            font-style: italic;
+        }
+        code {
+            background: #e8e8e8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        ul, ol {
+            margin: 1rem 0 1rem 1.8rem;
+        }
+        li {
+            margin: 0.5rem 0;
+        }
+        a {
+            color: #1a5490;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #5a5a5a;
+            font-size: 0.95rem;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            color: #6a6a6a;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Guide Index</a>
+
+        <h1>Creating Skills</h1>
+
+        <div class="meta-box">
+            <h3>What you'll need</h3>
+            <ul>
+                <li>EDWIN installed and configured</li>
+                <li>A task you do more than once</li>
+                <li>5–10 minutes to teach EDWIN how you do it</li>
+            </ul>
+        </div>
+
+        <div class="meta-box">
+            <h3>How long this takes</h3>
+            <p>10–15 minutes for your first skill. Faster once you're familiar with the process.</p>
+        </div>
+
+        <h2>What is skill creation?</h2>
+
+        <p>EDWIN can learn your workflows and turn them into skills — no coding required. When you do something twice, EDWIN notices and offers to capture it. You confirm what it saw, fill in any gaps, and EDWIN writes the skill for you.</p>
+
+        <p>This is one of EDWIN's most powerful features: it means you're not stuck with the 23 built-in skills. You can teach EDWIN anything you do repeatedly.</p>
+
+        <h2>The journey: creating a skill from start to finish</h2>
+
+        <div class="story-intro">
+            <p>The best way to understand skill creation is to watch it happen. Here's Alex, who backs up a database every week and wants to turn that into a skill.</p>
+        </div>
+
+        <h3>Act One: EDWIN notices</h3>
+
+        <p>Alex has just finished backing up the database — for the second time this session. EDWIN's workflow observation system fires.</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> You've done that twice now. Want me to learn it as a skill?</p>
+            <p><span class="you">Alex:</span> Yeah, I do this every week.</p>
+        </div>
+
+        <p>EDWIN switches into observation mode. It already watched Alex perform the task twice, so most of the workflow is visible in the conversation history.</p>
+
+        <h3>Act Two: confirming what EDWIN saw</h3>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> I saw you do this twice: export the database, compress it, and upload to S3. Is that the pattern?</p>
+            <p><span class="you">Alex:</span> Exactly.</p>
+        </div>
+
+        <p>EDWIN confirmed the core steps. Now it asks about the gaps — things observation didn't reveal:</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> A few questions:</p>
+            <p>1. What should I call this?</p>
+            <p>2. Any other times you'd say it, besides "run the backup"?</p>
+            <p>3. Do you always compress, or only when the dump is large?</p>
+            <p><span class="you">Alex:</span> Call it "weekly-backup". I'd also say "back up the database" or "run the S3 backup". Always compress it.</p>
+        </div>
+
+        <p>EDWIN has everything it needs. It plays the workflow back to confirm:</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> So: you back up the database weekly, triggered by "run the backup" or "back up the database", starting with the DB credentials and S3 bucket name, then export → compress → upload. Right?</p>
+            <p><span class="you">Alex:</span> Yep.</p>
+        </div>
+
+        <h3>Act Three: the workflow breakdown</h3>
+
+        <p>EDWIN writes a workflow breakdown file — a structured document that captures what Alex does. It's saved to the EDWIN folder at <code>user/workflows/weekly-backup.md</code>.</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> Workflow documented. When you're ready, I can turn this into a skill — just say "create a skill from my weekly-backup workflow".</p>
+        </div>
+
+        <div class="tip">
+            <p><strong>What just happened:</strong> EDWIN didn't create a skill yet. It created a <em>workflow breakdown</em> — a description of what Alex does. This two-step process (observe → breakdown, then breakdown → skill) means Alex can review and refine the workflow before it becomes a skill.</p>
+        </div>
+
+        <h3>Act Four: turning the breakdown into a skill</h3>
+
+        <p>Alex is ready to generate the skill:</p>
+
+        <div class="conversation">
+            <p><span class="you">Alex:</span> Create a skill from my weekly-backup workflow</p>
+        </div>
+
+        <p>EDWIN reads the breakdown and generates a skill using its internal template. It doesn't show Alex the raw code — it summarizes in plain language:</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> Here's the skill:</p>
+            <p><strong>What it does:</strong> Backs up your database to S3 weekly</p>
+            <p><strong>When it triggers:</strong> "run the backup", "back up the database", "run the S3 backup"</p>
+            <p><strong>The steps it follows:</strong> Asks for DB credentials and S3 bucket, exports the database, compresses the file, uploads to S3, confirms success</p>
+            <p><strong>Sample run:</strong></p>
+            <p>You: Run the backup</p>
+            <p>EDWIN: DB credentials? S3 bucket?</p>
+            <p>You: <em>(provides details)</em></p>
+            <p>EDWIN: Exported. Compressing... Uploaded to s3://your-bucket/backup-2026-08-26.sql.gz. Backup complete.</p>
+            <p>Look right, or anything to change?</p>
+        </div>
+
+        <p>Alex reviews it:</p>
+
+        <div class="conversation">
+            <p><span class="you">Alex:</span> Looks good.</p>
+        </div>
+
+        <h3>Act Five: installation</h3>
+
+        <p>EDWIN validates the skill (checks that all required sections are present, the description is the right length, etc.), then installs it:</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> Ready to install. This will create core/skills/weekly-backup/ and sync it to your harnesses.</p>
+            <p><span class="you">Alex:</span> Do it.</p>
+        </div>
+
+        <p>EDWIN creates the skill file, runs the sync engine (the tool that installs skills into Claude), and confirms:</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> Skill installed: <strong>weekly-backup</strong>. It's live now — try saying "run the backup".</p>
+        </div>
+
+        <p>Alex tries it:</p>
+
+        <div class="conversation">
+            <p><span class="you">Alex:</span> Run the backup</p>
+            <p><span class="edwin">EDWIN:</span> DB credentials? S3 bucket?</p>
+        </div>
+
+        <p>It works. Alex now has a custom skill that remembers the weekly backup workflow.</p>
+
+        <h2>The two paths to skill creation</h2>
+
+        <p>There are two ways to create a skill:</p>
+
+        <h3>Path 1: Observation mode (what we just saw)</h3>
+
+        <ol>
+            <li>Do a task twice in the same conversation</li>
+            <li>EDWIN offers to learn it</li>
+            <li>Confirm what EDWIN saw, answer a few questions</li>
+            <li>EDWIN writes a workflow breakdown</li>
+            <li>Say "create a skill from my [name] workflow"</li>
+            <li>Review and install</li>
+        </ol>
+
+        <p>This is the best path when EDWIN can watch you work.</p>
+
+        <h3>Path 2: Interview mode</h3>
+
+        <p>If you haven't done the task yet, or if EDWIN didn't notice, you can teach it directly:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Learn how I write my monthly report</p>
+        </div>
+
+        <p>EDWIN will ask you a series of questions (batched, not one-at-a-time) about what the workflow accomplishes, when you use it, what steps you follow, and what the result looks like. Then it writes a breakdown, and you proceed to skill creation the same way as observation mode.</p>
+
+        <h2>What happens behind the scenes</h2>
+
+        <p>When you create a skill, EDWIN:</p>
+
+        <ol>
+            <li>Writes a skill file to <code>core/skills/[your-skill-name]/SKILL.md</code> in the EDWIN folder</li>
+            <li>Runs the sync engine (a tool that copies skills into the right places so Claude can see them)</li>
+            <li>The skill becomes available immediately — no restart required</li>
+        </ol>
+
+        <p>Your skill is stored in the <code>core/skills/</code> directory alongside EDWIN's built-in skills. It's yours to edit, share, or delete.</p>
+
+        <h2>Creating personas (advanced)</h2>
+
+        <p>Skills aren't just for tasks — you can also create <strong>persona-mode skills</strong> that change how EDWIN behaves. For example, the built-in <strong>writing-editor</strong> persona makes EDWIN act like a patient writing coach.</p>
+
+        <p>To create a persona:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Create a persona for me</p>
+            <p><span class="edwin">EDWIN:</span> What role should this persona take?</p>
+        </div>
+
+        <p>Describe the role (e.g., "a Socratic philosophy teacher", "a stern fitness coach", "a supportive therapist") and answer a few questions about how it should behave. EDWIN will generate a persona-mode skill that you can activate by name:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Activate my philosophy teacher</p>
+            <p><span class="edwin">Philosophy Teacher:</span> <em>(EDWIN adopts that persona for the conversation)</em></p>
+        </div>
+
+        <h2>Tips for good skills</h2>
+
+        <ul>
+            <li><strong>Start with a real workflow.</strong> Don't invent a skill you might use someday — capture something you've actually done at least twice.</li>
+            <li><strong>Be specific about triggers.</strong> When EDWIN asks "what would you say when you need this?", give the exact phrases you'd use.</li>
+            <li><strong>Name it clearly.</strong> Use a name that makes sense to you six months from now. "weekly-backup" is better than "db-thing".</li>
+            <li><strong>Test it right away.</strong> Once installed, try the skill immediately to make sure it behaves as expected.</li>
+            <li><strong>Update it when your workflow changes.</strong> Say "update my [skill-name] workflow" and EDWIN will ask what changed.</li>
+        </ul>
+
+        <h2>Managing your skills</h2>
+
+        <p>Your custom skills live in the EDWIN folder at <code>core/skills/</code>. Each skill is a folder with a <code>SKILL.md</code> file inside.</p>
+
+        <p>To see all your skills (built-in and custom):</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> List skills</p>
+        </div>
+
+        <p>To update a skill:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Update my weekly-backup skill</p>
+        </div>
+
+        <p>To delete a skill, remove its folder from <code>core/skills/</code> and run the sync command:</p>
+
+        <ul>
+            <li><strong>Command Prompt or Terminal:</strong> <code>npm run sync</code> (from the EDWIN folder)</li>
+        </ul>
+
+        <h2>Next steps</h2>
+
+        <p>Now that you know how to create skills:</p>
+        <ul>
+            <li><a href="memory-and-wins.html">Memory and Wins</a> — learn how EDWIN remembers things and tracks accomplishments</li>
+            <li><a href="using-edwin.html">Using EDWIN</a> — refresh on how to talk to EDWIN and use contexts</li>
+        </ul>
+
+        <h2>If something goes wrong</h2>
+
+        <p>Common issues:</p>
+
+        <ul>
+            <li><strong>EDWIN doesn't offer to learn my workflow:</strong> Make sure you've done the task at least twice in the same conversation. If the workflow-observation preference is turned off, EDWIN stays silent. Check your settings: "show my config".</li>
+            <li><strong>Skill doesn't appear after installation:</strong> Restart Claude (quit and reopen). Skills should appear immediately, but a restart can help if something is cached.</li>
+            <li><strong>Skill triggers the wrong behavior:</strong> The trigger phrases might overlap with another skill. Try being more specific, or update the skill to use more distinctive phrases.</li>
+            <li><strong>I want to edit the skill directly:</strong> Advanced users can edit <code>core/skills/[skill-name]/SKILL.md</code> by hand, then run <code>npm run sync</code>. See the EDWIN conventions document for the format.</li>
+        </ul>
+
+        <p>For more help, see the <a href="troubleshooting.html">Troubleshooting guide</a>.</p>
+
+        <footer>
+            <p><a href="index.html">← Back to Guide Index</a></p>
+        </footer>
+    </div>
+</body>
+</html>

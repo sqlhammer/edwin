@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Using EDWIN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fafafa;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        .meta-box {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4a90e2;
+        }
+        .meta-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .meta-box ul {
+            margin: 0.5rem 0 0 1.5rem;
+        }
+        .meta-box li {
+            margin: 0.3rem 0;
+        }
+        .step-box {
+            background: #f8f9fa;
+            border: 2px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .conversation {
+            background: #e8f4fd;
+            border: 1px solid #b3d9f2;
+            border-radius: 6px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9rem;
+        }
+        .conversation .you {
+            color: #1a5490;
+            font-weight: 600;
+        }
+        .conversation .edwin {
+            color: #2a6f2a;
+            font-weight: 600;
+        }
+        .conversation p {
+            margin: 0.5rem 0;
+        }
+        .tip {
+            background: #e6f7e6;
+            border-left: 4px solid #4caf50;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .tip strong {
+            color: #2a6f2a;
+        }
+        code {
+            background: #e8e8e8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        ul, ol {
+            margin: 1rem 0 1rem 1.8rem;
+        }
+        li {
+            margin: 0.5rem 0;
+        }
+        a {
+            color: #1a5490;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #5a5a5a;
+            font-size: 0.95rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        th {
+            background: #f0f0f0;
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 2px solid #d0d0d0;
+            font-weight: 600;
+        }
+        td {
+            padding: 0.8rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            color: #6a6a6a;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Guide Index</a>
+
+        <h1>Using EDWIN</h1>
+
+        <div class="meta-box">
+            <h3>What you'll need</h3>
+            <ul>
+                <li>EDWIN installed and set up (see <a href="getting-started-mac.html">Getting Started (macOS)</a> or <a href="getting-started-windows.html">Getting Started (Windows)</a>)</li>
+            </ul>
+        </div>
+
+        <div class="meta-box">
+            <h3>How long this takes</h3>
+            <p>5 minutes to read, a lifetime to master.</p>
+        </div>
+
+        <h2>How to talk to EDWIN</h2>
+
+        <p>EDWIN works like a human assistant: just tell it what you need in plain language. You don't need special commands or syntax — though there are shortcuts if you want them.</p>
+
+        <h3>Starting a conversation</h3>
+
+        <p>Just type what you want EDWIN to do:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Brief me on this article</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Uses the briefing skill to create a summary)</em></p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> I need help planning a project</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Uses the project-planner skill to break it down)</em></p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Switch to Work</p>
+            <p><span class="edwin">EDWIN:</span> Switched to Work.</p>
+        </div>
+
+        <p>EDWIN figures out which skill to use based on what you say. You can also ask EDWIN directly:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> What can you help me with?</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Lists skills available in your current context)</em></p>
+        </div>
+
+        <h2>What skills are</h2>
+
+        <p>A <strong>skill</strong> is a focused way of working — a methodology for a specific kind of task. EDWIN comes with 23 built-in skills:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Skill</th>
+                    <th>What it does</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>analyst</strong></td>
+                    <td>Rigorous data analysis with pattern detection</td>
+                </tr>
+                <tr>
+                    <td><strong>blog-writer</strong></td>
+                    <td>Research-backed blog writing and revision</td>
+                </tr>
+                <tr>
+                    <td><strong>briefing</strong></td>
+                    <td>Distills anything into an executive summary</td>
+                </tr>
+                <tr>
+                    <td><strong>executive-coach</strong></td>
+                    <td>Career coaching for engineering leaders</td>
+                </tr>
+                <tr>
+                    <td><strong>intellectual-sparing-partner</strong></td>
+                    <td>Pressure-tests your ideas through debate</td>
+                </tr>
+                <tr>
+                    <td><strong>project-planner</strong></td>
+                    <td>Breaks projects into deliverables and tasks</td>
+                </tr>
+                <tr>
+                    <td><strong>prompter</strong></td>
+                    <td>Optimizes prompts for AI tools</td>
+                </tr>
+                <tr>
+                    <td><strong>researcher</strong></td>
+                    <td>Deep research with source evaluation</td>
+                </tr>
+                <tr>
+                    <td><strong>strategist</strong></td>
+                    <td>Structured brainstorming from ideas to decisions</td>
+                </tr>
+                <tr>
+                    <td><strong>tutor</strong></td>
+                    <td>Teaches concepts through questions, not answers</td>
+                </tr>
+                <tr>
+                    <td><strong>x-ghostwriter</strong></td>
+                    <td>Writes X (Twitter) posts through interviews</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>...and several more for managing EDWIN itself (memory, contexts, creating skills, scheduling tasks).</p>
+
+        <h3>Using a skill</h3>
+
+        <p>You don't need to say the skill's name. Just say what you need, and EDWIN will route to the right skill:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Teach me how recursion works</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Uses the tutor skill, asks Socratic questions)</em></p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Help me plan my quarterly roadmap</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Uses the project-planner skill)</em></p>
+        </div>
+
+        <p>If you want to be explicit, you can name the skill:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Use the analyst skill on this dataset</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Applies that skill)</em></p>
+        </div>
+
+        <h2>Understanding contexts</h2>
+
+        <p>EDWIN organizes skills into three <strong>contexts</strong>: Global, Work, and Home. Think of them like modes you switch between.</p>
+
+        <h3>The three contexts</h3>
+
+        <ul>
+            <li><strong>Global:</strong> No filtering. All skills are equally relevant. Use this when you're working on mixed tasks or haven't decided on a focus.</li>
+            <li><strong>Work:</strong> Professional tasks. Skills like analyst, briefing, project-planner, and executive-coach surface first. Use this during work hours.</li>
+            <li><strong>Home:</strong> Personal projects and learning. Use this for side projects, studying, or household matters.</li>
+        </ul>
+
+        <div class="tip">
+            <p><strong>Important:</strong> Contexts don't restrict access. Every skill stays available in every context. Contexts just help EDWIN prioritize suggestions when you say something that could match multiple skills.</p>
+        </div>
+
+        <h3>Switching contexts</h3>
+
+        <div class="step-box">
+            <h3>Change your active context</h3>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Switch to Work</p>
+                <p><span class="edwin">EDWIN:</span> Switched to Work.</p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Switch to Home</p>
+                <p><span class="edwin">EDWIN:</span> Switched to Home.</p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Switch to Global</p>
+                <p><span class="edwin">EDWIN:</span> Switched to Global.</p>
+            </div>
+
+            <p>Your active context persists between conversations. EDWIN remembers where you left off.</p>
+        </div>
+
+        <h3>Seeing what's available</h3>
+
+        <div class="step-box">
+            <h3>List skills by context</h3>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> List skills</p>
+                <p><span class="edwin">EDWIN:</span> <em>(Shows all skills, grouped by context. Your active context appears first.)</em></p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> What skills are in this context?</p>
+                <p><span class="edwin">EDWIN:</span> <em>(Shows skills tagged for your current context, plus Global skills)</em></p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> What context am I in?</p>
+                <p><span class="edwin">EDWIN:</span> You're in Work.</p>
+            </div>
+        </div>
+
+        <h2>EDWIN's personality</h2>
+
+        <p>EDWIN is modeled after Edwin Jarvis from the Iron Man stories — professional, composed, concise. It won't pad responses with filler or unnecessary explanation. When EDWIN says "three issues found — want the breakdown?" it means you can say yes to see details, or no to move on.</p>
+
+        <p>If you prefer more verbose responses, you can adjust that preference:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> I'd like more detailed responses</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Adjusts your verbosity preference to "detailed")</em></p>
+        </div>
+
+        <p>To revert:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Go back to concise responses</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Sets verbosity back to "concise")</em></p>
+        </div>
+
+        <h2>Asking EDWIN for help</h2>
+
+        <p>EDWIN knows how EDWIN works. If you forget how to do something, just ask:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> How do I create a new skill?</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Explains the workflow analyzer and skill creator)</em></p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> How do I remember things between sessions?</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Explains the memory system)</em></p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Show me what I've configured</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Reads your user/config.json and summarizes your settings)</em></p>
+        </div>
+
+        <h2>Common tasks</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>I want to...</th>
+                    <th>Say this...</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>See all available skills</td>
+                    <td>"List skills"</td>
+                </tr>
+                <tr>
+                    <td>Switch contexts</td>
+                    <td>"Switch to Work" / "Switch to Home" / "Switch to Global"</td>
+                </tr>
+                <tr>
+                    <td>Create a new skill from my workflow</td>
+                    <td>Do the task twice, EDWIN will offer to learn it</td>
+                </tr>
+                <tr>
+                    <td>Remember a preference</td>
+                    <td>"Remember that I prefer X" (see <a href="memory-and-wins.html">Memory and Wins</a>)</td>
+                </tr>
+                <tr>
+                    <td>Log an accomplishment</td>
+                    <td>"Log a win: shipped the analytics dashboard" (see <a href="memory-and-wins.html">Memory and Wins</a>)</td>
+                </tr>
+                <tr>
+                    <td>Get a summary of something</td>
+                    <td>"Brief me on [document/article/report]"</td>
+                </tr>
+                <tr>
+                    <td>Plan a project</td>
+                    <td>"Help me plan [project name]"</td>
+                </tr>
+                <tr>
+                    <td>Brainstorm ideas</td>
+                    <td>"Let's brainstorm [topic]" (uses strategist skill)</td>
+                </tr>
+                <tr>
+                    <td>Learn a concept</td>
+                    <td>"Teach me [concept]" (uses tutor skill)</td>
+                </tr>
+                <tr>
+                    <td>Check my settings</td>
+                    <td>"What are my preferences?" or "Show my config"</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Next steps</h2>
+
+        <p>Now that you know how to use EDWIN:</p>
+        <ul>
+            <li><a href="creating-skills.html">Creating Skills</a> — teach EDWIN your own workflows</li>
+            <li><a href="memory-and-wins.html">Memory and Wins</a> — how EDWIN remembers and tracks accomplishments</li>
+        </ul>
+
+        <h2>If something goes wrong</h2>
+
+        <p>Common issues:</p>
+
+        <ul>
+            <li><strong>EDWIN doesn't recognize a skill trigger:</strong> Try being more explicit ("use the briefing skill") or ask EDWIN what skills are available</li>
+            <li><strong>Responses are too verbose or too brief:</strong> Adjust your verbosity preference (see above)</li>
+            <li><strong>Can't remember what context I'm in:</strong> Ask "what context am I in?"</li>
+            <li><strong>Skills from another context would be useful:</strong> Remember, all skills are always available — contexts just prioritize suggestions. You can use any skill in any context.</li>
+        </ul>
+
+        <p>For more help, see the <a href="troubleshooting.html">Troubleshooting guide</a>.</p>
+
+        <footer>
+            <p><a href="index.html">← Back to Guide Index</a></p>
+        </footer>
+    </div>
+</body>
+</html>

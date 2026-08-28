@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduled Tasks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fafafa;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        .meta-box {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4a90e2;
+        }
+        .meta-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .meta-box ul {
+            margin: 0.5rem 0 0 1.5rem;
+        }
+        .meta-box li {
+            margin: 0.3rem 0;
+        }
+        .step-box {
+            background: #f8f9fa;
+            border: 2px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .conversation {
+            background: #e8f4fd;
+            border: 1px solid #b3d9f2;
+            border-radius: 6px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9rem;
+        }
+        .conversation .you {
+            color: #1a5490;
+            font-weight: 600;
+        }
+        .conversation .edwin {
+            color: #2a6f2a;
+            font-weight: 600;
+        }
+        .conversation p {
+            margin: 0.5rem 0;
+        }
+        .tip {
+            background: #e6f7e6;
+            border-left: 4px solid #4caf50;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .tip strong {
+            color: #2a6f2a;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .warning strong {
+            color: #856404;
+        }
+        code {
+            background: #e8e8e8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        ul, ol {
+            margin: 1rem 0 1rem 1.8rem;
+        }
+        li {
+            margin: 0.5rem 0;
+        }
+        a {
+            color: #1a5490;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #5a5a5a;
+            font-size: 0.95rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        th {
+            background: #f0f0f0;
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 2px solid #d0d0d0;
+            font-weight: 600;
+        }
+        td {
+            padding: 0.8rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            color: #6a6a6a;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Guide Index</a>
+
+        <h1>Scheduled Tasks</h1>
+
+        <p>EDWIN can schedule recurring or future-dated tasks — like a morning briefing every weekday, or a Friday reminder. The task runs automatically at the scheduled time, invoking EDWIN with a prepared prompt.</p>
+
+        <div class="meta-box">
+            <h3>What you'll need</h3>
+            <ul>
+                <li>EDWIN installed locally via Claude Code or Claude Desktop</li>
+                <li><strong>macOS users:</strong> No additional setup</li>
+                <li><strong>Windows users:</strong> No additional setup</li>
+            </ul>
+        </div>
+
+        <div class="meta-box">
+            <h3>How long this takes</h3>
+            <p>2 minutes to create a task. Listing and removing tasks takes seconds.</p>
+        </div>
+
+        <h2>What gets scheduled</h2>
+
+        <p>When you schedule a task, EDWIN:</p>
+        <ul>
+            <li>Saves your exact prompt to a file</li>
+            <li>Creates a job in your operating system's native scheduler (launchd on macOS, Task Scheduler on Windows)</li>
+            <li>Registers the task in <code>user/schedule.json</code> so EDWIN remembers it</li>
+        </ul>
+
+        <p>At the scheduled time, the OS invokes Claude Code with your prompt. The result is logged to <code>user/schedule-logs/</code>.</p>
+
+        <div class="warning">
+            <p><strong>Web portals:</strong> Scheduled tasks require Claude Code or Claude Desktop. In web portals (claude.ai, Gemini, Copilot), EDWIN will suggest creating a calendar reminder with a prepared prompt instead.</p>
+        </div>
+
+        <h2>Creating a scheduled task</h2>
+
+        <p>Just tell EDWIN what you want and when:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Brief me every weekday at 8am</p>
+            <p><span class="edwin">EDWIN:</span> Scheduled: **Morning briefing** will run every weekday at 8:00 AM. Logs: user/schedule-logs/edwin-1234567890-morning-brief.log</p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Remind me every Friday at 5pm to review my wins</p>
+            <p><span class="edwin">EDWIN:</span> Scheduled: **Friday win review** will run Fridays at 5:00 PM. Logs: user/schedule-logs/edwin-1234567891-friday-win-review.log</p>
+        </div>
+
+        <div class="tip">
+            <p><strong>Safety confirmation:</strong> EDWIN will confirm the schedule and show you the exact prompt before creating the task. If the prompt contains destructive actions (delete, remove, reset), EDWIN adds an explicit confirmation step to the scheduled prompt itself.</p>
+        </div>
+
+        <h3>What you can schedule</h3>
+
+        <p>Examples of tasks that work well:</p>
+        <ul>
+            <li><strong>Recurring briefings:</strong> "Summarize my calendar every morning at 7"</li>
+            <li><strong>Reminders:</strong> "Remind me every Monday at 9 to review the sprint board"</li>
+            <li><strong>Periodic checks:</strong> "Every Friday at 4, ask me what I accomplished this week"</li>
+            <li><strong>Future one-offs:</strong> "Remind me next Thursday at 2pm to call the contractor"</li>
+        </ul>
+
+        <p>Tasks that won't work:</p>
+        <ul>
+            <li>Anything requiring live data from external systems EDWIN doesn't have access to</li>
+            <li>Multi-step workflows where you need to respond mid-task (use skills instead)</li>
+        </ul>
+
+        <h2>Listing scheduled tasks</h2>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> What have you scheduled for me?</p>
+            <p><span class="edwin">EDWIN:</span> Scheduled tasks (2):<br>
+            &nbsp;&nbsp;Morning briefing — Every weekday at 8:00 AM<br>
+            &nbsp;&nbsp;Friday win review — Fridays at 5:00 PM</p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> List my scheduled tasks</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Shows the same list)</em></p>
+        </div>
+
+        <h2>Removing a scheduled task</h2>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Cancel the morning briefing</p>
+            <p><span class="edwin">EDWIN:</span> Removed: **Morning briefing** is no longer scheduled.</p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Remove the Friday reminder</p>
+            <p><span class="edwin">EDWIN:</span> Removed: **Friday reminder** is no longer scheduled.</p>
+        </div>
+
+        <p>EDWIN removes the OS job, deletes the prompt and log files, and updates the registry.</p>
+
+        <h2>Where tasks are stored</h2>
+
+        <p>EDWIN stores scheduled task data in three places:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Location</th>
+                    <th>What's there</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>user/schedule.json</code></td>
+                    <td>Registry of all tasks — name, schedule, prompt, log path</td>
+                </tr>
+                <tr>
+                    <td><code>user/schedule-prompts/</code></td>
+                    <td>Prompt files (one per task)</td>
+                </tr>
+                <tr>
+                    <td><code>user/schedule-logs/</code></td>
+                    <td>Output from each scheduled run</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>The OS-level jobs are stored separately:</p>
+        <ul>
+            <li><strong>macOS:</strong> <code>~/Library/LaunchAgents/com.edwin.task.[id].plist</code></li>
+            <li><strong>Windows:</strong> Task Scheduler, under the <code>EDWIN\</code> folder</li>
+        </ul>
+
+        <h2>Checking task logs</h2>
+
+        <p>Each scheduled run writes output to its log file in <code>user/schedule-logs/</code>. You can read these files to see what EDWIN generated at each run.</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Show me the log for the morning briefing</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Reads and displays the log file)</em></p>
+        </div>
+
+        <h2>If a task stops running</h2>
+
+        <p>When you list scheduled tasks, EDWIN checks whether the OS job still exists. If it finds a mismatch, it reports:</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> Warning: Task "Morning briefing" is in the registry but the OS job is missing. Want me to recreate it or remove the registry entry?</p>
+        </div>
+
+        <p>This can happen if:</p>
+        <ul>
+            <li>You manually deleted the OS job</li>
+            <li>A system update or permission change broke the job</li>
+            <li>The task file was moved or renamed</li>
+        </ul>
+
+        <p>EDWIN will offer to fix the mismatch. Choose "recreate" to restore the OS job, or "remove" to clean up the registry entry.</p>
+
+        <h2>Examples</h2>
+
+        <h3>Daily morning briefing</h3>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Every weekday at 7am, brief me on my calendar for the day</p>
+            <p><span class="edwin">EDWIN:</span> Confirming schedule:<br><br>
+            <strong>Every weekday at 7:00 AM</strong><br>
+            Prompt: "Brief me on my calendar for the day"<br><br>
+            Confirm?</p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Yes</p>
+            <p><span class="edwin">EDWIN:</span> Scheduled: **Daily calendar briefing** will run every weekday at 7:00 AM. Logs: user/schedule-logs/edwin-1234567892-daily-calendar-briefing.log</p>
+        </div>
+
+        <h3>Weekly win review reminder</h3>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Every Friday at 4pm, ask me what I accomplished this week</p>
+            <p><span class="edwin">EDWIN:</span> Confirming schedule:<br><br>
+            <strong>Fridays at 4:00 PM</strong><br>
+            Prompt: "What did you accomplish this week?"<br><br>
+            Confirm?</p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Confirm</p>
+            <p><span class="edwin">EDWIN:</span> Scheduled: **Weekly win review** will run Fridays at 4:00 PM. Logs: user/schedule-logs/edwin-1234567893-weekly-win-review.log</p>
+        </div>
+
+        <h2>Limitations</h2>
+
+        <ul>
+            <li><strong>Requires local installation.</strong> Scheduled tasks only work in Claude Code or Claude Desktop, not in web portals.</li>
+            <li><strong>Machine must be awake.</strong> The OS scheduler only runs tasks when your machine is powered on and not asleep. If the machine is off at the scheduled time, the task won't run.</li>
+            <li><strong>No multi-step workflows.</strong> The scheduled prompt runs once and logs the result. If you need back-and-forth conversation, use a skill interactively instead.</li>
+        </ul>
+
+        <h2>Next steps</h2>
+
+        <ul>
+            <li>Check task logs if a scheduled run doesn't produce what you expected</li>
+            <li>If a task stops firing, see the <a href="troubleshooting.html">Troubleshooting guide</a></li>
+        </ul>
+
+        <footer>
+            <p><a href="index.html">← Back to Guide Index</a></p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+# edwin-doctor personal data denylist
+#
+# This file defines patterns to detect personal data leakage in the framework.
+# Entries are case-insensitive substrings or, if wrapped in /.../,  regular expressions.
+#
+# Lines starting with # are comments. Blank lines are ignored.
+#
+# IMPORTANT: This file ships with placeholder examples only. Add your own personal
+# information to prevent leakage into committed code.
+
+# Example: Uncomment and replace with your actual name
+# YourFirstName
+# YourLastName
+
+# Example: Home directory patterns (uncomment and customize)
+# /Users/yourusername
+# /home/yourusername
+# C:\Users\yourusername
+
+# Example: Repository paths (uncomment and customize)
+# /path/to/your/repos
+# C:\repos\your-projects
+
+# Example: Email domains (uncomment and customize)
+# @yourcompany.com
+
+# Example: Account handles (uncomment and customize)
+# yourgithubhandle
+# yourslackhandle
+
+# Regex example: Match your name in various forms
+# /\b(FirstName|Nickname|LastName)\b/

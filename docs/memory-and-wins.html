@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory and Wins</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fafafa;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        .meta-box {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4a90e2;
+        }
+        .meta-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .meta-box ul {
+            margin: 0.5rem 0 0 1.5rem;
+        }
+        .meta-box li {
+            margin: 0.3rem 0;
+        }
+        .step-box {
+            background: #f8f9fa;
+            border: 2px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .conversation {
+            background: #e8f4fd;
+            border: 1px solid #b3d9f2;
+            border-radius: 6px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .conversation .you {
+            color: #1a5490;
+            font-weight: 600;
+        }
+        .conversation .edwin {
+            color: #2a6f2a;
+            font-weight: 600;
+        }
+        .conversation p {
+            margin: 0.5rem 0;
+        }
+        .conversation em {
+            color: #6a6a6a;
+            font-style: italic;
+        }
+        .tip {
+            background: #e6f7e6;
+            border-left: 4px solid #4caf50;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .tip strong {
+            color: #2a6f2a;
+        }
+        .warning {
+            background: #fff8e6;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .warning strong {
+            color: #d97706;
+        }
+        code {
+            background: #e8e8e8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        ul, ol {
+            margin: 1rem 0 1rem 1.8rem;
+        }
+        li {
+            margin: 0.5rem 0;
+        }
+        a {
+            color: #1a5490;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #5a5a5a;
+            font-size: 0.95rem;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            color: #6a6a6a;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Guide Index</a>
+
+        <h1>Memory and Wins</h1>
+
+        <div class="meta-box">
+            <h3>What you'll need</h3>
+            <ul>
+                <li>EDWIN installed and configured</li>
+                <li>A few preferences or facts you'd like EDWIN to remember</li>
+            </ul>
+        </div>
+
+        <div class="meta-box">
+            <h3>How long this takes</h3>
+            <p>5 minutes to understand, ongoing benefit as you use EDWIN.</p>
+        </div>
+
+        <h2>How EDWIN remembers</h2>
+
+        <p>EDWIN has a memory system that learns durable facts about you — preferences, people, work patterns, stable information — across sessions. It's like a human assistant who remembers how you like things done.</p>
+
+        <h3>What EDWIN remembers</h3>
+
+        <p>EDWIN organizes memory into five categories:</p>
+
+        <ul>
+            <li><strong>Preferences:</strong> How you like things done (verbosity, style, tools you use)</li>
+            <li><strong>People:</strong> Names, roles, relationships</li>
+            <li><strong>Work patterns:</strong> Recurring workflows, schedules, team structures</li>
+            <li><strong>Facts:</strong> Stable information like your role, location, contexts, tech stack</li>
+            <li><strong>Dislikes:</strong> Things to avoid, never-do rules</li>
+        </ul>
+
+        <h3>What EDWIN won't remember</h3>
+
+        <div class="warning">
+            <p><strong>Privacy rules (never violated):</strong></p>
+            <ul>
+                <li>No credentials, API keys, passwords, tokens, secrets</li>
+                <li>No health information, financial details, account numbers</li>
+                <li>No details about third parties unless you explicitly say "remember this about [person]"</li>
+            </ul>
+        </div>
+
+        <h2>How memory works</h2>
+
+        <h3>Observation and confirmation</h3>
+
+        <p>As you work with EDWIN, it watches for durable signals:</p>
+
+        <ul>
+            <li>Stated preferences ("I prefer X", "always do Y")</li>
+            <li>Corrections to EDWIN's behavior ("Actually, I use Emacs not Vim")</li>
+            <li>Recurring people or projects mentioned by name</li>
+            <li>Stable facts you volunteer (role, tools, team names)</li>
+        </ul>
+
+        <p>When EDWIN notices something worth remembering, it accumulates candidates. At a natural pause — when a task is complete, not in the middle of work — it asks once, batched:</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> I noticed a few things worth remembering:</p>
+            <p>1. Prefers hyper-concise responses</p>
+            <p>2. Uses VS Code as primary editor</p>
+            <p>3. Team lead: Jordan</p>
+            <p>Keep any of these?</p>
+        </div>
+
+        <p>You can accept all, pick specific ones, or decline:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> 1 and 2</p>
+            <p><span class="edwin">EDWIN:</span> Remembered both.</p>
+        </div>
+
+        <div class="tip">
+            <p><strong>EDWIN asks once.</strong> If you decline something, it won't propose that item again. This is called a "tombstone" — EDWIN marks it as rejected and never brings it up.</p>
+        </div>
+
+        <h3>Explicit memory capture</h3>
+
+        <p>You can also tell EDWIN to remember something directly:</p>
+
+        <div class="step-box">
+            <h3>Say "remember that..."</h3>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Remember that I prefer snake_case for variables</p>
+                <p><span class="edwin">EDWIN:</span> Remembered: Prefers snake_case for variables</p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Remember this: I report to Jordan</p>
+                <p><span class="edwin">EDWIN:</span> Remembered: Reports to Jordan</p>
+            </div>
+        </div>
+
+        <h3>Recalling memory</h3>
+
+        <p>EDWIN recalls memory automatically when it's relevant — you don't need to ask. But if you want to see what's stored:</p>
+
+        <div class="step-box">
+            <h3>Ask "what do you remember about me?"</h3>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> What do you remember about me?</p>
+                <p><span class="edwin">EDWIN:</span> Here's what I remember:</p>
+                <p><strong>Preferences:</strong></p>
+                <p>- Hyper-concise responses</p>
+                <p>- Verbosity: concise</p>
+                <p>- Prefers snake_case for variables</p>
+                <p><strong>People:</strong></p>
+                <p>- Reports to: Jordan (manager)</p>
+                <p><strong>Facts:</strong></p>
+                <p>- Primary contexts: Work, Home</p>
+                <p>- Tech stack: Node.js, PostgreSQL</p>
+            </div>
+        </div>
+
+        <h3>Forgetting</h3>
+
+        <p>If something is no longer relevant or was captured incorrectly:</p>
+
+        <div class="step-box">
+            <h3>Say "forget..."</h3>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Forget that I report to Jordan</p>
+                <p><span class="edwin">EDWIN:</span> Forgotten: Reports to Jordan</p>
+            </div>
+        </div>
+
+        <h3>Tidying memory</h3>
+
+        <p>Over time, memory can accumulate duplicates or stale entries. EDWIN can consolidate:</p>
+
+        <div class="step-box">
+            <h3>Say "tidy your memory"</h3>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Tidy your memory</p>
+                <p><span class="edwin">EDWIN:</span> <em>(Scans for duplicates, checks if old entries are still current, regenerates the memory digest)</em></p>
+                <p>Memory tidied. Digest regenerated with 12 entries.</p>
+            </div>
+        </div>
+
+        <h2>Where memory lives</h2>
+
+        <p>Your memory is stored in the EDWIN folder at:</p>
+
+        <ul>
+            <li><code>user/memory/memory.md</code> — all confirmed memories</li>
+            <li><code>user/memory/digest.md</code> — a shorter version that EDWIN reads in every conversation</li>
+            <li><code>user/memory/pending.md</code> — candidates waiting for confirmation</li>
+        </ul>
+
+        <p>These files are plain text. You can open and edit them by hand if you prefer. They never leave your machine — EDWIN doesn't sync them anywhere.</p>
+
+        <h2>Tracking wins (accomplishments)</h2>
+
+        <p>EDWIN's brag tracker keeps a running record of your wins — shipped features, positive feedback, milestones, hard conversations — so nothing gets forgotten at performance review time.</p>
+
+        <h3>Why track wins?</h3>
+
+        <p>When it's time for a performance review, promotion packet, or year-end reflection, most people struggle to remember what they accomplished six months ago. EDWIN solves this by logging wins as they happen.</p>
+
+        <h3>How win tracking works</h3>
+
+        <p>Just like memory, EDWIN watches for accomplishment signals during conversation:</p>
+
+        <ul>
+            <li>You shipped something ("deployed X", "launched Y")</li>
+            <li>You got positive feedback ("client loved it", "manager praised the approach")</li>
+            <li>You hit a milestone ("reached 100K users", "finished the migration")</li>
+            <li>You handled a hard conversation ("gave difficult feedback", "negotiated terms")</li>
+            <li>Personal achievements ("ran a marathon", "published an article")</li>
+        </ul>
+
+        <p>At a natural pause, EDWIN offers to log them:</p>
+
+        <div class="conversation">
+            <p><span class="edwin">EDWIN:</span> I noticed a few wins:</p>
+            <p>1. Shipped the analytics dashboard — user engagement doubled</p>
+            <p>2. Manager said the incident response was "textbook"</p>
+            <p>Log any of these?</p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Both</p>
+            <p><span class="edwin">EDWIN:</span> Logged both under Work.</p>
+        </div>
+
+        <h3>Explicit logging</h3>
+
+        <p>You can also log wins directly:</p>
+
+        <div class="step-box">
+            <h3>Say "log a win" or "brag: ..."</h3>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Log a win: finished the Rust course</p>
+                <p><span class="edwin">EDWIN:</span> Win logged under Learning (notable).</p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Brag: negotiated new vendor contract, saved 20%</p>
+                <p><span class="edwin">EDWIN:</span> Win logged under Work (notable).</p>
+            </div>
+        </div>
+
+        <h3>Win sizes</h3>
+
+        <p>EDWIN categorizes wins by impact:</p>
+
+        <ul>
+            <li><strong>Small:</strong> Routine accomplishment, positive moment (fixed a gnarly bug, helped a colleague)</li>
+            <li><strong>Notable:</strong> Significant work, visible impact (shipped a feature, key milestone)</li>
+            <li><strong>Major:</strong> High-impact, career-defining (launched a product, promoted, major public win)</li>
+        </ul>
+
+        <p>EDWIN suggests a size based on how you describe the win. You can adjust it:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Change that win to major</p>
+            <p><span class="edwin">EDWIN:</span> Updated to major.</p>
+        </div>
+
+        <h3>Viewing your wins</h3>
+
+        <div class="step-box">
+            <h3>Say "show my wins"</h3>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Show my wins this quarter</p>
+                <p><span class="edwin">EDWIN:</span> <strong>Q3 2026 — Work wins (notable and major):</strong></p>
+                <p>- [Aug 15] Shipped the analytics dashboard — doubled user engagement (major)</p>
+                <p>- [Jul 22] Led the incident response for the outage — minimal downtime (notable)</p>
+                <p>- [Jul 10] Negotiated new vendor contract, saved 20% (notable)</p>
+            </div>
+
+            <p>You can filter by category, size, or date range:</p>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Show major wins only</p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Show my Work wins from last month</p>
+            </div>
+        </div>
+
+        <h3>Generating a brag document</h3>
+
+        <p>When it's performance review time, EDWIN can turn your wins into a polished document:</p>
+
+        <div class="step-box">
+            <h3>Say "generate my brag doc"</h3>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Generate my brag doc for Q3</p>
+                <p><span class="edwin">EDWIN:</span> Brag doc generated: user/brags/exports/brag-doc-2026-09-30.md (12 entries, performance-review mode)</p>
+            </div>
+        </div>
+
+        <p>EDWIN creates a structured document with your wins grouped by theme, written in impact-framed language suitable for promotion packets or manager 1-on-1s.</p>
+
+        <p>There's also a <strong>personal-retrospective mode</strong> for year-end reflections:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Generate a personal retrospective for 2026</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Creates a chronological, celebratory document for personal reflection)</em></p>
+        </div>
+
+        <h3>Where wins are stored</h3>
+
+        <p>Wins live in the EDWIN folder at:</p>
+
+        <ul>
+            <li><code>user/brags/brags.md</code> — all logged wins</li>
+            <li><code>user/brags/categories.json</code> — win categories (Work, Learning, Personal, etc.)</li>
+            <li><code>user/brags/exports/</code> — generated brag documents</li>
+        </ul>
+
+        <p>These files are plain text and never leave your machine.</p>
+
+        <h2>Turning off observation</h2>
+
+        <p>If you don't want EDWIN watching for memories or wins, you can disable observation:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Turn off memory capture</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Sets preferences.memoryCapture to false)</em></p>
+        </div>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Turn off brag detection</p>
+            <p><span class="edwin">EDWIN:</span> <em>(Sets preferences.bragDetection to false)</em></p>
+        </div>
+
+        <p>You can still use explicit commands ("remember that...", "log a win") even when observation is off.</p>
+
+        <h3>Going off the record</h3>
+
+        <p>For a single session where you don't want anything remembered:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Go off the record</p>
+            <p><span class="edwin">EDWIN:</span> Off the record. Nothing from this session will be remembered.</p>
+        </div>
+
+        <p>To resume:</p>
+
+        <div class="conversation">
+            <p><span class="you">You:</span> Go back on the record</p>
+            <p><span class="edwin">EDWIN:</span> Back on the record.</p>
+        </div>
+
+        <h2>Next steps</h2>
+
+        <p>Now that you understand memory and wins:</p>
+        <ul>
+            <li><a href="using-edwin.html">Using EDWIN</a> — learn more about skills and contexts</li>
+            <li><a href="creating-skills.html">Creating Skills</a> — teach EDWIN your workflows</li>
+        </ul>
+
+        <h2>If something goes wrong</h2>
+
+        <p>Common issues:</p>
+
+        <ul>
+            <li><strong>EDWIN doesn't offer to remember things:</strong> Check if memory capture is enabled: "show my config". If <code>memoryCapture</code> is false, turn it back on.</li>
+            <li><strong>Memory seems stale:</strong> Say "tidy your memory" to consolidate and refresh.</li>
+            <li><strong>Can't find my brag doc:</strong> It's saved to <code>user/brags/exports/</code> in the EDWIN folder. The filename includes the date it was generated.</li>
+            <li><strong>Want to edit memory or wins by hand:</strong> The files are plain markdown in <code>user/memory/</code> and <code>user/brags/</code>. You can edit them directly.</li>
+        </ul>
+
+        <p>For more help, see the <a href="troubleshooting.html">Troubleshooting guide</a>.</p>
+
+        <footer>
+            <p><a href="index.html">← Back to Guide Index</a></p>
+        </footer>
+    </div>
+</body>
+</html>

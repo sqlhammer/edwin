@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getting Started with EDWIN (Windows)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fafafa;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        .meta-box {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4a90e2;
+        }
+        .meta-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .meta-box ul {
+            margin: 0.5rem 0 0 1.5rem;
+        }
+        .meta-box li {
+            margin: 0.3rem 0;
+        }
+        .step-box {
+            background: #f8f9fa;
+            border: 2px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .step-box code {
+            background: #e8e8e8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        .warning {
+            background: #fff8e6;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .warning strong {
+            color: #d97706;
+        }
+        .conversation {
+            background: #e8f4fd;
+            border: 1px solid #b3d9f2;
+            border-radius: 6px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+            font-size: 0.9rem;
+        }
+        .conversation .you {
+            color: #1a5490;
+            font-weight: 600;
+        }
+        .conversation .edwin {
+            color: #2a6f2a;
+            font-weight: 600;
+        }
+        .conversation p {
+            margin: 0.5rem 0;
+        }
+        code {
+            background: #e8e8e8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        ul, ol {
+            margin: 1rem 0 1rem 1.8rem;
+        }
+        li {
+            margin: 0.5rem 0;
+        }
+        a {
+            color: #1a5490;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #5a5a5a;
+            font-size: 0.95rem;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            color: #6a6a6a;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Guide Index</a>
+
+        <h1>Getting Started with EDWIN (Windows)</h1>
+
+        <div class="meta-box">
+            <h3>What you'll need</h3>
+            <ul>
+                <li><strong>Node.js</strong> version 18 or later (the installer will help you get this if you don't have it)</li>
+                <li><strong>Git</strong> (the installer will help you get this if you don't have it)</li>
+                <li><strong>Claude Code</strong> or <strong>Claude Desktop</strong> (the app you use to talk to Claude)</li>
+                <li>About 50 MB of disk space</li>
+            </ul>
+        </div>
+
+        <div class="meta-box">
+            <h3>How long this takes</h3>
+            <p>10–15 minutes for first-time installation, 5 minutes if you already have Node.js and Git.</p>
+        </div>
+
+        <h2>Step 1: Download the installer</h2>
+
+        <div class="step-box">
+            <h3>Download two files, into the same folder</h3>
+            <p>Go to the EDWIN folder (the repository on your computer or on GitHub) and find <strong>both</strong> of these:</p>
+            <p><code>tools\installers\EDWIN-Install.cmd</code><br>
+            <code>tools\installers\EDWIN-Install.ps1</code></p>
+            <p>Download both into your <strong>Downloads</strong> folder, or anywhere you can easily find them — but into the <strong>same</strong> folder. The <code>.cmd</code> is the file you double-click; the <code>.ps1</code> next to it is the installer itself. If you only take the first one, it will tell you the second is missing rather than doing anything half-finished.</p>
+            <p>Two files rather than one because Windows won't run a PowerShell script when you double-click it — it opens it in an editor instead. The <code>.cmd</code> exists purely to start the real installer.</p>
+        </div>
+
+        <h2>Step 2: Run the installer</h2>
+
+        <div class="step-box">
+            <h3>Double-click EDWIN-Install.cmd</h3>
+            <p>Find the file in your Downloads folder and double-click it to run.</p>
+            <p>A Command Prompt window will open. This is where you type commands in Windows — don't worry, the installer will guide you through everything.</p>
+        </div>
+
+        <div class="step-box">
+            <h3>Follow the installer prompts</h3>
+            <p>The installer will:</p>
+            <ol>
+                <li>Check if you have Node.js and Git installed</li>
+                <li>If you're missing either one, it will ask "Install Node.js now?" — press <strong>Y</strong> and it installs it for you. Nothing to download or find in a browser.</li>
+                <li>Ask where you want to install EDWIN (default: a folder called "edwin" in your user directory)</li>
+                <li>Download EDWIN and set everything up</li>
+                <li>Install EDWIN's skills and persona into Claude</li>
+            </ol>
+            <p>The installer will tell you exactly what it's doing as it goes. If something goes wrong, it will tell you how to fix it.</p>
+        </div>
+
+        <div class="meta-box">
+            <h3>About those permission prompts</h3>
+            <p>If Node.js or Git needs installing, Windows will show a "Do you want to allow this app to make changes to your device?" box. Click <strong>Yes</strong>. That's Windows asking, not EDWIN — installing software for every user on the machine requires it.</p>
+            <p>The installer uses <strong>winget</strong>, the software installer built into Windows 10 and 11, so the download comes from Microsoft's catalogue. On an older or locked-down Windows that doesn't have winget, it downloads Node.js and Git directly from their official sites instead, and checks the Node.js download against the official checksum before installing it.</p>
+        </div>
+
+        <div class="warning">
+            <p><strong>If it says a tool installed but still can't find it:</strong> close the Command Prompt window and double-click the installer again. Windows only gives a program the list of installed tools when it starts, so a fresh window is sometimes needed. The installer tells you when this is the problem.</p>
+        </div>
+
+        <div class="meta-box">
+            <h3>Installing a specific version</h3>
+            <p>Double-clicking gets you whatever version the repository serves by default. If you were told to install a particular one — a branch name like <code>v0.2</code> — open Command Prompt, then run:</p>
+            <p><code>%USERPROFILE%\Downloads\EDWIN-Install.cmd -Branch v0.2</code></p>
+            <p>You'll know you needed this if the installer finishes the download and then says <strong>"This does not look like EDWIN"</strong>. That message means the download worked perfectly but fetched the wrong version — it names the branch it got, so you can compare. Delete the folder it installed into before retrying, because an existing folder is <em>updated</em> rather than replaced.</p>
+        </div>
+
+        <h2>Step 3: Restart Claude</h2>
+
+        <div class="step-box">
+            <h3>Quit and reopen Claude</h3>
+            <p>After the installer finishes, you need to restart Claude so it picks up the new skills:</p>
+            <ul>
+                <li><strong>Claude Code:</strong> Type <code>/quit</code> in the conversation, then open Claude Code again</li>
+                <li><strong>Claude Desktop:</strong> Quit the app (Alt+F4 or close all windows) and reopen it</li>
+            </ul>
+        </div>
+
+        <h2>Step 4: Complete first-run setup</h2>
+
+        <div class="step-box">
+            <h3>Say "set up EDWIN"</h3>
+            <p>Open a new conversation in Claude and type:</p>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> set up EDWIN</p>
+                <p><span class="edwin">EDWIN:</span> I'm EDWIN — your personal AI assistant. Before we begin properly, I need a few details:</p>
+                <p>1. What should I call you?</p>
+                <p>2. How would you like to be addressed?</p>
+                <p>3. Which contexts do you work in? I can set up Work, Home, or just Global (everything in one place).</p>
+                <p>4. What's your primary harness? (Claude Code terminal, Claude Desktop, Cowork, or web portal)</p>
+                <p>5. What OS are you on? (Windows, macOS, Linux)</p>
+                <p>6. Verbosity preference: concise (brief, offer detail) or detailed (slightly fuller responses)?</p>
+            </div>
+
+            <p>Answer the questions. Here's an example:</p>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Call me Alex. Work and Home contexts. Claude Code. Windows. Concise.</p>
+                <p><span class="edwin">EDWIN:</span> All set, Alex. I'm ready when you are.</p>
+                <p><strong>Quick tour:</strong></p>
+                <p>- I organize my capabilities into skills — focused methodologies for specific tasks. You're currently in the Global context.</p>
+                <p>- To switch contexts: "Switch to Work" or "Switch to Home".</p>
+                <p>- To see what I can do: "List skills" or "What skills are in this context?"</p>
+                <p>- To create a new skill: just describe the task you need help with, and I'll offer to turn it into a skill if I see a pattern.</p>
+            </div>
+        </div>
+
+        <h2>Step 5: Try it out</h2>
+
+        <div class="step-box">
+            <h3>Ask EDWIN what it can do</h3>
+            <p>Try these commands to get familiar:</p>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> List skills</p>
+                <p><span class="edwin">EDWIN:</span> <em>(Shows you all available skills, grouped by context)</em></p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> Switch to Work</p>
+                <p><span class="edwin">EDWIN:</span> Switched to Work.</p>
+            </div>
+
+            <div class="conversation">
+                <p><span class="you">You:</span> What skills are available?</p>
+                <p><span class="edwin">EDWIN:</span> <em>(Shows skills tagged for Work context, plus Global skills)</em></p>
+            </div>
+        </div>
+
+        <h2>What contexts mean</h2>
+
+        <p>EDWIN organizes skills into three contexts: <strong>Global</strong>, <strong>Work</strong>, and <strong>Home</strong>. Think of contexts like different modes:</p>
+
+        <ul>
+            <li><strong>Global</strong> means all skills are equally relevant — no filtering</li>
+            <li><strong>Work</strong> prioritizes skills related to professional tasks, but all skills remain available</li>
+            <li><strong>Home</strong> prioritizes skills for personal projects and learning, but all skills remain available</li>
+        </ul>
+
+        <p><strong>Important:</strong> Contexts don't restrict what you can do. They just help EDWIN suggest the right skill when you ask something that could match multiple skills. You can always use any skill in any context.</p>
+
+        <h2>Next steps</h2>
+
+        <p>Now that EDWIN is installed, learn more about:</p>
+        <ul>
+            <li><a href="using-edwin.html">Using EDWIN</a> — how to talk to EDWIN, use skills, and get help</li>
+            <li><a href="creating-skills.html">Creating Skills</a> — teach EDWIN your own workflows</li>
+            <li><a href="memory-and-wins.html">Memory and Wins</a> — how EDWIN remembers and tracks accomplishments</li>
+        </ul>
+
+        <h2>If something goes wrong</h2>
+
+        <p>Most issues come down to one of these:</p>
+
+        <ul>
+            <li><strong>Skills don't appear after installation:</strong> Restart Claude (quit and reopen)</li>
+            <li><strong>Node.js or Git missing:</strong> The installer detects this and installs them for you — just press Y when it asks. If it then says it still can't find the tool, close the Command Prompt window and run the installer again.</li>
+            <li><strong>"set up EDWIN" does nothing:</strong> EDWIN might already be configured. Try saying "list skills" to see if it's working</li>
+            <li><strong>Permission errors during installation:</strong> Right-click the installer and choose "Run as administrator"</li>
+        </ul>
+
+        <p>For more help, see the <a href="troubleshooting.html">Troubleshooting guide</a>.</p>
+
+        <footer>
+            <p><a href="index.html">← Back to Guide Index</a></p>
+        </footer>
+    </div>
+</body>
+</html>

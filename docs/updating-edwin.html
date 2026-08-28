@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Updating EDWIN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #fafafa;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        p {
+            margin: 0.8rem 0;
+        }
+        .meta-box {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #4a90e2;
+        }
+        .meta-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .meta-box ul {
+            margin: 0.5rem 0 0 1.5rem;
+        }
+        .meta-box li {
+            margin: 0.3rem 0;
+        }
+        .step-box {
+            background: #f8f9fa;
+            border: 2px solid #d0d0d0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .step-box h3 {
+            margin-top: 0;
+            color: #1a5490;
+        }
+        .conversation {
+            background: #e8f4fd;
+            border: 1px solid #b3d9f2;
+            border-radius: 6px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9rem;
+        }
+        .conversation .you {
+            color: #1a5490;
+            font-weight: 600;
+        }
+        .conversation .edwin {
+            color: #2a6f2a;
+            font-weight: 600;
+        }
+        .conversation p {
+            margin: 0.5rem 0;
+        }
+        .tip {
+            background: #e6f7e6;
+            border-left: 4px solid #4caf50;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .tip strong {
+            color: #2a6f2a;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+        .warning strong {
+            color: #856404;
+        }
+        code {
+            background: #e8e8e8;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Courier New", monospace;
+            font-size: 0.9em;
+        }
+        ul, ol {
+            margin: 1rem 0 1rem 1.8rem;
+        }
+        li {
+            margin: 0.5rem 0;
+        }
+        a {
+            color: #1a5490;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #5a5a5a;
+            font-size: 0.95rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        th {
+            background: #f0f0f0;
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 2px solid #d0d0d0;
+            font-weight: 600;
+        }
+        td {
+            padding: 0.8rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+            color: #6a6a6a;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Guide Index</a>
+
+        <h1>Updating EDWIN</h1>
+
+        <p>Updating EDWIN pulls the latest skills and framework improvements from the repository while preserving all your personal data — memory, accomplishments, custom workflows, configuration, and scheduled tasks.</p>
+
+        <div class="meta-box">
+            <h3>What you'll need</h3>
+            <ul>
+                <li>EDWIN installed (see <a href="getting-started-mac.html">Getting Started</a>)</li>
+                <li>An internet connection</li>
+            </ul>
+        </div>
+
+        <div class="meta-box">
+            <h3>How long this takes</h3>
+            <p>1–2 minutes. The update runs automatically once you start it.</p>
+        </div>
+
+        <h2>What gets updated</h2>
+
+        <p>An update pulls the latest version of:</p>
+        <ul>
+            <li><strong>Skills</strong> — new skills, improvements to existing ones</li>
+            <li><strong>Persona</strong> — refinements to how EDWIN works</li>
+            <li><strong>Tools and scripts</strong> — installers, schedulers, validators, bundle generators</li>
+            <li><strong>Documentation</strong> — these guides</li>
+        </ul>
+
+        <h2>What gets preserved</h2>
+
+        <p>Your personal data is stored in the <code>user/</code> directory, which is explicitly excluded from version control. An update <strong>never</strong> touches:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Location</th>
+                    <th>What's there</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>user/config.json</code></td>
+                    <td>Your name, preferences, contexts, paths</td>
+                </tr>
+                <tr>
+                    <td><code>user/state.json</code></td>
+                    <td>Active context, session state</td>
+                </tr>
+                <tr>
+                    <td><code>user/memory/</code></td>
+                    <td>Everything EDWIN remembers about you</td>
+                </tr>
+                <tr>
+                    <td><code>user/brags/</code></td>
+                    <td>Your logged accomplishments</td>
+                </tr>
+                <tr>
+                    <td><code>user/workflows/</code></td>
+                    <td>Custom skills you've created</td>
+                </tr>
+                <tr>
+                    <td><code>user/schedule.json</code></td>
+                    <td>Scheduled tasks registry</td>
+                </tr>
+                <tr>
+                    <td><code>user/schedule-prompts/</code></td>
+                    <td>Prompts for scheduled tasks</td>
+                </tr>
+                <tr>
+                    <td><code>user/schedule-logs/</code></td>
+                    <td>Output from scheduled runs</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="tip">
+            <p><strong>Guarantee:</strong> The <code>user/</code> directory is listed in <code>.gitignore</code> and is never synced, committed, or overwritten by an update. Your data stays on your machine and survives every update.</p>
+        </div>
+
+        <h2>Custom edits to CLAUDE.md</h2>
+
+        <p>If you've edited your <code>~/.claude/CLAUDE.md</code> file directly, those edits are preserved as long as they're <strong>outside</strong> the managed markers:</p>
+
+        <code>&lt;!-- EDWIN:BEGIN --&gt;</code><br>
+        <code>...(EDWIN-managed content)...</code><br>
+        <code>&lt;!-- EDWIN:END --&gt;</code>
+
+        <p>Anything you write before the <code>BEGIN</code> marker or after the <code>END</code> marker is never touched by the sync engine. Content <em>between</em> the markers is regenerated from <code>core/</code> on every sync.</p>
+
+        <h2>Running the update</h2>
+
+        <h3>macOS</h3>
+
+        <div class="step-box">
+            <h3>Step 1: Find the update script</h3>
+            <p>Open Finder and navigate to:</p>
+            <p><code>~/edwin/tools/installers/</code></p>
+            <p>You'll see a file named <strong>EDWIN-Update.command</strong>.</p>
+        </div>
+
+        <div class="step-box">
+            <h3>Step 2: Run the updater</h3>
+            <p>Double-click <strong>EDWIN-Update.command</strong>.</p>
+            <p>A Terminal window opens and the updater runs automatically.</p>
+        </div>
+
+        <div class="step-box">
+            <h3>Step 3: Wait for completion</h3>
+            <p>The updater will:</p>
+            <ol>
+                <li>Check that EDWIN is installed</li>
+                <li>Check for uncommitted changes (excluding the <code>user/</code> directory)</li>
+                <li>Download updates from the repository</li>
+                <li>Run the sync engine to update your Claude installation</li>
+            </ol>
+            <p>When you see "Update Complete!", the update is done.</p>
+        </div>
+
+        <div class="step-box">
+            <h3>Step 4: Restart Claude</h3>
+            <p>Close and reopen Claude Code or Claude Desktop to load the changes.</p>
+        </div>
+
+        <h3>Windows</h3>
+
+        <div class="step-box">
+            <h3>Step 1: Find the update script</h3>
+            <p>Open File Explorer and navigate to:</p>
+            <p><code>%USERPROFILE%\edwin\tools\installers\</code></p>
+            <p>You'll see a file named <strong>EDWIN-Update.cmd</strong>.</p>
+        </div>
+
+        <div class="step-box">
+            <h3>Step 2: Run the updater</h3>
+            <p>Double-click <strong>EDWIN-Update.cmd</strong>.</p>
+            <p>A Command Prompt window opens and the updater runs automatically.</p>
+        </div>
+
+        <div class="step-box">
+            <h3>Step 3: Wait for completion</h3>
+            <p>The updater will:</p>
+            <ol>
+                <li>Check that EDWIN is installed</li>
+                <li>Check for uncommitted changes (excluding the <code>user\</code> directory)</li>
+                <li>Download updates from the repository</li>
+                <li>Run the sync engine to update your Claude installation</li>
+            </ol>
+            <p>When you see "Update Complete!", the update is done.</p>
+        </div>
+
+        <div class="step-box">
+            <h3>Step 4: Restart Claude</h3>
+            <p>Close and reopen Claude Code or Claude Desktop to load the changes.</p>
+        </div>
+
+        <h2>If the update fails</h2>
+
+        <p>The updater checks for conditions that would prevent a clean update and stops if it finds any:</p>
+
+        <h3>Uncommitted changes detected</h3>
+
+        <p>If you've edited files outside the <code>user/</code> directory (like skills in <code>core/skills/</code>), the updater won't overwrite them. To proceed:</p>
+
+        <ol>
+            <li><strong>Commit your changes:</strong> If you've made intentional edits, commit them with Git before updating.</li>
+            <li><strong>Stash your changes:</strong> Run <code>git stash</code> in the EDWIN directory to save your changes temporarily, then run the update, then <code>git stash pop</code> to restore them.</li>
+            <li><strong>Discard your changes:</strong> If the edits were experiments and you don't need them, run <code>git restore .</code> to discard them, then update.</li>
+        </ol>
+
+        <div class="warning">
+            <p><strong>Note:</strong> Changes in the <code>user/</code> directory are always preserved and do not block updates.</p>
+        </div>
+
+        <h3>Not connected to the internet</h3>
+
+        <p>The updater needs an internet connection to download updates. Connect to the internet and try again.</p>
+
+        <h3>Branch has diverged</h3>
+
+        <p>If your local branch has commits that aren't in the remote repository, the update will fail. This typically happens if you've committed custom changes. To resolve:</p>
+
+        <ol>
+            <li>Run <code>git status</code> in the EDWIN directory to see the state</li>
+            <li>Run <code>git log</code> to see your commits</li>
+            <li>If you want to keep your changes, push them to a fork or a new branch</li>
+            <li>If you want to discard them, run <code>git reset --hard origin/main</code> (this is destructive — only do it if you're certain)</li>
+        </ol>
+
+        <h3>Sync engine failed</h3>
+
+        <p>If the sync engine encounters an error after downloading updates, check the log file:</p>
+        <ul>
+            <li><strong>macOS:</strong> <code>~/edwin/install.log</code></li>
+            <li><strong>Windows:</strong> <code>%USERPROFILE%\edwin\install.log</code></li>
+        </ul>
+
+        <p>Common causes:</p>
+        <ul>
+            <li><strong>Invalid skill syntax:</strong> A new skill has a malformed frontmatter block. Report this as a bug.</li>
+            <li><strong>File permissions:</strong> The sync engine can't write to <code>~/.claude/</code> or <code>~/.claude-desktop/</code>. Check that the directories exist and are writable.</li>
+        </ul>
+
+        <p>For help, see the <a href="troubleshooting.html">Troubleshooting guide</a>.</p>
+
+        <h2>Updating web portal bundles</h2>
+
+        <p>After updating EDWIN locally, your web portal bundles (for claude.ai, Gemini, Copilot) become stale. To regenerate them:</p>
+
+        <ol>
+            <li>Open Terminal (macOS) or Command Prompt (Windows)</li>
+            <li>Navigate to your EDWIN directory: <code>cd ~/edwin</code> (macOS) or <code>cd %USERPROFILE%\edwin</code> (Windows)</li>
+            <li>Run: <code>node tools/bundle/build-bundle.mjs --context [YourContext] --portal all --diff</code></li>
+            <li>The script regenerates only changed bundles and prints re-paste instructions</li>
+        </ol>
+
+        <p>See <a href="web-portals.html">Using EDWIN in Web Portals</a> for details.</p>
+
+        <h2>How often to update</h2>
+
+        <p>There's no automatic update mechanism. You control when to update. Consider updating when:</p>
+        <ul>
+            <li>A new version is announced with features you want</li>
+            <li>A bug you've encountered is fixed</li>
+            <li>You're troubleshooting an issue and want to rule out an outdated installation</li>
+        </ul>
+
+        <p>Check the <a href="https://github.com/sqlhammer/edwin">EDWIN repository</a> for release notes and announcements.</p>
+
+        <h2>Next steps</h2>
+
+        <ul>
+            <li>After updating, restart Claude to load the changes</li>
+            <li>Regenerate web portal bundles if you use them</li>
+            <li>If something goes wrong, see the <a href="troubleshooting.html">Troubleshooting guide</a></li>
+        </ul>
+
+        <footer>
+            <p><a href="index.html">← Back to Guide Index</a></p>
+        </footer>
+    </div>
+</body>
+</html>

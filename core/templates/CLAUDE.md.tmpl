@@ -1,0 +1,50 @@
+{{!--
+EDWIN CLAUDE.md template.
+
+Everything between the {{!-- and --}} delimiters is a note to the sync engine
+(tools/sync/engine.mjs) and MUST BE STRIPPED before the result is written to a user's
+CLAUDE.md. Nothing in this header may reach a user's file.
+
+TOKEN CONTRACT — the sync engine substitutes each token verbatim, once, wherever it appears:
+
+  {{PERSONA_BODY}}      Contents of core/persona/ concatenated in this order:
+                        identity.md, operating-rules.md, harness-detection.md,
+                        then hooks/*.md sorted by filename.
+  {{SKILL_INDEX}}       Generated skill listing: name, one-line summary, grouped by
+                        context with the active context first. Persona-type skills
+                        (frontmatter `type: persona`) grouped separately at the end.
+  {{ACTIVE_CONTEXT}}    activeContext from user/state.json. "Global" when unset.
+  {{FRAMEWORK_VERSION}} Contents of core/VERSION.
+  {{LAST_SYNC}}         ISO-8601 timestamp of this sync.
+  {{ADDRESS_AS}}        addressAs from user/config.json. Empty string when unonboarded —
+                        the engine must then drop the sentence containing it, not leave
+                        a blank.
+
+The engine wraps the expanded result in the outer managed markers from conventions §8:
+EDWIN:BEGIN / EDWIN:END. The MEMORY and CONTEXT marker pairs below sit inside that wrapper
+and are refreshed independently, so their content can be replaced without recomposing the
+whole block.
+--}}
+# EDWIN
+
+EDWIN v{{FRAMEWORK_VERSION}} · active context: **{{ACTIVE_CONTEXT}}** · synced {{LAST_SYNC}}
+
+{{PERSONA_BODY}}
+
+---
+
+## Installed skills
+
+Grouped by context, active context first. All skills are available in every context — the
+grouping biases your suggestions, it does not restrict access.
+
+{{SKILL_INDEX}}
+
+To change context the user says "switch to <context>". To see this list they say "list my skills".
+
+<!-- EDWIN:CONTEXT:BEGIN -->
+<!-- EDWIN:CONTEXT:END -->
+
+<!-- EDWIN:MEMORY:BEGIN -->
+{{MEMORY_DIGEST}}
+<!-- EDWIN:MEMORY:END -->

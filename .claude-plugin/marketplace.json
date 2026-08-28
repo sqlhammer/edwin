@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "edwin",
+  "description": "EDWIN — Electronic Digital Workforce Intelligence Network. A portable personal AI assistant framework.",
+  "owner": {
+    "name": "sqlhammer"
+  },
+  "plugins": [
+    {
+      "name": "edwin",
+      "description": "EDWIN — Electronic Digital Workforce Intelligence Network. A portable personal AI assistant framework for Claude.",
+      "author": {
+        "name": "EDWIN Core Team"
+      },
+      "category": "productivity",
+      "source": "."
+    }
+  ]
+}
