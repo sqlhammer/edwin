@@ -25,6 +25,9 @@ FINAL_LOG_FILE="$INSTALL_DIR/install.log"
 # Repository to clone (read from package.json, or prompted)
 REPO_URL=""
 
+# Branch to clone. Empty means the repository's default branch.
+BRANCH=""
+
 # Answer every confirmation with yes (for unattended runs)
 ASSUME_YES=0
 
@@ -44,6 +47,7 @@ Usage:
 
 Options:
   --repo-url <url>   Repository to install from (otherwise read from package.json or prompted)
+  --branch <name>    Branch to clone (default: the repository's default branch)
   --yes              Answer yes to every confirmation; required for unattended runs
   --skip-deps        Report missing Git or Node.js instead of installing them
   --no-pause         Do not wait for a keypress before closing
@@ -63,6 +67,14 @@ while [ $# -gt 0 ]; do
                 exit 2
             fi
             REPO_URL="$2"
+            shift 2
+            ;;
+        --branch)
+            if [ -z "${2:-}" ]; then
+                echo "Error: --branch requires a branch name" >&2
+                exit 2
+            fi
+            BRANCH="$2"
             shift 2
             ;;
         --yes|-y)
@@ -750,18 +762,31 @@ clone_or_update_repo() {
             exit_with_error "Invalid repository URL"
         fi
 
-        log "Cloning repository from $REPO_URL..."
+        local clone_args=(clone)
+        if [ -n "$BRANCH" ]; then
+            log "Cloning repository from $REPO_URL (branch $BRANCH)..."
+            clone_args+=(--branch "$BRANCH")
+        else
+            log "Cloning repository from $REPO_URL..."
+        fi
+        clone_args+=("$REPO_URL" "$INSTALL_DIR")
 
         # Clone the repository
-        if ! git clone "$REPO_URL" "$INSTALL_DIR" >> "$LOG_FILE" 2>&1; then
+        if ! git "${clone_args[@]}" >> "$LOG_FILE" 2>&1; then
             log_error "Failed to clone repository"
             echo ""
             echo "Failed to download EDWIN. This might happen if:"
             echo "  - You're not connected to the internet"
             echo "  - The repository URL is incorrect"
             echo "  - You don't have access to the repository"
+            if [ -n "$BRANCH" ]; then
+                echo "  - The branch $BRANCH does not exist in that repository"
+            fi
             echo ""
             echo "Repository URL: $REPO_URL"
+            if [ -n "$BRANCH" ]; then
+                echo "Branch: $BRANCH"
+            fi
             echo ""
             echo "Check the log file for details: $LOG_FILE"
             echo ""
@@ -782,17 +807,34 @@ run_sync_engine() {
     local engine_path="$INSTALL_DIR/tools/sync/engine.mjs"
 
     if [ ! -f "$engine_path" ]; then
+        # This used to say the download was "incomplete or corrupted", which sent a user
+        # hunting for a broken clone that was in fact perfect: the repository's default
+        # branch simply held an older layout with no sync engine in it. A complete clone
+        # of the wrong version looks identical to a truncated one unless the message says so.
+        local cloned_branch
+        cloned_branch=$(cd "$INSTALL_DIR" && git rev-parse --abbrev-ref HEAD 2>/dev/null) || cloned_branch=""
+
         echo ""
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "  Sync engine not found"
+        echo "  This does not look like EDWIN"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo ""
-        echo "The sync engine is missing from the repository."
-        echo "This might mean the download was incomplete or corrupted."
+        echo "The clone succeeded, but there is no sync engine in it, so this is not an"
+        echo "EDWIN v0.2 repository."
         echo ""
         echo "Expected location: $engine_path"
+        if [ -n "$cloned_branch" ]; then
+            echo "Branch cloned:     $cloned_branch"
+        fi
         echo ""
-        exit_with_error "Sync engine not found"
+        echo "The likely cause is the branch, not a bad download. If the version you want"
+        echo "is not the repository's default branch, clone it explicitly:"
+        echo ""
+        echo "  EDWIN-Install.command --branch <name>"
+        echo ""
+        echo "Remove $INSTALL_DIR first -- an existing clone is updated, not replaced."
+        echo ""
+        exit_with_error "No sync engine in the cloned repository"
     fi
 
     # Run the sync engine
@@ -831,6 +873,9 @@ main() {
     echo "This will install EDWIN on your machine."
     echo ""
     echo "Installation directory: $INSTALL_DIR"
+    if [ -n "$BRANCH" ]; then
+        echo "Branch: $BRANCH"
+    fi
     echo "Log file: $LOG_FILE"
     echo ""
 

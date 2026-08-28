@@ -14,6 +14,45 @@ set -euo pipefail
 INSTALL_DIR="$HOME/edwin"
 LOG_FILE="$INSTALL_DIR/install.log"
 
+# Branch to switch to before updating. Empty means stay on whatever branch is checked out.
+BRANCH=""
+
+show_usage() {
+    cat <<'USAGE'
+EDWIN-Update.command — update an existing EDWIN installation
+
+Usage:
+  EDWIN-Update.command [options]
+
+Options:
+  --branch <name>    Branch to switch to before updating (default: the current branch)
+  --help             Show this help
+USAGE
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --branch)
+            if [ -z "${2:-}" ]; then
+                echo "Error: --branch requires a branch name" >&2
+                exit 2
+            fi
+            BRANCH="$2"
+            shift 2
+            ;;
+        --help|-h)
+            show_usage
+            exit 0
+            ;;
+        *)
+            echo "Error: unknown option: $1" >&2
+            echo "" >&2
+            show_usage >&2
+            exit 2
+            ;;
+    esac
+done
+
 # ============================================================================
 # Logging
 # ============================================================================
@@ -53,6 +92,10 @@ main() {
     echo "  EDWIN Update"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
+    if [ -n "$BRANCH" ]; then
+        echo "Target branch: $BRANCH"
+        echo ""
+    fi
 
     log "========================================"
     log "EDWIN Update Started"
@@ -120,6 +163,46 @@ main() {
             exit_with_error "Uncommitted changes detected"
         else
             log "Changes are only in user/ directory (preserved)"
+        fi
+    fi
+
+    # Switch branch before pulling, if requested
+    if [ -n "$BRANCH" ]; then
+        local current_branch
+        current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || current_branch=""
+
+        if [ "$current_branch" != "$BRANCH" ]; then
+            log "Switching to branch $BRANCH..."
+
+            if ! git fetch origin "$BRANCH" >> "$LOG_FILE" 2>&1; then
+                log_error "Failed to fetch branch $BRANCH"
+                echo ""
+                echo "Failed to fetch branch $BRANCH from origin. This might happen if:"
+                echo "  - You're not connected to the internet"
+                echo "  - The branch $BRANCH does not exist in the remote repository"
+                echo ""
+                echo "Check the log file for details: $LOG_FILE"
+                echo ""
+                exit_with_error "Git fetch failed for branch $BRANCH"
+            fi
+
+            # A local branch of that name may already exist (checkout it directly) or this
+            # may be the first time it's checked out here (create it tracking origin/$BRANCH).
+            if ! git checkout "$BRANCH" >> "$LOG_FILE" 2>&1; then
+                if ! git checkout -B "$BRANCH" "origin/$BRANCH" >> "$LOG_FILE" 2>&1; then
+                    log_error "Failed to switch to branch $BRANCH"
+                    echo ""
+                    echo "Could not switch to branch $BRANCH. This might happen if:"
+                    echo "  - Uncommitted changes would be overwritten by the switch"
+                    echo "  - The branch $BRANCH does not exist in the remote repository"
+                    echo ""
+                    echo "Check the log file for details: $LOG_FILE"
+                    echo ""
+                    exit_with_error "Git checkout failed for branch $BRANCH"
+                fi
+            fi
+
+            log "Switched to branch $BRANCH"
         fi
     fi
 

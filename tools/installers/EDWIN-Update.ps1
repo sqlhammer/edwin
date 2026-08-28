@@ -16,6 +16,11 @@
 .PARAMETER InstallDir
     Where EDWIN is installed. Defaults to <user profile>\edwin.
 
+.PARAMETER Branch
+    Branch to switch to before updating. Defaults to whatever branch is currently checked
+    out. Use this to move an installation onto a different branch -- switching happens
+    before the pull, so the update lands on the new branch's tip.
+
 .PARAMETER NoPause
     Accepted for compatibility. Pausing is the launcher's job (EDWIN-Update.cmd).
 
@@ -24,11 +29,16 @@
 
 .EXAMPLE
     .\EDWIN-Update.ps1 -InstallDir D:\edwin
+
+.EXAMPLE
+    .\EDWIN-Update.ps1 -Branch v0.2
 #>
 
 [CmdletBinding()]
 param(
     [string]$InstallDir,
+
+    [string]$Branch,
 
     [switch]$NoPause,
 
@@ -55,13 +65,28 @@ Usage:
 
 Options:
   -InstallDir <dir>  Where EDWIN is installed (default: <user profile>\edwin)
+  -Branch <name>     Branch to switch to before updating (default: the current branch)
   -NoPause           Do not wait for a keypress before closing
   -Help              Show this help
+
+The --branch, --no-pause and --help spellings are also accepted.
 '@
 
-foreach ($arg in @($Rest)) {
+$Rest = @($Rest)
+for ($i = 0; $i -lt $Rest.Count; $i++) {
+    $arg = $Rest[$i]
     if (-not $arg) { continue }
     switch -Regex ($arg) {
+        '^--branch$' {
+            if ($i + 1 -ge $Rest.Count -or -not $Rest[$i + 1]) {
+                Write-Host 'Error: --branch requires a branch name' -ForegroundColor Red
+                Write-Host ''
+                Write-Host $usage
+                exit 2
+            }
+            $Branch = $Rest[$i + 1]
+            $i++
+        }
         '^--no-pause$' { }
         '^--help$'     { $Help = $true }
         default {
@@ -160,6 +185,7 @@ try {
     Write-Host '  EDWIN Update'
     Write-Host '========================================================================'
     Write-Host ''
+    if ($Branch) { Write-Host "Target branch: $Branch" }
 
     Write-Step 'check-installed'
     if (-not (Test-Path $script:InstallDir)) {
@@ -224,6 +250,43 @@ try {
                 throw 'Uncommitted changes detected'
             }
             Write-Log 'Changes are only in user/ directory (preserved)'
+        }
+
+        if ($Branch) {
+            Write-Step 'branch-switch'
+            $current = (Invoke-Native -Exe 'git' -Arguments @('rev-parse', '--abbrev-ref', 'HEAD') -Quiet).Output.Trim()
+            if ($current -ne $Branch) {
+                Write-Log "Switching to branch $Branch..."
+
+                $fetch = Invoke-Native -Exe 'git' -Arguments @('fetch', 'origin', $Branch)
+                if ($fetch.ExitCode -ne 0) {
+                    Write-LogError "Failed to fetch branch $Branch"
+                    Write-Host ''
+                    Write-Host "Failed to fetch branch $Branch from origin. This might happen if:"
+                    Write-Host "  - You're not connected to the internet"
+                    Write-Host "  - The branch $Branch does not exist in the remote repository"
+                    Write-Host ''
+                    throw "Git fetch failed for branch $Branch"
+                }
+
+                # A local branch of that name may already exist (checkout it directly) or this
+                # may be the first time it's checked out here (create it tracking origin/$Branch).
+                $checkout = Invoke-Native -Exe 'git' -Arguments @('checkout', $Branch)
+                if ($checkout.ExitCode -ne 0) {
+                    $checkout = Invoke-Native -Exe 'git' -Arguments @('checkout', '-B', $Branch, "origin/$Branch")
+                }
+                if ($checkout.ExitCode -ne 0) {
+                    Write-LogError "Failed to switch to branch $Branch"
+                    Write-Host ''
+                    Write-Host "Could not switch to branch $Branch. This might happen if:"
+                    Write-Host '  - Uncommitted changes would be overwritten by the switch'
+                    Write-Host "  - The branch $Branch does not exist in the remote repository"
+                    Write-Host ''
+                    throw "Git checkout failed for branch $Branch"
+                }
+
+                Write-Log "Switched to branch $Branch"
+            }
         }
 
         Write-Step 'pull'
