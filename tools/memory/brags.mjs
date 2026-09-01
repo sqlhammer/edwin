@@ -71,7 +71,7 @@ const opts = {
   command: null,
   args: [],
   context: 'Global',
-  size: 'notable',
+  size: null,  // Don't filter by size unless explicitly specified
   category: null,
   since: null,
   until: null,
@@ -317,6 +317,11 @@ function cmdAppend() {
 
   const entryText = opts.args[0];
   const validSizes = ['small', 'notable', 'major'];
+
+  // Default size for append command is 'notable'
+  if (!opts.size) {
+    opts.size = 'notable';
+  }
 
   if (!validSizes.includes(opts.size)) {
     error(`Invalid size. Must be one of: ${validSizes.join(', ')}`, 1);

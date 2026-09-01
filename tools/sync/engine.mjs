@@ -520,6 +520,39 @@ export function updateMemorySection(targetPath, memoryContent) {
   writeFileSync(targetPath, updated, 'utf-8');
 }
 
+// Copy tools directory to target
+function syncTools(target, manifest) {
+  const results = {
+    changed: false,
+    skipped: false,
+  };
+
+  const TOOLS_DIR = join(REPO_ROOT, 'tools');
+  const targetToolsDir = join(dirname(target.skillsDir), 'tools');
+
+  // Hash the source tools directory
+  const srcHash = hashDirectory(TOOLS_DIR);
+
+  // Check if already installed with same hash
+  const existingHash = manifest.tools?.hash;
+
+  if (existingHash === srcHash && existsSync(targetToolsDir)) {
+    results.skipped = true;
+    return results;
+  }
+
+  // Ensure parent directory exists and copy tools
+  if (!opts.dryRun) {
+    mkdirSync(dirname(targetToolsDir), { recursive: true });
+    copyDirRecursive(TOOLS_DIR, targetToolsDir);
+  }
+
+  manifest.tools = { hash: srcHash };
+  results.changed = true;
+
+  return results;
+}
+
 // Copy skills to target
 function syncSkills(target, manifest) {
   const results = {
@@ -618,7 +651,12 @@ function hashDirectory(dir) {
 function loadManifest() {
   const manifestPath = getManifestPath(HOME_DIR);
   if (existsSync(manifestPath)) {
-    return JSON.parse(readFileSync(manifestPath, 'utf-8'));
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+    // Ensure tools field exists for backwards compatibility
+    if (!manifest.tools) {
+      manifest.tools = null;
+    }
+    return manifest;
   }
 
   return {
@@ -627,6 +665,7 @@ function loadManifest() {
     lastSync: null,
     targets: [],
     skills: {},
+    tools: null,
   };
 }
 
@@ -704,11 +743,19 @@ function cleanupLegacy() {
 function uninstall(target) {
   const results = {
     skillsRemoved: [],
+    toolsRemoved: false,
     markerRemoved: false,
     manifestCleared: false,
   };
 
   const manifest = loadManifest();
+
+  // Remove tools directory
+  const targetToolsDir = join(dirname(target.skillsDir), 'tools');
+  if (existsSync(targetToolsDir) && !opts.dryRun) {
+    rmSync(targetToolsDir, { recursive: true, force: true });
+    results.toolsRemoved = true;
+  }
 
   // Remove skills
   const skillsToRemove = Object.keys(manifest.skills);
@@ -741,6 +788,7 @@ function uninstall(target) {
   // Clear manifest
   if (!opts.dryRun) {
     manifest.skills = {};
+    manifest.tools = null;
     manifest.targets = [];
     saveManifest(manifest);
   }
@@ -757,6 +805,7 @@ function sync(target) {
     targetCreated: null,
     coworkDetected: target.coworkDetected,
     claudeMd: {},
+    tools: {},
     skills: {},
     legacy: {},
     needsMigration: [],
@@ -813,6 +862,9 @@ function sync(target) {
     size: injected.length,
   };
 
+  // Sync tools
+  results.tools = syncTools(target, manifest);
+
   // Sync skills
   results.skills = syncSkills(target, manifest);
 
@@ -857,6 +909,9 @@ function formatResults(results) {
 
     if (result.uninstall) {
       const u = result.uninstall;
+      if (u.toolsRemoved) {
+        lines.push('  Removed tools directory');
+      }
       lines.push(`  Removed ${u.skillsRemoved.length} skill(s)`);
       if (u.markerRemoved) {
         lines.push('  Removed EDWIN marker block from CLAUDE.md');
@@ -871,6 +926,13 @@ function formatResults(results) {
       lines.push(`  CLAUDE.md updated (${result.claudeMd.size} bytes)`);
     } else {
       lines.push('  CLAUDE.md unchanged');
+    }
+
+    const t = result.tools;
+    if (t.changed) {
+      lines.push('  Tools directory updated');
+    } else if (t.skipped) {
+      lines.push('  Tools directory unchanged');
     }
 
     const s = result.skills;
