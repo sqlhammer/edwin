@@ -78,8 +78,14 @@ And `user/state.json`:
 ```
 
 **Execution path:**
-- **Shell available:** Invoke `node tools/sync/init-user.mjs --name "<name>" --address-as "<addressAs>" --os <os> --harness <harness> --contexts "<comma-separated>" --verbosity <verbosity>`. The script writes both files.
-- **File tools available, no shell:** Write both files directly using the Write tool.
+- **Shell available:** Locate and invoke the `init-user.mjs` script. Search in order:
+  1. `~/.claude/tools/sync/init-user.mjs` (if tools are installed alongside skills)
+  2. `~/edwin/tools/sync/init-user.mjs` (common symlink/install location)
+  
+  Once found, invoke: `node <path-to-script> --name "<name>" --address-as "<addressAs>" --os <os> --harness <harness> --contexts "<comma-separated>" --verbosity <verbosity>`
+  
+  If the script is not found at any of these locations, fall through to file tools.
+- **File tools available (no shell OR script not found):** Write both files directly using the Write tool.
 - **No file tools (web portal):** Print both JSON objects with clear instructions:
 
 > Here's your configuration. Save these files:
@@ -124,16 +130,20 @@ If the user hasn't specified a harness, detect it and confirm:
 
 | Script | Purpose | Invocation |
 |--------|---------|-----------|
-| `tools/sync/init-user.mjs` | Writes `user/config.json` and `user/state.json` atomically | `node tools/sync/init-user.mjs --name "Alex" --address-as "Alex" --os macos --harness claude-code --contexts "Work,Home" --verbosity concise` |
+| `tools/sync/init-user.mjs` | Writes `user/config.json` and `user/state.json` atomically | `node <path-to-edwin>/tools/sync/init-user.mjs --name "Alex" --address-as "Alex" --os macos --harness claude-code --contexts "Work,Home" --verbosity concise` |
 
 The script supports `--help`, `--dry-run`, and `--json` (emits the config objects without writing).
+
+**Path resolution:** The skill searches common EDWIN installation locations in order: `~/.claude/tools/`, `~/edwin/tools/`. If not found, it falls back to direct file writes.
 
 ## Degradation
 
 | Capability | Available | Unavailable |
 |------------|-----------|-------------|
-| Shell | Invoke `init-user.mjs` | Use file tools to write the JSON files directly |
+| Shell + script found | Invoke `init-user.mjs` from discovered path | Fall through to file tools |
 | File tools | Write files directly | Print the JSON for the user to save manually with clear file paths |
+
+**Note:** Script not found is a normal condition if EDWIN tools aren't installed alongside the skills. The skill gracefully falls back to direct file writes.
 
 ## Examples
 
